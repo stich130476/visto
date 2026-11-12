@@ -360,7 +360,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.2';
+const VERSIONE = '1.3';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -430,6 +430,13 @@ async function enrichShow(sh, tmdbId){
     const t = await tmdb(`/tv/${tmdbId}`, {append_to_response:'watch/providers'});
     Object.assign(sh, {tmdb:tmdbId, itName:t.name, itPlot:t.overview || '', back:t.backdrop_path || '', poster:t.poster_path || '',
       prov:provList(t['watch/providers']), genres:(t.genres || []).map(g => g.name).length ? t.genres.map(g => g.name) : sh.genres});
+    const itEp = Object.assign({}, sh.itEp || {});
+    for (const se of (t.seasons || []).filter(x => x.season_number > 0)){
+      try { const r = await tmdb(`/tv/${tmdbId}/season/${se.season_number}`);
+        (r.episodes || []).forEach(e => { if (e.name && !/^(Episodio|Episode) \d+$/i.test(e.name.trim())) itEp[se.season_number + '-' + e.episode_number] = e.name; });
+      } catch(e){}
+    }
+    sh.itEp = itEp;
   } catch(e){}
 }
 function showStats(sh){
@@ -445,6 +452,7 @@ function showStats(sh){
   else st = 'corso';
   return {aired:aired.length, w, next, left:left.length, leftMin, st, pct:aired.length ? Math.round(w / aired.length * 100) : 0};
 }
+const epT = (sh, e) => (sh.itEp && sh.itEp[e.s + '-' + e.n]) || e.t;
 const showName = sh => sh.itName && sh.itName !== sh.name ? sh.itName : sh.name;
 const showImg = (sh, size = 'w342') => sh.poster ? IMG + size + sh.poster : sh.img;
 const showBack = sh => sh.back ? IMG + 'w1280' + sh.back : sh.big || sh.img;
@@ -515,7 +523,7 @@ function renderSerie(){
     return `<div class="cwc fadein"><div class="bgb" style="background-image:url('${esc(showImg(sh, 'w185'))}')"></div>
       <div data-act="openShow" data-id="${sh.id}" role="button">${poster(showImg(sh), showName(sh), 'pimg')}</div>
       <div class="info"><div class="tt" data-act="openShow" data-id="${sh.id}">${esc(showName(sh))}</div>
-      <div class="nx">Prossimo: <b>${epCode(nx)}</b> · ${esc(nx.t)}</div>
+      <div class="nx">Prossimo: <b>${epCode(nx)}</b> · ${esc(epT(sh, nx))}</div>
       <div class="nx">${x.left === 1 ? 'Ultimo episodio uscito' : `Ne mancano ${x.left} · circa ${ore(x.leftMin)}`}</div>
       <div class="row"><div class="bar"><i style="width:${x.pct}%"></i></div><span class="pc">${x.pct}%</span>
       <button class="qcheck" data-act="quick" data-id="${sh.id}" aria-label="Segna visto">${I.check}</button></div></div></div>`;
@@ -638,7 +646,7 @@ function showSheet(id, keep){
   <div class="pad">
     <div class="box"><div class="prog"><div class="ring"><svg viewBox="0 0 72 72"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5e62"/><stop offset="1" stop-color="#ffc857"/></linearGradient></defs><circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="7"/><circle cx="36" cy="36" r="30" fill="none" stroke="url(#rg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C2}" stroke-dashoffset="${C2 * (1 - x.pct / 100)}"/></svg><b>${x.pct}%</b></div>
       <div class="tx"><b>${stato}</b><p>${x.w} di ${x.aired} episodi visti${x.left ? ` · ne mancano ${x.left} (circa ${ore(x.leftMin)})` : ''}</p>
-      ${x.next ? `<p>Prossimo: <b style="font-size:14px;color:var(--txt)">${epCode(x.next)}</b> · ${esc(x.next.t)}</p>` : ''}
+      ${x.next ? `<p>Prossimo: <b style="font-size:14px;color:var(--txt)">${epCode(x.next)}</b> · ${esc(epT(sh, x.next))}</p>` : ''}
       ${sh.next?.d ? `<p>Nuovo episodio ${epCode(sh.next)}: <b style="font-size:14px;color:var(--a2)">${esc(fGiorno(sh.next.d))}</b></p>` : (sh.status === 'Ended' ? '<p>Serie conclusa</p>' : '')}</div></div>
       <div class="acts">${x.next ? `<button class="btn" data-act="quick" data-id="${id}">${I.check}Segna ${epCode(x.next)}</button>` : ''}
         <button class="btn ghost" data-act="pause" data-id="${id}">${sh.paused ? 'Riprendi' : 'Metti in pausa'}</button></div></div>
@@ -650,7 +658,7 @@ function showSheet(id, keep){
       <div class="seasact"><span>${sW} di ${eps.length} visti${eps.length > sAired.length ? ` · ${eps.length - sAired.length} in arrivo` : ''}</span>
         ${sAired.length ? `<button class="lnk" data-act="seasonAll" data-id="${id}" data-s="${cur}">${sW === sAired.length ? 'Togli tutte le spunte' : 'Segna tutta la stagione'}</button>` : ''}</div>
       ${eps.map(e => { const fut = !e.d || e.d > t, on = !!sh.watched[e.i];
-        return `<div class="ep ${fut ? 'fut' : ''}"><div class="n">E${String(e.n).padStart(2, '0')}</div><div class="nm"><b>${esc(e.t)}</b><small>${e.d ? (fut ? 'Esce ' + esc(fGiorno(e.d)) : esc(fData(e.d))) : 'Data da annunciare'}${e.r ? ' · ' + e.r + ' min' : ''}${on && typeof sh.watched[e.i] === 'number' ? ' · visto il ' + esc(fData(new Date(sh.watched[e.i]).toLocaleDateString('sv'), false)) : ''}</small></div>
+        return `<div class="ep ${fut ? 'fut' : ''}"><div class="n">E${String(e.n).padStart(2, '0')}</div><div class="nm"><b>${esc(epT(sh, e))}</b><small>${e.d ? (fut ? 'Esce ' + esc(fGiorno(e.d)) : esc(fData(e.d))) : 'Data da annunciare'}${e.r ? ' · ' + e.r + ' min' : ''}${on && typeof sh.watched[e.i] === 'number' ? ' · visto il ' + esc(fData(new Date(sh.watched[e.i]).toLocaleDateString('sv'), false)) : ''}</small></div>
         ${fut ? '' : `<button class="ck ${on ? 'on' : ''}" data-act="ep" data-id="${id}" data-e="${e.i}" aria-label="Visto">${I.check}</button>`}</div>`; }).join('')}
     </div>
     <div class="box"><h4>I miei appunti</h4><textarea class="notes" data-notes="show" data-id="${id}" placeholder="A che punto sei, cosa ti è piaciuto, chi te l'ha consigliata…">${esc(sh.notes || '')}</textarea></div>
@@ -706,7 +714,7 @@ function tonightList(mins){
     if (D.news.some(n => !n.read && n.ref === 'show' && n.rid == sh.id)) sc += 2;
     const n = Math.max(1, Math.min(Math.floor(mins / r), x.left));
     out.push({type:'show', id:sh.id, sc:sc + Math.random() * 3, img:showImg(sh), title:showName(sh), k:x.st === 'corso' ? 'Continua la serie' : 'Inizia una serie nuova',
-      d:`${epCode(x.next)} · ${x.next.t}${n > 1 ? ` · ci stanno ${n} episodi` : ` · ${r} min`}`});
+      d:`${epCode(x.next)} · ${epT(sh, x.next)}${n > 1 ? ` · ci stanno ${n} episodi` : ` · ${r} min`}`});
   });
   if (mins >= 90) Object.values(D.movies).forEach(m => {
     if (m.state !== 'todo' || (m.rel && m.rel > t)) return;
@@ -999,12 +1007,13 @@ async function checkNews(force){
       const nu = await fetchShow(old.id);
       const oldMax = Math.max(0, ...old.eps.map(e => e.s)), newMax = Math.max(0, ...nu.eps.map(e => e.s));
       const fresh = nu.eps.filter(e => e.d && e.d > since && e.d <= t && !old.watched[e.i]);
-      const keep = {watched:old.watched, paused:old.paused, notes:old.notes, added:old.added, lastW:old.lastW, tmdb:old.tmdb, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov};
+      const keep = {watched:old.watched, paused:old.paused, notes:old.notes, added:old.added, lastW:old.lastW, tmdb:old.tmdb, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
       if (old.tmdb) keep.genres = old.genres;
       D.series[old.id] = Object.assign(nu, keep);
       const sh = D.series[old.id], name = showName(sh), img = showImg(sh, 'w185');
+      if (C.tmdb && (fresh.length || nu.eps.length !== old.eps.length)) await enrichShow(sh, sh.tmdb);
       if (fresh.length) addNews({id:`ep-${sh.id}-${fresh[fresh.length - 1].i}`, ref:'show', rid:sh.id, kind:'new', img, t:name, d:fresh[fresh.length - 1].d,
-        k:fresh.length > 1 ? `${fresh.length} nuovi episodi` : 'Nuovo episodio', d2:fresh.length > 1 ? `Da ${epCode(fresh[0])} a ${epCode(fresh[fresh.length - 1])}` : `${epCode(fresh[0])} · ${fresh[0].t} · uscito ${fGiorno(fresh[0].d)}`});
+        k:fresh.length > 1 ? `${fresh.length} nuovi episodi` : 'Nuovo episodio', d2:fresh.length > 1 ? `Da ${epCode(fresh[0])} a ${epCode(fresh[fresh.length - 1])}` : `${epCode(fresh[0])} · ${epT(sh, fresh[0])} · uscito ${fGiorno(fresh[0].d)}`});
       if (newMax > oldMax && oldMax > 0) addNews({id:`ss-${sh.id}-${newMax}`, ref:'show', rid:sh.id, kind:'new', img, t:name, d:t, k:'Nuova stagione', d2:`Annunciata la stagione ${newMax}` + (sh.eps.find(e => e.s === newMax)?.d ? ` · dal ${fData(sh.eps.find(e => e.s === newMax).d, false)}` : '')});
       if (sh.next?.d && sh.next.d > t && sh.next.d <= week) addNews({id:`soon-${sh.id}-${sh.next.s}-${sh.next.n}`, ref:'show', rid:sh.id, kind:'soon', img, t:name, d:sh.next.d, k:'In arrivo', d2:`${epCode(sh.next)} esce ${fGiorno(sh.next.d)}`});
       await sleep(250);
@@ -1027,7 +1036,7 @@ async function checkNews(force){
   if (force){ const n = D.news.filter(x => !x.read).length; toast(errs ? `Controllo fatto, ${errs} titoli non raggiunti` : n ? `${n} novità per te` : 'Tutto aggiornato, nessuna novità'); }
 }
 async function enrichAll(){
-  for (const sh of Object.values(D.series)) if (!sh.tmdb){ await enrichShow(sh); await sleep(120); }
+  for (const sh of Object.values(D.series)) if (!sh.tmdb || !sh.itEp){ await enrichShow(sh, sh.tmdb); await sleep(120); }
   save(); render();
 }
 
@@ -1122,7 +1131,7 @@ function introStats(){
     posterPool().then(list => { if (!cache && list.length) buildWall(list); });
   } else $('#intro').remove();
   await pull();
-  if (C.tmdb && Object.values(D.series).some(s => !s.tmdb)) enrichAll();
+  if (C.tmdb && Object.values(D.series).some(s => !s.tmdb || !s.itEp)) enrichAll();
   await checkNews(false);
   loadRecs();
 })();
