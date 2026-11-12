@@ -381,6 +381,17 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 .badge i{font-style:normal;font-size:20px;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--grad)}
 .badge.off{opacity:.6}.badge.off i{background:var(--card);filter:grayscale(1)}
 .badge small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+.wrank{display:flex;flex-direction:column;gap:7px}
+.wr{display:flex;align-items:center;gap:10px;font-size:14px}
+.wr .wn{width:16px;color:var(--mut2);font-weight:800;font-size:12px}
+.wr b{width:84px;font-weight:600}
+.wr .bar{height:10px}
+.wr em{font-style:normal;width:38px;text-align:right;color:var(--mut);font-variant-numeric:tabular-nums}
+.wr.top b,.wr.top em{color:var(--a2);font-weight:800}
+.wsplit{display:flex;gap:6px;margin-top:14px;border-radius:12px;overflow:hidden}
+.wsplit div{display:flex;flex-direction:column;align-items:center;padding:8px 4px;background:var(--card2);min-width:70px}
+.wsplit div:last-child{background:linear-gradient(135deg,rgba(255,94,98,.25),rgba(255,200,87,.25))}
+.wsplit b{font-size:17px}.wsplit span{font-size:11px;color:var(--mut)}
 .wdays{display:flex;align-items:flex-end;gap:6px;height:90px}
 .wdays div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
 .wdays i{width:100%;border-radius:6px 6px 3px 3px;background:var(--grad);min-height:3px}
@@ -434,7 +445,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.7.3';
+const VERSIONE = '2.7.4';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -775,8 +786,12 @@ function renderIo(){
     <p class="cap2" style="margin-top:8px;white-space:normal">Tocca un genere per vedere i titoli · le frecce mostrano come cambia la classifica rispetto alla settimana scorsa</p></div>` : ''}
   ${recMin ? `<div class="box"><h4>Da recuperare</h4><div class="bigline">${dur(recMin)}</div><p class="cap2" style="white-space:normal;font-size:14px">il tempo per finire le serie in corso e vedere tutti i film in lista</p></div>` : ''}
   ${plTop.length ? `<div class="box"><h4>Le tue piattaforme</h4>${plTop.map(([n, v]) => `<div class="gbar" data-act="plat" data-p="${esc(n)}" role="button" style="cursor:pointer"><span>${esc(n)}</span><div class="bar"><i style="width:${v / plMx * 100}%"></i></div><em style="width:44px">${ore(v)}</em></div>`).join('')}<p class="cap2" style="margin-top:8px;white-space:normal">Tocca una piattaforma per vedere i titoli</p></div>` : ''}
-  <div class="box"><h4>Abitudini</h4>${dated >= 5 ? `<div class="wdays">${wd.map((v, i) => `<div><i style="height:${v / wmx * 100}%;opacity:${v ? 1 : .25}"></i><span>${GIORNI[i].slice(0, 3)}</span></div>`).join('')}</div>
-    <p class="plot" style="font-size:14px;margin-top:10px">Il tuo giorno preferito è il <b>${GIORNI[wbest]}</b>.${mar && mar[1].n > 1 ? ` Record di maratona: <b>${mar[1].n} episodi</b> in un giorno (${esc(fData(mar[0]))}), soprattutto di <i>${esc(marShow)}</i>.` : ''}</p>`
+  <div class="box"><h4>Abitudini</h4>${dated >= 5 ? (() => {
+    const tot = wd.reduce((a, b) => a + b, 0), pct = v => Math.round(v / tot * 100), ord = wd.map((v, i) => [i, v]).sort((a, b) => b[1] - a[1]);
+    const we = pct(wd[5] + wd[6]), fer = 100 - we;
+    return `<div class="wrank">${ord.map(([i, v], k) => `<div class="wr ${k === 0 ? 'top' : ''}"><span class="wn">${k + 1}</span><b>${GIORNI[i][0].toUpperCase() + GIORNI[i].slice(1)}</b><div class="bar"><i style="width:${v / ord[0][1] * 100}%;opacity:${k === 0 ? 1 : .35 + .55 * (v / ord[0][1])}"></i></div><em>${pct(v)}%</em></div>`).join('')}</div>
+      <div class="wsplit"><div style="flex:${fer || 1}"><b>${fer}%</b><span>lun–ven</span></div><div style="flex:${we || 1}"><b>${we}%</b><span>weekend</span></div></div>
+      <p class="plot" style="font-size:14px;margin-top:12px">Il tuo giorno preferito è il <b>${GIORNI[wbest]}</b> (${pct(wd[wbest])}% delle visioni)${ord[6][1] < ord[0][1] ? `, quello in cui guardi meno è il <b>${GIORNI[ord[6][0]]}</b> (${pct(ord[6][1])}%)` : ''}.${mar && mar[1].n > 1 ? ` Record di maratona: <b>${mar[1].n} episodi</b> in un giorno (${esc(fData(mar[0]))}), soprattutto di <i>${esc(marShow)}</i>.` : ''}</p>`; })()
     : `<p class="plot" style="font-size:14px">Qui compariranno il tuo giorno della settimana preferito e i record di maratona, man mano che segni cosa guardi${C.archivio ? ' (con la modalità archivio spenta)' : ''}.</p>`}</div>
   <div class="box"><h4>Traguardi · ${BADGE.filter(b => b[3]).length} di ${BADGE.length}</h4><div class="badges">${BADGE.map(([ic, t, sub, ok, cur, goal]) => `<div class="badge ${ok ? '' : 'off'}"><i>${ic}</i><span>${t}<small>${sub}${!ok && goal > 1 ? ` · <b style="color:var(--a2)">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</b>` : ''}</small>${!ok && goal > 1 && cur > 0 ? `<span class="bar" style="display:block;height:4px;margin-top:4px;width:100%"><i style="width:${Math.min(100, cur / goal * 100)}%"></i></span>` : ''}</span></div>`).join('')}</div></div>
   <h2 class="sec">Impostazioni</h2>
