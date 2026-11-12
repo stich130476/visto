@@ -376,7 +376,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.8.3';
+const VERSIONE = '1.9';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -397,8 +397,8 @@ const genIt = g => GENERI[g] || g;
 const SPLIT = {'Sci-Fi & Fantasy':['Fantascienza','Fantasy'],'Action & Adventure':['Azione','Avventura'],'War & Politics':['Guerra','Politica'],'Kids':['Ragazzi'],'Talk':['Talk show'],'Soap':['Soap opera'],'Science Fiction':['Fantascienza'],'Animation':['Animazione'],'Documentary':['Documentario'],'Mystery':['Mistero'],'Drama':['Dramma']};
 const MACRO = {Horror:'Horror', Soprannaturale:'Horror', Commedia:'Commedia', Thriller:'Thriller & Crime', Crime:'Thriller & Crime', Spionaggio:'Thriller & Crime', Legale:'Thriller & Crime',
   Dramma:'Drammatico', Medico:'Drammatico', Sentimentale:'Drammatico', Storico:'Drammatico', Storia:'Drammatico', Romance:'Drammatico', 'Soap opera':'Drammatico', Animazione:'Animazione', Anime:'Animazione',
-  Avventura:'Avventura', Azione:'Avventura', Western:'Avventura', Guerra:'Avventura', Mistero:'Mistero', Fantascienza:'Fantascienza', Fantasy:'Fantasy'};
-const macro = list => [...new Set((list || []).map(g => MACRO[g]).filter(Boolean))];
+  Avventura:'Avventura', Azione:'Avventura', Western:'Avventura', Guerra:'Avventura', Mistero:'Mistero', Fantascienza:'Fantascienza', Fantasy:'Altro'};
+const macro = list => { const m = [...new Set((list || []).map(g => MACRO[g]).filter(Boolean))]; return m.length ? m : ['Altro']; };
 const normGen = (...lists) => [...new Set(lists.flat().filter(Boolean).flatMap(g => SPLIT[g] || [genIt(g)]))];
 
 /* ---------- STATO ---------- */
@@ -610,7 +610,7 @@ function renderIo(){
   const rated = seen.filter(m => m.rating);
   const avg = rated.length ? (rated.reduce((a, m) => a + m.rating, 0) / rated.length).toFixed(1).replace('.', ',') : '–';
   seen.forEach(m => macro(m.genres).forEach(g => gen[g] = (gen[g] || 0) + 1));
-  const ORD = ['Horror','Commedia','Thriller & Crime','Drammatico','Animazione','Avventura','Mistero','Fantascienza','Fantasy'];
+  const ORD = ['Horror','Commedia','Thriller & Crime','Drammatico','Animazione','Avventura','Mistero','Fantascienza','Altro'];
   const top = ORD.map(g => [g, gen[g] || 0]).sort((a, b) => b[1] - a[1] || ORD.indexOf(a[0]) - ORD.indexOf(b[0])), mx = top[0]?.[1] || 1;
   const order = top.map(t => t[0]);
   if (!D.genSnap || Date.now() - D.genSnap.at > 7 * 864e5){ D.genPrev = D.genSnap ? D.genSnap.order : order; D.genSnap = {at:Date.now(), order}; save(false); }
@@ -629,8 +629,8 @@ function renderIo(){
     <div class="tile fadein" style="--c:#4da3ff"><b>${epYear + filmYear}</b><span>visioni nel ${y}</span></div>
   </div>
   <button class="yearbtn fadein" data-act="year"><span style="font-size:34px">✨</span><span><b>Il mio ${y} in Visto!</b><small>Il riepilogo del tuo anno davanti allo schermo</small></span><span class="ar">›</span></button>
-  ${top[0][1] ? `<div class="box"><h4>La classifica dei tuoi generi</h4>${top.map(([g, n], i) => `<div class="gbar"><em style="width:18px;text-align:left;color:${i < 3 ? 'var(--a2)' : 'var(--mut2)'};font-weight:800">${i + 1}</em><span>${esc(g)}</span><div class="bar"><i style="width:${n / mx * 100}%;${n ? '' : 'opacity:0'}"></i></div><em>${n}</em><span style="width:24px;text-align:right">${move(g)}</span></div>`).join('')}
-    <p class="cap2" style="margin-top:8px;white-space:normal">Le frecce mostrano come cambia la classifica rispetto alla settimana scorsa</p></div>` : ''}
+  ${top[0][1] ? `<div class="box"><h4>La classifica dei tuoi generi</h4>${top.map(([g, n], i) => `<div class="gbar" data-act="genre" data-g="${esc(g)}" role="button" style="cursor:pointer"><em style="width:18px;text-align:left;color:${i < 3 ? 'var(--a2)' : 'var(--mut2)'};font-weight:800">${i + 1}</em><span>${esc(g)}</span><div class="bar"><i style="width:${n / mx * 100}%;${n ? '' : 'opacity:0'}"></i></div><em>${n}</em><span style="width:24px;text-align:right">${move(g)}</span></div>`).join('')}
+    <p class="cap2" style="margin-top:8px;white-space:normal">Tocca un genere per vedere i titoli · le frecce mostrano come cambia la classifica rispetto alla settimana scorsa</p></div>` : ''}
   <h2 class="sec">Impostazioni</h2>
   <div class="box">
     <div class="set"><div class="l"><b>Intro all'avvio</b><small>Il collage di locandine quando apri l'app</small></div><button class="sw ${C.intro ? 'on' : ''}" data-act="toggleIntro" aria-label="Intro"></button></div>
@@ -659,7 +659,7 @@ function renderIo(){
 
 /* ---------- SCHEDA SERIE ---------- */
 function openSheet(html, keep){ const sy = $('#sheet').scrollTop; $('#sheetIn').innerHTML = html; $('#sheet').scrollTop = keep ? sy : 0; $('#sheet').classList.add('open'); $('#closeBtn').classList.remove('hide'); document.body.style.overflow = 'hidden'; }
-function closeSheet(){ $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); }
+function closeSheet(){ if (UI.back && UI.open?.type !== 'genre'){ const b = UI.back; UI.back = null; genreSheet(b); return; } UI.back = null; $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); }
 
 function showSheet(id, keep){
   const sh = D.series[id]; if (!sh) return;
@@ -853,6 +853,17 @@ function rateShowModal(id, fin){
   $('#modal').classList.add('open');
 }
 
+function genreSheet(g){
+  UI.open = {type:'genre', g};
+  const ss = Object.values(D.series).filter(sh => Object.keys(sh.watched).length && macro(sh.genres).includes(g));
+  const ms = Object.values(D.movies).filter(m => m.state === 'seen' && macro(m.genres).includes(g));
+  const card = (act, id, img, t, sub) => `<button class="pc-it fadein" data-act="${act}" data-id="${id}">${poster(img, t)}<div class="cap">${esc(t)}</div><div class="cap2">${esc(sub)}</div></button>`;
+  openSheet(`<div class="yhero" style="padding-bottom:22px"><div class="yy" style="font-size:52px;letter-spacing:-1px">${esc(g)}</div><p>${ss.length} serie · ${ms.length} film</p></div>
+    <div class="pad">${ss.length ? `<h2 class="sec">Serie <small>${ss.length}</small></h2><div class="grid">${ss.map(sh => { const x = showStats(sh); return card('openShow', sh.id, showImg(sh), showName(sh), sh.myRating ? '★'.repeat(sh.myRating) : x.pct + '% visto'); }).join('')}</div>` : ''}
+    ${ms.length ? `<h2 class="sec">Film <small>${ms.length}</small></h2><div class="grid">${ms.map(m => card('openMovie', m.id, movImg(m), m.title, m.rating ? '★'.repeat(m.rating) : m.year || '')).join('')}</div>` : ''}
+    ${!ss.length && !ms.length ? '<p class="hint">Ancora nessun titolo in questo genere.</p>' : ''}</div>`);
+}
+
 /* ---------- RICERCA ---------- */
 function searchSheet(type){
   UI.searchType = type || (UI.tab === 'film' ? 'film' : 'serie');
@@ -913,13 +924,13 @@ function refreshView(){ if (UI.open?.type === 'show') showSheet(UI.open.id, true
 
 const A = {
   enter(){ $('#intro').classList.add('out'); setTimeout(() => $('#intro').remove(), 900); },
-  tab(d){ UI.tab = d.t; if ($('#sheet').classList.contains('open')) closeSheet(); render(); scrollTo(0, 0); },
+  tab(d){ UI.tab = d.t; UI.back = null; if ($('#sheet').classList.contains('open')) closeSheet(); render(); scrollTo(0, 0); },
   filmSeg(d){ UI.filmSeg = d.s; render(); },
   search(){ searchSheet(); },
   sType(d){ const q = $('#q')?.value || ''; searchSheet(d.s); $('#q').value = q; doSearch(q.trim()); },
   closeSheet(){ closeSheet(); },
-  openShow(d){ showSheet(+d.id); },
-  openMovie(d){ movieSheet(d.id); },
+  openShow(d){ if (UI.open?.type === 'genre') UI.back = UI.open.g; showSheet(+d.id); },
+  openMovie(d){ if (UI.open?.type === 'genre') UI.back = UI.open.g; movieSheet(d.id); },
   async addShow(d, el){
     if (el.classList.contains('done')) return;
     el.textContent = 'Aggiungo…';
@@ -1016,6 +1027,7 @@ const A = {
   tonightGo(){ const p = UI.tn.list[UI.tn.i % UI.tn.list.length]; $('#modal').classList.remove('open'); p.type === 'show' ? showSheet(p.id) : movieSheet(p.id); },
   recOpen(d){ recModal(d.k, d.id); },
   year(){ yearSheet(); },
+  genre(d){ genreSheet(d.g); },
   star(d){ UI.rate.r = UI.rate.r === +d.n ? 0 : +d.n; document.querySelectorAll('.rate button').forEach((b, i) => b.classList.toggle('on', i < UI.rate.r)); },
   rateShow(d){ rateShowModal(d.id); },
   saveRate(){
