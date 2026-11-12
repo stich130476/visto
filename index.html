@@ -382,6 +382,10 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 .badge.off{opacity:.6}.badge.off i{background:var(--card);filter:grayscale(1)}
 .badge small{display:block;font-weight:500;color:var(--mut);font-size:11px}
 .tfam{margin-bottom:10px}
+.ynav{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+.ynav button{padding:6px 14px;border-radius:99px;background:rgba(255,255,255,.12);font-weight:700;font-size:14px;color:inherit}
+html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
+.ynav button.on{background:var(--grad);color:#2a0d05}
 .tfh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
 .tfh span{font-weight:700;font-size:14px}.tfh em{font-style:normal;font-size:12px;color:var(--mut)}
 .tpath{display:flex;align-items:center;overflow-x:auto;margin:0 -16px;padding:4px 16px 6px;scrollbar-width:none}
@@ -460,7 +464,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.8.1';
+const VERSIONE = '2.9';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1024,9 +1028,15 @@ function recModal(kind, id){
 }
 
 /* ---------- IL MIO ANNO ---------- */
-function yearSheet(){
+function anniDisponibili(){
+  const ys = new Set([String(new Date().getFullYear())]);
+  Object.values(D.series).forEach(sh => Object.values(sh.watched).forEach(ts => { if (ts > 1e11) ys.add(String(new Date(ts).getFullYear())); }));
+  Object.values(D.movies).forEach(m => { if (m.state === 'seen' && m.seenAt) ys.add(m.seenAt.slice(0, 4)); });
+  return [...ys].sort();
+}
+function yearSheet(yy){
   UI.open = {type:'year'};
-  const y = String(new Date().getFullYear()), M = ['G','F','M','A','M','G','L','A','S','O','N','D'];
+  const y = String(yy || new Date().getFullYear()), M = ['G','F','M','A','M','G','L','A','S','O','N','D'];
   const months = Array(12).fill(0); let eps = 0, min = 0; const perShow = {}; const imgs = [];
   Object.values(D.series).forEach(sh => { const byId = Object.fromEntries(sh.eps.map(e => [e.i, e]));
     Object.entries(sh.watched).forEach(([id, ts]) => { const d = new Date(ts); if (String(d.getFullYear()) !== y) return;
@@ -1034,18 +1044,26 @@ function yearSheet(){
     if (perShow[sh.id]) imgs.push([showImg(sh), showName(sh)]); });
   const films = Object.values(D.movies).filter(m => m.state === 'seen' && (m.seenAt || '').startsWith(y));
   films.forEach(m => { months[+m.seenAt.slice(5, 7) - 1]++; min += m.runtime || 110; imgs.push([movImg(m), m.title]); });
-  const best = films.filter(m => m.rating).sort((a, b) => b.rating - a.rating || (b.seenAt || '').localeCompare(a.seenAt || ''))[0];
-  const topS = Object.entries(perShow).sort((a, b) => b[1] - a[1])[0], ts = topS && D.series[topS[0]];
+  const best = films.filter(m => m.rating && !m.dropped).sort((a, b) => b.rating - a.rating || (b.seenAt || '').localeCompare(a.seenAt || ''))[0];
+  const sRank = Object.entries(perShow).map(([id, n]) => [D.series[id], n]).filter(([sh]) => sh && !sh.dropped)
+    .sort((a, b) => (b[0].myRating || 0) - (a[0].myRating || 0) || b[1] - a[1]);
+  const topS = sRank[0] ? [sRank[0][0].id, sRank[0][1]] : null, ts = topS && D.series[topS[0]];
+  const perVoto = !!(ts && ts.myRating);
+  const fRank = films.filter(m => !m.dropped).sort((a, b) => (b.rating || 0) - (a.rating || 0) || (b.seenAt || '').localeCompare(a.seenAt || ''));
+  const anni = anniDisponibili();
   const finite = Object.values(D.series).filter(sh => { const x = showStats(sh); return (x.st === 'finite' || x.st === 'attesa') && Object.values(sh.watched).some(v => String(new Date(v).getFullYear()) === y); }).length;
   const mx = Math.max(1, ...months), mi = months.indexOf(Math.max(...months));
   const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
   const empty = !eps && !films.length;
-  openSheet(`<div class="yhero"><div class="yy">${y}</div><p>${empty ? 'Il tuo anno comincia qui: spunta episodi e film e questa pagina si riempie.' : `Un anno di storie: <b>${ore(min)}</b> davanti allo schermo`}</p></div>
+  openSheet(`<div class="yhero">${anni.length > 1 ? `<div class="ynav">${anni.map(a => `<button class="${a === y ? 'on' : ''}" data-act="yearGo" data-y="${a}">${a}</button>`).join('')}</div>` : ''}<div class="yy">${y}</div><p>${empty ? 'Il tuo anno comincia qui: spunta episodi e film e questa pagina si riempie.' : `Un anno di storie: <b>${ore(min)}</b> davanti allo schermo`}</p></div>
   <div class="pad">${empty ? '' : `
     <div class="tiles"><div class="tile" style="--c:#ff5e62"><b>${eps}</b><span>episodi</span></div><div class="tile" style="--c:#7d6bff"><b>${films.length}</b><span>film</span></div>
       <div class="tile" style="--c:#22b8aa"><b>${finite}</b><span>serie completate o in pari</span></div><div class="tile" style="--c:#ffb648"><b>${ore(min)}</b><span>in totale</span></div></div>
-    ${best ? `<div class="box"><h4>Il film dell'anno</h4><div class="feat">${poster(movImg(best), best.title, 'pimg')}<div><b>${esc(best.title)}</b>${stars(best.rating)}${best.comment ? `<p class="plot" style="font-style:italic;margin-top:6px;font-size:14px">“${esc(best.comment)}”</p>` : ''}</div></div></div>` : ''}
-    ${ts ? `<div class="box"><h4>La serie dell'anno</h4><div class="feat">${poster(showImg(ts), showName(ts), 'pimg')}<div><b>${esc(showName(ts))}</b><p class="cap2" style="font-size:14px">${topS[1]} episodi visti quest'anno</p></div></div></div>` : ''}
+    ${best ? `<div class="box"><h4>Il film dell'anno</h4><p class="cap2" style="white-space:normal;margin:-4px 0 10px">il voto più alto che hai dato tra i film visti nel ${y}</p><div class="feat">${poster(movImg(best), best.title, 'pimg')}<div><b>${esc(best.title)}</b>${stars(best.rating)}${best.comment ? `<p class="plot" style="font-style:italic;margin-top:6px;font-size:14px">“${esc(best.comment)}”</p>` : ''}</div></div></div>` : ''}
+    ${ts ? `<div class="box"><h4>La serie dell'anno</h4><p class="cap2" style="white-space:normal;margin:-4px 0 10px">${perVoto ? `il voto più alto tra le serie seguite nel ${y}` : `la serie di cui hai visto più episodi nel ${y}`}</p><div class="feat">${poster(showImg(ts), showName(ts), 'pimg')}<div><b>${esc(showName(ts))}</b>${stars(ts.myRating)}<p class="cap2" style="font-size:14px">${topS[1]} episodi visti nel ${y}</p></div></div></div>` : ''}
+    ${fRank.length > 1 || sRank.length > 1 ? `<div class="box"><h4>Il podio del ${y}</h4>
+      ${fRank.length > 1 ? `<p class="lbl" style="margin-top:0">Film</p>${fRank.slice(0, 3).map((m, i) => `<div class="set" data-act="openMovie" data-id="${m.id}" role="button"><div class="l"><b>${['🥇','🥈','🥉'][i]} ${esc(m.title)}</b><small>${m.rating ? '★'.repeat(m.rating) : 'senza voto'}</small></div><span class="lnk">›</span></div>`).join('')}` : ''}
+      ${sRank.length > 1 ? `<p class="lbl">Serie</p>${sRank.slice(0, 3).map(([sh, n], i) => `<div class="set" data-act="openShow" data-id="${sh.id}" role="button"><div class="l"><b>${['🥇','🥈','🥉'][i]} ${esc(showName(sh))}</b><small>${sh.myRating ? '★'.repeat(sh.myRating) + ' · ' : ''}${n} episodi</small></div><span class="lnk">›</span></div>`).join('')}` : ''}</div>` : ''}
     <div class="box"><h4>Mese per mese</h4><div class="mbars">${months.map((v, i) => `<div><i style="height:${v / mx * 100}%;opacity:${v ? 1 : .25}"></i><span>${M[i]}</span></div>`).join('')}</div>
       <p class="cap2" style="margin-top:10px;font-size:14px">Il mese più intenso: <b style="color:var(--txt)">${MESI[mi]}</b>, con ${months[mi]} visioni</p></div>
     ${imgs.length ? `<div class="box"><h4>Tutto quello che hai visto</h4><div class="ycoll">${imgs.slice(0, 30).map(([src, t]) => poster(src, t)).join('')}</div></div>` : ''}`}
@@ -1260,6 +1278,7 @@ const A = {
   tonightGo(){ const p = UI.tn.list[UI.tn.i % UI.tn.list.length]; $('#modal').classList.remove('open'); p.type === 'show' ? showSheet(p.id) : movieSheet(p.id); },
   recOpen(d){ recModal(d.k, d.id); },
   year(){ yearSheet(); },
+  yearGo(d){ yearSheet(d.y); $('#sheet').scrollTop = 0; },
   genre(d){ genreSheet(d.g); },
   plat(d){ platSheet(d.p); },
   netflix(){
