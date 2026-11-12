@@ -377,7 +377,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 .badges{display:flex;flex-wrap:wrap;gap:8px}
 .badge{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 8px;border-radius:14px;background:var(--card2);font-size:13px;font-weight:600}
 .badge i{font-style:normal;font-size:20px;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--grad)}
-.badge.off{opacity:.45}.badge.off i{background:var(--card);filter:grayscale(1)}
+.badge.off{opacity:.6}.badge.off i{background:var(--card);filter:grayscale(1)}
 .badge small{display:block;font-weight:500;color:var(--mut);font-size:11px}
 .wdays{display:flex;align-items:flex-end;gap:6px;height:90px}
 .wdays div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
@@ -431,7 +431,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.3';
+const VERSIONE = '2.3.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -727,19 +727,24 @@ function renderIo(){
   const mesi = new Set(giorni.filter(g => g.startsWith(y)).map(g => g.slice(5, 7))).size;
   const generi = Object.values(gen).filter(Boolean).length;
   const marN = mar?.[1].n || 0;
+  // traguardo: [icona, nome, descrizione, raggiunto, valore attuale, obiettivo]
+  const T = (ic, t, sub, cur, goal) => [ic, t, sub, cur >= goal, cur, goal];
+  // scale "infinite": superato l'ultimo livello, compare da solo il livello successivo (raddoppiato)
+  const scala = (cur, livelli, mk) => { const out = livelli.map(([g, ic, t]) => T(ic, t, mk(g), cur, g)); let g = livelli[livelli.length - 1][0], k = 1;
+    while (cur >= g){ g *= 2; out.push(T('🚀', `${livelli[livelli.length - 1][2]} ${['II','III','IV','V','VI','VII','VIII','IX','X'][k - 1] || k + 1}`, mk(g), cur, g)); k++; } return out; };
+  const fmtN = n => n.toLocaleString('it-IT');
   const BADGE = [
-    ['📺','Primi passi','10 episodi',eps >= 10],['🛋️','Divano d\'oro','100 episodi',eps >= 100],['🥉','Divano di platino','250 episodi',eps >= 250],
-    ['🏆','Leggenda del divano','500 episodi',eps >= 500],['👑','Re del telecomando','1.000 episodi',eps >= 1000],['🌌','Oltre l\'infinito','2.500 episodi',eps >= 2500],
-    ['✅','Serial finisher','5 serie complete',finite >= 5],['🎖️','Collezionista','15 serie complete',finite >= 15],['🏅','Archivista','30 serie complete',finite >= 30],['💎','Enciclopedia vivente','50 serie complete',finite >= 50],
-    ['🎬','Cinefilo','10 film',seen.length >= 10],['🎞️','Cineteca','50 film',seen.length >= 50],['🍿','Cinema d\'essai','100 film',seen.length >= 100],['🎥','Palma d\'oro','250 film',seen.length >= 250],
-    ['🏃','Maratoneta','6 episodi in un giorno',marN >= 6],['⚡','Binge-watcher','10 episodi in un giorno',marN >= 10],
-    ['🔥','Abitudinario','7 giorni di fila',streak >= 7],['🗓️','Mese da record','30 giorni di fila',streak >= 30],
-    ['🦉','Nottambulo','un episodio dopo mezzanotte',notturno],['⏱️','Puntuale','un episodio il giorno d\'uscita',puntuale],
-    ['❤️','Fedelissimo','100 episodi della stessa serie',maxSerie >= 100],
-    ['✍️','Critico','10 commenti',commenti >= 10],['📝','Recensore','30 commenti',commenti >= 30],['📚','Penna d\'oro','100 commenti',commenti >= 100],
-    ['⭐','Pignolo','25 voti dati',votati >= 25],['🌟','Cinque stelle','10 titoli da 5 stelle',cinque >= 10],
-    ['🌍','Esploratore','6 generi diversi',generi >= 6],['🧭','Onnivoro','tutti i 10 generi',generi >= 10],
-    ['📅','Anno pieno','visioni in tutti i 12 mesi',mesi >= 12]];
+    ...scala(eps, [[10,'📺','Primi passi'],[100,'🛋️','Divano d\'oro'],[250,'🥉','Divano di platino'],[500,'🏆','Leggenda del divano'],[1000,'👑','Re del telecomando'],[2500,'🌌','Oltre l\'infinito']], g => `${fmtN(g)} episodi`),
+    ...scala(finite, [[5,'✅','Serial finisher'],[15,'🎖️','Collezionista'],[30,'🏅','Archivista'],[50,'💎','Enciclopedia vivente']], g => `${g} serie complete`),
+    ...scala(seen.length, [[10,'🎬','Cinefilo'],[50,'🎞️','Cineteca'],[100,'🍿','Cinema d\'essai'],[250,'🎥','Palma d\'oro']], g => `${g} film`),
+    T('🏃','Maratoneta','6 episodi in un giorno',marN,6), T('⚡','Binge-watcher','10 episodi in un giorno',marN,10),
+    T('🔥','Abitudinario','7 giorni di fila',streak,7), T('🗓️','Mese da record','30 giorni di fila',streak,30),
+    T('🦉','Nottambulo','un episodio dopo mezzanotte',+notturno,1), T('⏱️','Puntuale','un episodio il giorno d\'uscita',+puntuale,1),
+    ...scala(maxSerie, [[100,'❤️','Fedelissimo']], g => `${g} episodi della stessa serie`),
+    ...scala(commenti, [[10,'✍️','Critico'],[30,'📝','Recensore'],[100,'📚','Penna d\'oro']], g => `${g} commenti`),
+    T('⭐','Pignolo','25 voti dati',votati,25), T('🌟','Cinque stelle','10 titoli da 5 stelle',cinque,10),
+    T('🌍','Esploratore','6 generi diversi',generi,6), T('🧭','Onnivoro','tutti i 10 generi',generi,10),
+    T('📅','Anno pieno','visioni in tutti i 12 mesi',mesi,12)];
   BADGE.sort((a, b) => b[3] - a[3]);
   const sync = C.ghToken && C.ghUser ? (C.syncErr ? `<span class="stat-ko">Errore: ${esc(C.syncErr)}</span>` : C.lastSync ? `<span class="stat-ok">Sincronizzato ${new Date(C.lastSync).toLocaleString('it-IT', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>` : 'Non ancora sincronizzato') : 'Non attiva';
   return `<h1 class="big">Io</h1><div class="sub">Il tuo divano, in numeri</div>
@@ -760,7 +765,7 @@ function renderIo(){
   <div class="box"><h4>Abitudini</h4>${dated >= 5 ? `<div class="wdays">${wd.map((v, i) => `<div><i style="height:${v / wmx * 100}%;opacity:${v ? 1 : .25}"></i><span>${GIORNI[i].slice(0, 3)}</span></div>`).join('')}</div>
     <p class="plot" style="font-size:14px;margin-top:10px">Il tuo giorno preferito è il <b>${GIORNI[wbest]}</b>.${mar && mar[1].n > 1 ? ` Record di maratona: <b>${mar[1].n} episodi</b> in un giorno (${esc(fData(mar[0]))}), soprattutto di <i>${esc(marShow)}</i>.` : ''}</p>`
     : `<p class="plot" style="font-size:14px">Qui compariranno il tuo giorno della settimana preferito e i record di maratona, man mano che segni cosa guardi${C.archivio ? ' (con la modalità archivio spenta)' : ''}.</p>`}</div>
-  <div class="box"><h4>Traguardi · ${BADGE.filter(b => b[3]).length} di ${BADGE.length}</h4><div class="badges">${BADGE.map(([ic, t, sub, ok]) => `<div class="badge ${ok ? '' : 'off'}"><i>${ic}</i><span>${t}<small>${sub}</small></span></div>`).join('')}</div></div>
+  <div class="box"><h4>Traguardi · ${BADGE.filter(b => b[3]).length} di ${BADGE.length}</h4><div class="badges">${BADGE.map(([ic, t, sub, ok, cur, goal]) => `<div class="badge ${ok ? '' : 'off'}"><i>${ic}</i><span>${t}<small>${sub}${!ok && goal > 1 ? ` · <b style="color:var(--a2)">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</b>` : ''}</small>${!ok && goal > 1 && cur > 0 ? `<span class="bar" style="display:block;height:4px;margin-top:4px;width:100%"><i style="width:${Math.min(100, cur / goal * 100)}%"></i></span>` : ''}</span></div>`).join('')}</div></div>
   <h2 class="sec">Impostazioni</h2>
   <div class="box">
     <div class="set"><div class="l"><b>Aspetto</b><small>Giorno, notte o automatico come l'iPhone</small></div><div class="theme3">${[['auto','Auto'],['light','☀︎ Giorno'],['dark','☾ Notte']].map(([v, l]) => `<button class="${(C.theme || 'auto') === v ? 'on' : ''}" data-act="theme" data-v="${v}">${l}</button>`).join('')}</div></div>
