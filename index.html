@@ -431,7 +431,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.3.1';
+const VERSIONE = '2.3.2';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -761,7 +761,7 @@ function renderIo(){
   ${top[0][1] ? `<div class="box"><h4>La classifica dei tuoi generi</h4>${top.map(([g, n], i) => `<div class="gbar" data-act="genre" data-g="${esc(g)}" role="button" style="cursor:pointer"><em style="width:18px;text-align:left;color:${i < 3 ? 'var(--a2)' : 'var(--mut2)'};font-weight:800">${i + 1}</em><span>${esc(g)}</span><div class="bar"><i style="width:${n / mx * 100}%;${n ? '' : 'opacity:0'}"></i></div><em>${n}</em><span style="width:24px;text-align:right">${move(g)}</span></div>`).join('')}
     <p class="cap2" style="margin-top:8px;white-space:normal">Tocca un genere per vedere i titoli · le frecce mostrano come cambia la classifica rispetto alla settimana scorsa</p></div>` : ''}
   ${recMin ? `<div class="box"><h4>Da recuperare</h4><div class="bigline">${dur(recMin)}</div><p class="cap2" style="white-space:normal;font-size:14px">il tempo per finire le serie in corso e vedere tutti i film in lista</p></div>` : ''}
-  ${plTop.length ? `<div class="box"><h4>Le tue piattaforme</h4>${plTop.map(([n, v]) => `<div class="gbar"><span>${esc(n)}</span><div class="bar"><i style="width:${v / plMx * 100}%"></i></div><em style="width:44px">${ore(v)}</em></div>`).join('')}</div>` : ''}
+  ${plTop.length ? `<div class="box"><h4>Le tue piattaforme</h4>${plTop.map(([n, v]) => `<div class="gbar" data-act="plat" data-p="${esc(n)}" role="button" style="cursor:pointer"><span>${esc(n)}</span><div class="bar"><i style="width:${v / plMx * 100}%"></i></div><em style="width:44px">${ore(v)}</em></div>`).join('')}<p class="cap2" style="margin-top:8px;white-space:normal">Tocca una piattaforma per vedere i titoli</p></div>` : ''}
   <div class="box"><h4>Abitudini</h4>${dated >= 5 ? `<div class="wdays">${wd.map((v, i) => `<div><i style="height:${v / wmx * 100}%;opacity:${v ? 1 : .25}"></i><span>${GIORNI[i].slice(0, 3)}</span></div>`).join('')}</div>
     <p class="plot" style="font-size:14px;margin-top:10px">Il tuo giorno preferito è il <b>${GIORNI[wbest]}</b>.${mar && mar[1].n > 1 ? ` Record di maratona: <b>${mar[1].n} episodi</b> in un giorno (${esc(fData(mar[0]))}), soprattutto di <i>${esc(marShow)}</i>.` : ''}</p>`
     : `<p class="plot" style="font-size:14px">Qui compariranno il tuo giorno della settimana preferito e i record di maratona, man mano che segni cosa guardi${C.archivio ? ' (con la modalità archivio spenta)' : ''}.</p>`}</div>
@@ -796,7 +796,7 @@ function renderIo(){
 
 /* ---------- SCHEDA SERIE ---------- */
 function openSheet(html, keep){ const sy = $('#sheet').scrollTop; $('#sheetIn').innerHTML = html; $('#sheet').scrollTop = keep ? sy : 0; $('#sheet').classList.add('open'); $('#closeBtn').classList.remove('hide'); document.body.style.overflow = 'hidden'; }
-function closeSheet(){ if (UI.back && UI.open?.type !== 'genre'){ const b = UI.back; UI.back = null; genreSheet(b); return; } UI.back = null; $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); }
+function closeSheet(){ if (UI.back && UI.open?.type !== 'genre'){ const b = UI.back; UI.back = null; if (b && b.p) platSheet(b.p); else genreSheet(b); return; } UI.back = null; $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); }
 
 function showSheet(id, keep){
   const sh = D.series[id]; if (!sh) return;
@@ -992,6 +992,21 @@ function rateShowModal(id, fin){
   $('#modal').classList.add('open');
 }
 
+const platOf = it => it.prov?.[0]?.n || it.net || '';
+function platSheet(pn){
+  UI.open = {type:'genre', g:null, p:pn};
+  const ssV = Object.values(D.series).filter(sh => platOf(sh) === pn && Object.keys(sh.watched).length);
+  const ssT = Object.values(D.series).filter(sh => platOf(sh) === pn && !Object.keys(sh.watched).length);
+  const msV = Object.values(D.movies).filter(m => m.state === 'seen' && platOf(m) === pn);
+  const msT = Object.values(D.movies).filter(m => m.state === 'todo' && platOf(m) === pn);
+  const card = (act, id, img, t, sub) => `<button class="pc-it fadein" data-act="${act}" data-id="${id}">${poster(img, t)}<div class="cap">${esc(t)}</div><div class="cap2">${esc(sub)}</div></button>`;
+  const sez = (tit, list, f) => list.length ? `<h2 class="sec">${tit} <small>${list.length}</small></h2><div class="grid">${list.map(f).join('')}</div>` : '';
+  const fs = sh => { const x = showStats(sh); return card('openShow', sh.id, showImg(sh), showName(sh), sh.myRating ? '★'.repeat(sh.myRating) : x.pct + '% visto'); };
+  const fm = m => card('openMovie', m.id, movImg(m), m.title, m.rating ? '★'.repeat(m.rating) : m.year || '');
+  openSheet(`<div class="yhero" style="padding-bottom:22px"><div class="yy" style="font-size:46px;letter-spacing:-1px">${esc(pn)}</div><p>${ssV.length + ssT.length} serie · ${msV.length + msT.length} film</p></div>
+    <div class="pad">${sez('Serie viste o in corso', ssV, fs)}${sez('Film visti', msV, fm)}${sez('Serie da iniziare', ssT, fs)}${sez('Film da vedere', msT, fm)}
+    ${!ssV.length && !ssT.length && !msV.length && !msT.length ? '<p class="hint">Nessun titolo su questa piattaforma.</p>' : ''}</div>`);
+}
 function genreSheet(g){
   UI.open = {type:'genre', g};
   const ss = Object.values(D.series).filter(sh => Object.keys(sh.watched).length && mainGen(sh) === g);
@@ -1068,8 +1083,8 @@ const A = {
   search(){ searchSheet(); },
   sType(d){ const q = $('#q')?.value || ''; searchSheet(d.s); $('#q').value = q; doSearch(q.trim()); },
   closeSheet(){ closeSheet(); },
-  openShow(d){ if (UI.open?.type === 'genre') UI.back = UI.open.g; showSheet(+d.id); },
-  openMovie(d){ if (UI.open?.type === 'genre') UI.back = UI.open.g; movieSheet(d.id); },
+  openShow(d){ if (UI.open?.type === 'genre') UI.back = UI.open.p ? {p:UI.open.p} : UI.open.g; showSheet(+d.id); },
+  openMovie(d){ if (UI.open?.type === 'genre') UI.back = UI.open.p ? {p:UI.open.p} : UI.open.g; movieSheet(d.id); },
   async addShow(d, el){
     if (el.classList.contains('done')) return;
     el.textContent = 'Aggiungo…';
@@ -1167,6 +1182,7 @@ const A = {
   recOpen(d){ recModal(d.k, d.id); },
   year(){ yearSheet(); },
   genre(d){ genreSheet(d.g); },
+  plat(d){ platSheet(d.p); },
   async posters(d){
     const it = d.k === 's' ? D.series[d.id] : D.movies[d.id];
     $('#mcard').innerHTML = `<h3>Scegli la locandina</h3><div class="s">${esc(d.k === 's' ? showName(it) : it.title)}</div><div class="pgrid" id="pg"><p class="hint" style="grid-column:1/-1">Cerco le locandine…</p></div>
