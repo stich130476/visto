@@ -464,7 +464,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.9.1';
+const VERSIONE = '2.9.2';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -866,7 +866,7 @@ function renderIo(){
 
 /* ---------- SCHEDA SERIE ---------- */
 function openSheet(html, keep){ const sy = $('#sheet').scrollTop; $('#sheetIn').innerHTML = html; $('#sheet').scrollTop = keep ? sy : 0; $('#sheet').classList.add('open'); $('#closeBtn').classList.remove('hide'); document.body.style.overflow = 'hidden'; }
-function closeSheet(){ if (UI.back && UI.open?.type !== 'genre' && UI.open?.type !== 'year'){ const b = UI.back; UI.back = null; if (b && b.year !== undefined){ yearSheet(b.year); return; } if (b && b.q !== undefined){ searchSheet(b.t); $('#q').value = b.q; doSearch(b.q.trim()); } else if (b && b.p) platSheet(b.p); else genreSheet(b); return; } UI.back = null; $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); }
+function closeSheet(){ if (UI.back && UI.open?.type !== 'genre' && UI.open?.type !== 'year'){ const b = UI.back; UI.back = null; if (b && typeof b === 'object' && 'year' in b){ yearSheet(b.year); return; } if (b && b.q !== undefined){ searchSheet(b.t); $('#q').value = b.q; doSearch(b.q.trim()); } else if (b && b.p) platSheet(b.p); else if (typeof b === 'string') genreSheet(b); else { $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); } return; } UI.back = null; $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); }
 
 function showSheet(id, keep){
   const sh = D.series[id]; if (!sh) return;
@@ -1035,6 +1035,7 @@ function anniDisponibili(){
   return [...ys].sort();
 }
 function yearSheet(yy){
+  yy = String(yy || new Date().getFullYear());
   UI.open = {type:'year', y:yy};
   const y = String(yy || new Date().getFullYear()), M = ['G','F','M','A','M','G','L','A','S','O','N','D'];
   const months = Array(12).fill(0); let eps = 0, min = 0; const perShow = {}; const imgs = [];
