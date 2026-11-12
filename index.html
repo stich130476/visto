@@ -415,7 +415,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.0.2';
+const VERSIONE = '2.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -684,6 +684,7 @@ function renderIo(){
   <h2 class="sec">Impostazioni</h2>
   <div class="box">
     <div class="set"><div class="l"><b>Aspetto</b><small>Giorno, notte o automatico come l'iPhone</small></div><div class="theme3">${[['auto','Auto'],['light','☀︎ Giorno'],['dark','☾ Notte']].map(([v, l]) => `<button class="${(C.theme || 'auto') === v ? 'on' : ''}" data-act="theme" data-v="${v}">${l}</button>`).join('')}</div></div>
+    <div class="set"><div class="l"><b>Notifiche</b><small>${esc(statoNotifiche().t)}</small></div><button class="btn small ${statoNotifiche().ok ? 'ghost' : ''}" data-act="push">${statoNotifiche().ok ? 'Riattiva' : '🔔 Attiva'}</button></div>
     <div class="set"><div class="l"><b>Intro all'avvio</b><small>Il collage di locandine quando apri l'app</small></div><button class="sw ${C.intro ? 'on' : ''}" data-act="toggleIntro" aria-label="Intro"></button></div>
     <div class="set"><div class="l"><b>Modalità archivio</b><small>Attivala mentre inserisci serie e film visti in passato: non falseranno le statistiche di oggi</small></div><button class="sw ${C.archivio ? 'on' : ''}" data-act="toggleArch" aria-label="Archivio"></button></div>
     <div class="set"><div class="l"><b>Novità</b><small>${D.lastCheck ? 'Ultimo controllo ' + new Date(D.lastCheck).toLocaleString('it-IT', {weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Mai controllato'} · automatico ogni settimana</small></div><button class="btn small ghost" data-act="checkNews">Controlla</button></div>
@@ -1111,6 +1112,7 @@ const A = {
   dismiss(d){ const n = D.news.find(x => x.id === d.id); if (n) n.read = true; save(); render(); },
   readAll(){ D.news.forEach(n => n.read = true); save(); render(); },
   checkNews(){ checkNews(true); },
+  push(){ attivaNotifiche(); },
   theme(d){ C.theme = d.v; saveCfg(); applyTheme(); render(); },
   toggleIntro(){ C.intro = !C.intro; saveCfg(); render(); },
   async saveTmdb(){
@@ -1297,6 +1299,43 @@ async function migGeneri(){
   if (!ok){ save(); return; }
   Object.values(D.movies).forEach(m => m.genres = normGen(m.genres || []));
   D.mig18 = true; save(); if (!$('#sheet').classList.contains('open')) render();
+}
+
+/* ---------- NOTIFICHE PUSH ---------- */
+const VAPID = 'BFSSzAkBuNgcHx48tOhbXcqYcAL6EgBl46za0Il00uk9vKRlJRfW1OzNPjNiijyngPOSZ17wbTQubKnl-Ah5yB0';
+const isIpad = () => /iPad/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+const pushPossibile = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+function statoNotifiche(){
+  if (!pushPossibile()) return {ok:false, t:'Apri Visto! dall\'icona sulla schermata Home (non da Safari) per poterle attivare'};
+  if (!C.ghToken || !C.ghUser) return {ok:false, t:'Prima attiva la sincronizzazione qui sotto'};
+  if (Notification.permission === 'denied') return {ok:false, t:'Bloccate: riattivale in Impostazioni iPhone → Notifiche → Visto!'};
+  if (C.pushOn && Notification.permission === 'granted') return {ok:true, t:`Attive su questo ${isIpad() ? 'iPad' : 'iPhone'} ✓ · nuove stagioni, ritorni e film in uscita`};
+  return {ok:false, t:'Nuove stagioni, ritorni delle serie e film in uscita, anche ad app chiusa'};
+}
+async function attivaNotifiche(){
+  try {
+    if (!pushPossibile()) return toast('Apri Visto! dall\'icona della schermata Home');
+    if (!C.ghToken) return toast('Prima attiva la sincronizzazione');
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return toast('Permesso non concesso');
+    const reg = await navigator.serviceWorker.ready;
+    const key = Uint8Array.from(atob(VAPID.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - VAPID.length % 4) % 4)), c => c.charCodeAt(0));
+    const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:key});
+    C.devId = C.devId || (isIpad() ? 'ipad-' : 'iphone-') + Math.random().toString(36).slice(2, 8); saveCfg();
+    const url = `https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/contents/push.json`;
+    let sha, cur = {subs:{}};
+    const g = await fetch(url + '?t=' + Date.now(), {headers:ghH(), cache:'no-store'});
+    if (g.ok){ const j = await g.json(); sha = j.sha; try { cur = JSON.parse(b64d(j.content)); } catch(e){} }
+    cur.subs = cur.subs || {};
+    cur.subs[C.devId] = {name:isIpad() ? 'iPad' : 'iPhone', at:Date.now(), sub:sub.toJSON()};
+    const body = {message:'Visto!: notifiche attivate su ' + cur.subs[C.devId].name, content:b64e(JSON.stringify(cur, null, 1))};
+    if (sha) body.sha = sha;
+    const r = await fetch(url, {method:'PUT', headers:Object.assign({'Content-Type':'application/json'}, ghH()), body:JSON.stringify(body)});
+    if (!r.ok) throw new Error('GitHub ' + r.status);
+    C.pushOn = true; saveCfg(); render();
+    toast('🔔 Notifiche attivate! Tra un paio di minuti arriva quella di benvenuto', null, null, 6000);
+  } catch(e){ toast('Non riesco ad attivarle: ' + esc(e.message)); }
 }
 
 /* ---------- AGGIORNAMENTO AUTOMATICO ---------- */
