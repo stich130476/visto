@@ -134,6 +134,8 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .pst .ph{position:absolute;inset:0;display:flex;align-items:flex-end;padding:10px;font:700 14px/1.15 var(--serif);color:rgba(255,255,255,.9)}
 .pst .bdg{position:absolute;top:7px;left:7px;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(10,9,16,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .pst .bdg.hot{background:var(--grad);color:#2a0d05}
+.pst .bdg:not(.hot){color:#fff}
+.pst .bdg .st{color:#ffc857;letter-spacing:1px}
 .pst .pb{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(0,0,0,.5)}
 .pst .pb i{display:block;height:100%;background:var(--grad)}
 .cap{font-size:13px;font-weight:600;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -431,7 +433,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.3.2';
+const VERSIONE = '2.3.3';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -639,7 +641,7 @@ function renderSerie(){
   h += grid('Al passo, in attesa', by('attesa'), x => x.sh.next?.d ? `<span class="bdg hot">${esc(fGiorno(x.sh.next.d))}</span>` : '');
   h += grid('Da iniziare', by('nuove'), x => Date.now() - (x.sh.added || 0) < 2 * 864e5 ? '<span class="bdg hot">Appena aggiunta</span>' : x.sh.next?.d && !x.aired ? `<span class="bdg">Esce ${esc(fData(x.sh.next.d, false))}</span>` : '');
   h += grid('In pausa', by('pausa'), () => '<span class="bdg">In pausa</span>');
-  h += grid('Finite', by('finite'), x => `<span class="bdg">${x.sh.myRating ? '★'.repeat(x.sh.myRating) : '✓ Vista'}</span>`);
+  h += grid('Finite', by('finite'), x => `<span class="bdg">${x.sh.myRating ? `<span class="st">${'★'.repeat(x.sh.myRating)}</span>` : '✓ Vista'}</span>`);
   return h + recRow('shows');
 }
 function capSerie(x){
