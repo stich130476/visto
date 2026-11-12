@@ -231,6 +231,9 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .lnk{color:var(--a2);font-weight:600;font-size:14px}
 textarea.notes,.fld{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:12px 14px;outline:none;resize:vertical}
 textarea.notes{min-height:110px;line-height:1.5}
+.notes.ce{min-height:110px;line-height:1.5;width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:12px 14px;outline:none;white-space:pre-wrap;-webkit-user-select:text;user-select:text;max-height:40vh;overflow:auto}
+.notes.ce:focus{border-color:rgba(255,154,77,.6)}
+.notes.ce:empty::before{content:attr(data-ph);color:var(--mut2)}
 .fld:focus,textarea.notes:focus{border-color:rgba(255,154,77,.6)}
 .danger{color:#ff7b7b;font-weight:600;font-size:15px;display:block;margin:26px auto 0}
 
@@ -373,7 +376,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.6.2';
+const VERSIONE = '1.6.3';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -720,7 +723,7 @@ function rateModal(id){
   $('#mcard').innerHTML = `<h3>${esc(m.title)}</h3><div class="s">Com'è stato?</div>
     <div class="rate">${[1,2,3,4,5].map(n => `<button class="${n <= UI.rate.r ? 'on' : ''}" data-act="star" data-n="${n}">★</button>`).join('')}</div>
     <div class="lbl">Quando l'hai visto</div><input class="fld" type="date" id="rDate" value="${esc(m.seenAt || oggi())}" max="${oggi()}">
-    <div class="lbl">Il tuo commento</div><textarea class="notes" id="rCom" name="commento-visto" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true" enterkeyhint="enter" placeholder="Di cosa parlava, cosa ti è rimasto, con chi l'hai visto…">${esc(m.comment || '')}</textarea>
+    <div class="lbl">Il tuo commento</div><div class="notes ce" id="rCom" contenteditable="true" role="textbox" aria-multiline="true" autocorrect="on" autocapitalize="sentences" spellcheck="true" data-ph="Di cosa parlava, cosa ti è rimasto, con chi l'hai visto…">${esc(m.comment || '')}</div>
     <div class="mrow"><button class="btn ghost" data-act="closeModal">Annulla</button><button class="btn" data-act="saveRate">Salva</button></div>`;
   $('#modal').classList.add('open');
 }
@@ -829,7 +832,7 @@ function rateShowModal(id, fin){
   UI.rate = {id, r:sh.myRating || 0, show:true};
   $('#mcard').innerHTML = `<h3>${esc(showName(sh))}</h3><div class="s">${fin ? 'Hai finito la serie! Com\'è stata?' : 'Com\'è questa serie?'}</div>
     <div class="rate">${[1,2,3,4,5].map(n => `<button class="${n <= UI.rate.r ? 'on' : ''}" data-act="star" data-n="${n}">★</button>`).join('')}</div>
-    <div class="lbl">Il tuo commento</div><textarea class="notes" id="rCom" name="commento-visto" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true" enterkeyhint="enter" placeholder="Di cosa parla, cosa ti è piaciuto, i personaggi, con chi la guardi…">${esc(sh.notes || '')}</textarea>
+    <div class="lbl">Il tuo commento</div><div class="notes ce" id="rCom" contenteditable="true" role="textbox" aria-multiline="true" autocorrect="on" autocapitalize="sentences" spellcheck="true" data-ph="Di cosa parla, cosa ti è piaciuto, i personaggi, con chi la guardi…">${esc(sh.notes || '')}</div>
     <div class="mrow"><button class="btn ghost" data-act="closeModal">${fin ? 'Più tardi' : 'Annulla'}</button><button class="btn" data-act="saveRate">Salva</button></div>`;
   $('#modal').classList.add('open');
 }
@@ -983,9 +986,9 @@ const A = {
   star(d){ UI.rate.r = UI.rate.r === +d.n ? 0 : +d.n; document.querySelectorAll('.rate button').forEach((b, i) => b.classList.toggle('on', i < UI.rate.r)); },
   rateShow(d){ rateShowModal(d.id); },
   saveRate(){
-    if (UI.rate.show){ const sh = D.series[UI.rate.id]; sh.myRating = UI.rate.r; sh.notes = $('#rCom').value.trim(); save(); $('#modal').classList.remove('open'); toast('✓ Giudizio salvato'); refreshView(); return; }
+    if (UI.rate.show){ const sh = D.series[UI.rate.id]; sh.myRating = UI.rate.r; sh.notes = $('#rCom').innerText.trim(); save(); $('#modal').classList.remove('open'); toast('✓ Giudizio salvato'); refreshView(); return; }
     const m = D.movies[UI.rate.id], first = m.state !== 'seen';
-    Object.assign(m, {state:'seen', rating:UI.rate.r, seenAt:$('#rDate').value || oggi(), comment:$('#rCom').value.trim()});
+    Object.assign(m, {state:'seen', rating:UI.rate.r, seenAt:$('#rDate').value || oggi(), comment:$('#rCom').innerText.trim()});
     save(); $('#modal').classList.remove('open');
     if (first) toast(`🎬 <b>${esc(m.title)}</b> è nel tuo diario`);
     if (UI.open?.type === 'movie') movieSheet(m.id); else { UI.filmSeg = 'seen'; render(); }
