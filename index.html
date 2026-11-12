@@ -376,7 +376,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.9.4';
+const VERSIONE = '1.9.5';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -395,12 +395,12 @@ const epCode = e => `S${e.s}E${String(e.n).padStart(2, '0')}`;
 const GENERI = {Drama:'Dramma',Comedy:'Commedia','Science-Fiction':'Fantascienza',Horror:'Horror',Thriller:'Thriller',Crime:'Crime',Mystery:'Mistero',Fantasy:'Fantasy',Action:'Azione',Adventure:'Avventura',Romance:'Sentimentale',Family:'Famiglia',Supernatural:'Soprannaturale',History:'Storico',War:'Guerra',Western:'Western',Anime:'Anime',Music:'Musica',Sports:'Sport',Medical:'Medico',Legal:'Legale',Espionage:'Spionaggio',Children:'Ragazzi',Food:'Cucina',Travel:'Viaggi',Nature:'Natura'};
 const genIt = g => GENERI[g] || g;
 const SPLIT = {'Sci-Fi & Fantasy':['Fantascienza','Fantasy'],'Action & Adventure':['Azione','Avventura'],'War & Politics':['Guerra','Politica'],'Kids':['Ragazzi'],'Talk':['Talk show'],'Soap':['Soap opera'],'Science Fiction':['Fantascienza'],'Animation':['Animazione'],'Documentary':['Documentario'],'Mystery':['Mistero'],'Drama':['Dramma']};
-const MACRO = {Horror:'Horror', Soprannaturale:'Horror', Commedia:'Commedia', Thriller:'Thriller & Crime', Crime:'Thriller & Crime', Spionaggio:'Thriller & Crime', Legale:'Thriller & Crime',
+const MACRO = {Horror:'Horror & Mistero', Soprannaturale:'Horror & Mistero', Commedia:'Commedia', Thriller:'Thriller & Crime', Crime:'Thriller & Crime', Spionaggio:'Thriller & Crime', Legale:'Thriller & Crime',
   Dramma:'Drammatico', Medico:'Drammatico', Sentimentale:'Drammatico', Storico:'Storico', Storia:'Storico', Politica:'Storico', Romance:'Drammatico', 'Soap opera':'Drammatico', Animazione:'Animazione', Anime:'Animazione',
-  Avventura:'Avventura', Azione:'Avventura', Western:'Avventura', Guerra:'Storico', Mistero:'Mistero', Fantascienza:'Fantascienza', Fantasy:'Fantasy'};
+  Avventura:'Avventura', Azione:'Avventura', Western:'Avventura', Guerra:'Storico', Mistero:'_mistero', Fantascienza:'Fantascienza', Fantasy:'Fantasy'};
 const macro = list => { const m = [...new Set((list || []).map(g => MACRO[g]).filter(Boolean))]; return m.length ? m : ['Altro']; };
-const PRIO = ['Animazione','Horror','Commedia','Fantascienza','Fantasy','Storico','Thriller & Crime','Mistero','Avventura','Drammatico'];
-const mainGen = it => { if (it.myGen) return it.myGen; const m = macro(it.genres).filter(g => g !== 'Altro'); return PRIO.find(g => m.includes(g)) || 'Altro'; };
+const PRIO = ['Animazione','Horror & Mistero','Commedia','Fantascienza','Fantasy','Storico','Thriller & Crime','_mistero','Avventura','Drammatico'];
+const mainGen = it => { if (it.myGen === 'Horror' || it.myGen === 'Mistero') it.myGen = 'Horror & Mistero'; if (it.myGen) return it.myGen; const m = macro(it.genres).filter(g => g !== 'Altro'); const r = PRIO.find(g => m.includes(g)) || 'Altro'; return r === '_mistero' ? 'Horror & Mistero' : r; };
 const normGen = (...lists) => [...new Set(lists.flat().filter(Boolean).flatMap(g => SPLIT[g] || [genIt(g)]))];
 
 /* ---------- STATO ---------- */
@@ -612,7 +612,7 @@ function renderIo(){
   const rated = seen.filter(m => m.rating);
   const avg = rated.length ? (rated.reduce((a, m) => a + m.rating, 0) / rated.length).toFixed(1).replace('.', ',') : '–';
   seen.forEach(m => { const g = mainGen(m); gen[g] = (gen[g] || 0) + 1; });
-  const ORD = ['Horror','Commedia','Thriller & Crime','Drammatico','Animazione','Avventura','Mistero','Fantascienza','Fantasy','Storico','Altro'];
+  const ORD = ['Horror & Mistero','Commedia','Thriller & Crime','Drammatico','Animazione','Avventura','Fantascienza','Fantasy','Storico','Altro'];
   const top = ORD.map(g => [g, gen[g] || 0]).sort((a, b) => b[1] - a[1] || ORD.indexOf(a[0]) - ORD.indexOf(b[0])), mx = top[0]?.[1] || 1;
   const order = top.map(t => t[0]);
   if (!D.genSnap || Date.now() - D.genSnap.at > 7 * 864e5){ D.genPrev = D.genSnap ? D.genSnap.order : order; D.genSnap = {at:Date.now(), order}; save(false); }
@@ -1036,7 +1036,7 @@ const A = {
     const it = d.k === 's' ? D.series[d.id] : D.movies[d.id], cur = mainGen(it);
     UI.pg = {k:d.k, id:d.id};
     $('#mcard').innerHTML = `<h3>Genere nella tua classifica</h3><div class="s">${esc(d.k === 's' ? showName(it) : it.title)} · scelto in automatico: ${esc((() => { const x = Object.assign({}, it, {myGen:null}); return mainGen(x); })())}</div>
-      <div class="tchips" style="flex-wrap:wrap">${[...PRIO, 'Altro'].map(g => `<button style="flex:1 1 30%" class="${g === cur ? 'on' : ''}" data-act="setGen" data-g="${esc(g)}">${esc(g)}</button>`).join('')}</div>
+      <div class="tchips" style="flex-wrap:wrap">${['Horror & Mistero','Commedia','Thriller & Crime','Drammatico','Animazione','Avventura','Fantascienza','Fantasy','Storico','Altro'].map(g => `<button style="flex:1 1 30%" class="${g === cur ? 'on' : ''}" data-act="setGen" data-g="${esc(g)}">${esc(g)}</button>`).join('')}</div>
       <div class="mrow">${it.myGen ? '<button class="btn ghost" data-act="setGen" data-g="">Torna automatico</button>' : ''}<button class="btn ghost" data-act="closeModal">Chiudi</button></div>`;
     $('#modal').classList.add('open');
   },
