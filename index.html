@@ -464,7 +464,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.9.2';
+const VERSIONE = '2.9.3';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -595,6 +595,7 @@ function showStats(sh){
   const leftMin = left.reduce((a, e) => a + (e.r || sh.runtime || 45), 0);
   let st;
   if (sh.dropped) st = 'bocciate';
+  else if (sh.stopped) st = 'finite';
   else if (sh.paused) st = 'pausa';
   else if (!aired.length || w === 0) st = 'nuove';
   else if (w >= aired.length) st = (sh.status === 'Ended' || sh.closed) && !sh.next?.d ? 'finite' : 'attesa';
@@ -691,7 +692,7 @@ function renderSerie(){
   h += grid('Da iniziare', by('nuove'), x => Date.now() - (x.sh.added || 0) < 2 * 864e5 ? '<span class="bdg hot">Appena aggiunta</span>' : x.sh.next?.d && !x.aired ? `<span class="bdg">Esce ${esc(fData(x.sh.next.d, false))}</span>` : '');
   h += grid('In pausa', by('pausa'), () => '<span class="bdg">In pausa</span>');
   const _boc = by('bocciate');
-  h += grid('Finite', by('finite'), x => `<span class="bdg">${x.sh.myRating ? `<span class="st">${'★'.repeat(x.sh.myRating)}</span>` : '✓ Vista'}</span>`);
+  h += grid('Finite', by('finite'), x => `<span class="bdg">${x.sh.stopped && !x.sh.myRating ? '🏁 Chiusa' : x.sh.myRating ? `<span class="st">${'★'.repeat(x.sh.myRating)}</span>` : '✓ Vista'}</span>`);
   h += grid('Bocciate', _boc, x => `<span class="bdg">👎 ${x.sh.myRating ? `<span class="st">${'★'.repeat(x.sh.myRating)}</span>` : 'Bocciata'}</span>`);
   return h + recRow('shows');
 }
@@ -879,7 +880,7 @@ function showSheet(id, keep){
   const C2 = 2 * Math.PI * 30;
   const eps = sh.eps.filter(e => e.s === cur);
   const sAired = eps.filter(e => e.d && e.d <= t), sW = sAired.filter(e => sh.watched[e.i]).length;
-  const stato = {corso:'In corso', attesa:'Al passo', nuove:'Da iniziare', pausa:'In pausa', finite:'Vista tutta', bocciate:'👎 Bocciata'}[x.st];
+  const stato = sh.stopped ? '🏁 Chiusa: visto quello che mi interessava' : {corso:'In corso', attesa:'Al passo', nuove:'Da iniziare', pausa:'In pausa', finite:'Vista tutta', bocciate:'👎 Bocciata'}[x.st];
   const years = sh.premiered ? sh.premiered.slice(0, 4) + (sh.status === 'Ended' ? '–' + (sh.ended || '').slice(0, 4) : '–') : '';
   openSheet(`
   <div class="hero"><div class="bk ${sh.back ? '' : 'blur'}" style="background-image:url('${esc(showBack(sh))}')"></div></div>
@@ -893,7 +894,8 @@ function showSheet(id, keep){
       ${x.next ? `<p>Prossimo: <b style="font-size:14px;color:var(--txt)">${epCode(x.next)}</b> · ${esc(epT(sh, x.next))}</p>` : ''}
       ${sh.next?.d ? `<p>Nuovo episodio ${epCode(sh.next)}: <b style="font-size:14px;color:var(--a2)">${esc(fGiorno(sh.next.d))}</b></p>` : (sh.status === 'Ended' || sh.closed ? '<p>Serie conclusa</p>' : (x.st === 'attesa' ? `<p class="cap2" style="white-space:normal;margin-top:4px">Nessun nuovo episodio annunciato. <button class="lnk" data-act="closeShow" data-id="${id}">È finita? Segnala come conclusa ›</button></p>` : ''))}</div></div>
       <div class="acts">${x.next ? `<button class="btn" data-act="quick" data-id="${id}">${I.check}Segna ${epCode(x.next)}</button>` : ''}
-        ${sh.dropped ? '' : `<button class="btn ghost" data-act="pause" data-id="${id}">${sh.paused ? 'Riprendi' : 'Metti in pausa'}</button>`}
+        ${sh.dropped || sh.stopped ? '' : `<button class="btn ghost" data-act="pause" data-id="${id}">${sh.paused ? 'Riprendi' : 'Metti in pausa'}</button>`}
+        ${!sh.dropped && (x.left || sh.stopped) ? `<button class="btn ghost" data-act="stopShow" data-id="${id}">${sh.stopped ? '↩︎ Riprendila' : '🏁 Basta così'}</button>` : ''}
         <button class="btn ghost" data-act="drop" data-id="${id}">${sh.dropped ? '↩︎ Dai un\'altra possibilità' : '👎 Bocciata'}</button></div>
       ${x.left && !sh.dropped ? `<div class="acts" style="margin-top:10px"><button class="btn ghost" data-act="allShow" data-id="${id}">✓ Vista tutta la serie</button></div>` : ''}</div>
     ${sh.prov?.length ? `<div class="box"><h4>Dove vederla</h4><div class="prov">${sh.prov.map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div></div>` : ''}
@@ -962,7 +964,7 @@ function tonightCard(){ return `<button class="tonight fadein" data-act="tonight
 function tonightList(mins){
   const t = oggi(), out = [];
   Object.values(D.series).forEach(sh => {
-    if (sh.paused || sh.dropped) return; const x = showStats(sh); if (!x.next) return;
+    if (sh.paused || sh.dropped || sh.stopped) return; const x = showStats(sh); if (!x.next) return;
     const r = x.next.r || sh.runtime || 45; if (r > mins + 8) return;
     let sc = x.st === 'corso' ? 5 : 2; if (sh.lastW && Date.now() - sh.lastW < 14 * 864e5) sc += 3;
     if (D.news.some(n => !n.read && n.ref === 'show' && n.rid == sh.id)) sc += 2;
@@ -1246,6 +1248,8 @@ const A = {
     else toast('Ok, un\'altra possibilità!');
   },
   closeShow(d){ const sh = D.series[d.id]; sh.closed = true; save(); showSheet(+d.id, true); toast('✓ Serie segnata come conclusa: va tra le Finite. Se dovesse tornare, ti avviso comunque', null, null, 5000); },
+  stopShow(d){ const sh = D.series[d.id]; sh.stopped = !sh.stopped; if (sh.stopped) sh.paused = false; save(); showSheet(+d.id, true);
+    toast(sh.stopped ? '🏁 Chiusa: va tra le Finite, con gli episodi che hai visto. Niente più avvisi' : 'Ok, di nuovo tra le serie da guardare', null, null, 5000); },
   drop(d){
     const sh = D.series[d.id]; sh.dropped = !sh.dropped; if (sh.dropped) sh.paused = false; save(); showSheet(+d.id, true);
     if (sh.dropped){ toast('👎 Serie bocciata: niente più avvisi per lei', 'Annulla', () => { sh.dropped = false; save(); refreshView(); }, 6000); if (!sh.notes) setTimeout(() => rateShowModal(sh.id, false, true), 900); }
@@ -1386,14 +1390,14 @@ async function checkNews(force){
   const t = oggi(), since = D.lastCheck ? new Date(D.lastCheck).toLocaleDateString('sv') : addDays(t, -7), week = addDays(t, 7);
   let errs = 0;
   for (const old of ss){
-    if (old.dropped) continue;
+    if (old.dropped || old.stopped) continue;
     if (old.status === 'Ended' && showStats(old).st === 'finite' && Date.now() - (old.lastFull || 0) < 30 * 864e5) continue;
     if (old.status === 'Ended') old.lastFull = Date.now();
     try {
       const nu = await fetchShow(old.id);
       const oldMax = Math.max(0, ...old.eps.map(e => e.s)), newMax = Math.max(0, ...nu.eps.map(e => e.s));
       const fresh = nu.eps.filter(e => e.d && e.d > since && e.d <= t && !old.watched[e.i]);
-      const keep = {watched:old.watched, paused:old.paused, dropped:old.dropped, closed:old.closed, notes:old.notes, myRating:old.myRating, lastFull:old.lastFull, added:old.added, lastW:old.lastW, tmdb:old.tmdb, myGen:old.myGen, myPoster:old.myPoster, autoP:old.autoP, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
+      const keep = {watched:old.watched, paused:old.paused, dropped:old.dropped, stopped:old.stopped, closed:old.closed, notes:old.notes, myRating:old.myRating, lastFull:old.lastFull, added:old.added, lastW:old.lastW, tmdb:old.tmdb, myGen:old.myGen, myPoster:old.myPoster, autoP:old.autoP, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
       keep.tmg = old.tmg; keep.genres = normGen(nu.tvg, old.tmg || []);
       D.series[old.id] = Object.assign(nu, keep);
       const sh = D.series[old.id], name = showName(sh), img = showImg(sh, 'w185');
