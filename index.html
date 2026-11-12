@@ -434,7 +434,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.7';
+const VERSIONE = '2.7.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -891,9 +891,10 @@ function rateModal(id){
   UI.rate = {id, r:m.rating || 0};
   $('#mcard').innerHTML = `<h3>${esc(m.title)}</h3><div class="s">Com'è stato?</div>
     <div class="rate">${[1,2,3,4,5].map(n => `<button class="${n <= UI.rate.r ? 'on' : ''}" data-act="star" data-n="${n}">★</button>`).join('')}</div>
-    <div class="lbl">Quando l'hai visto</div>
+    <div class="lbl">Quando l'hai visto${m.seenAt ? ` · <b style="color:var(--a2)">registrato il ${esc(fData(m.seenAt))}</b>` : m.state === 'seen' ? ' · <b>visto in passato</b>' : ''}</div>
     <div class="tchips" style="margin:0 0 8px"><button class="${m.seenAt || (m.state !== 'seen' && !C.archivio) ? 'on' : ''}" data-act="whenD" data-w="d">In questa data</button><button class="${(m.state === 'seen' && !m.seenAt) || (m.state !== 'seen' && C.archivio) ? 'on' : ''}" data-act="whenD" data-w="p">Tempo fa</button></div>
     <input class="fld ${(m.state === 'seen' && !m.seenAt) || (m.state !== 'seen' && C.archivio) ? 'hide' : ''}" type="date" id="rDate" value="${esc(m.seenAt || oggi())}" max="${oggi()}">
+    ${m.seenAt ? `<p class="cap2 hide" id="rWarn" style="white-space:normal;color:#ff7b7b;margin-top:6px">Attenzione: così la data ${esc(fData(m.seenAt))} verrà tolta</p>` : ''}
     <div class="lbl">Il tuo commento</div><div class="notes ce" id="rCom" contenteditable="true" role="textbox" aria-multiline="true" autocorrect="on" autocapitalize="sentences" spellcheck="true" data-ph="Di cosa parlava, cosa ti è rimasto, con chi l'hai visto…">${esc(m.comment || '')}</div>
     <div class="mrow"><button class="btn ghost" data-act="closeModal">Annulla</button><button class="btn" data-act="saveRate">Salva</button></div>`;
   $('#modal').classList.add('open');
@@ -1199,7 +1200,7 @@ const A = {
     sh.watched[UI.ew.e] = past ? 1 : new Date(($('#rDate').value || oggi()) + 'T21:00').getTime();
     save(); $('#modal').classList.remove('open'); refreshView(); toast(past ? 'Segnato come visto in passato' : '✓ Data aggiornata');
   },
-  whenD(d, el){ el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); $('#rDate').classList.toggle('hide', d.w === 'p'); },
+  whenD(d, el){ el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); $('#rDate').classList.toggle('hide', d.w === 'p'); $('#rWarn')?.classList.toggle('hide', d.w !== 'p'); },
   toggleArch(){ C.archivio = !C.archivio; saveCfg(); render(); toast(C.archivio ? 'Modalità archivio attiva: le spunte non contano nelle statistiche del periodo' : 'Modalità archivio disattivata: da ora conta tutto con la data di oggi', null, null, 5000); },
   tonight(){ UI.tn = null; tonightModal(UI.tab === 'film' ? 150 : 60); },
   tonightT(d){ UI.tn = null; tonightModal(+d.m); },
@@ -1575,6 +1576,13 @@ async function controllaImport(){
     if (!r.ok) return;
     const imp = JSON.parse(b64d((await r.json()).content));
     if ((D.importati || []).includes(imp.id)) return;
+    if (imp.soloDate){
+      let n = 0;
+      for (const f of imp.film){ const m = Object.values(D.movies).find(x => norm(x.title) === norm(f.title)); if (m && m.state === 'seen' && !m.seenAt){ m.seenAt = f.d; n++; } }
+      D.importati = [...(D.importati || []), imp.id]; save(); render();
+      if (n) toast(`📅 Ripristinate le date di ${n} film`, null, null, 5000);
+      return;
+    }
     UI.imp = imp;
     $('#mcard').innerHTML = `<h3>${esc(imp.titolo || 'Importazione pronta')}</h3><div class="s">Ho preparato <b>${imp.serie.length} serie</b> e <b>${imp.film.length} film</b> da aggiungere, con le date.</div>
       <p class="plot" style="font-size:14px">${esc(imp.nota || '')}</p>
