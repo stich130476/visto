@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" style="background:#07060b">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
@@ -414,7 +414,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.0';
+const VERSIONE = '2.0.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1302,7 +1302,7 @@ async function checkUpdate(){
   try {
     const r = await fetch('./index.html?nc=' + Date.now(), {cache:'no-store'});
     const m = (await r.text()).match(/const VERSIONE = '([0-9.]+)'/);
-    if (m && m[1] !== VERSIONE){ toast(`✨ Aggiorno Visto! alla versione ${m[1]}…`); setTimeout(() => location.replace('./?v=' + m[1]), 1200); }
+    if (m && m[1] !== VERSIONE){ try { sessionStorage.setItem('vistoUpd', m[1]); } catch(e){} toast(`✨ Aggiorno Visto! alla versione ${m[1]}…`); setTimeout(() => location.replace('./?v=' + m[1]), 1200); }
   } catch(e){}
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
@@ -1311,7 +1311,9 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 (async function init(){
   render();
   checkUpdate();
-  if (C.intro){
+  let upd = null; try { upd = sessionStorage.getItem('vistoUpd'); sessionStorage.removeItem('vistoUpd'); } catch(e){}
+  if (upd){ $('#intro').remove(); setTimeout(() => toast(`✨ Visto! aggiornata alla versione <b>${VERSIONE}</b>`), 400); }
+  else if (C.intro){
     introStats();
     const cache = load(POSTERS); buildWall(cache?.list || []);
     posterPool().then(list => { if (!cache && list.length) buildWall(list); });
