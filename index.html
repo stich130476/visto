@@ -434,7 +434,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.7.2';
+const VERSIONE = '2.7.3';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -810,7 +810,7 @@ function renderIo(){
 
 /* ---------- SCHEDA SERIE ---------- */
 function openSheet(html, keep){ const sy = $('#sheet').scrollTop; $('#sheetIn').innerHTML = html; $('#sheet').scrollTop = keep ? sy : 0; $('#sheet').classList.add('open'); $('#closeBtn').classList.remove('hide'); document.body.style.overflow = 'hidden'; }
-function closeSheet(){ if (UI.back && UI.open?.type !== 'genre'){ const b = UI.back; UI.back = null; if (b && b.p) platSheet(b.p); else genreSheet(b); return; } UI.back = null; $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); }
+function closeSheet(){ if (UI.back && UI.open?.type !== 'genre'){ const b = UI.back; UI.back = null; if (b && b.q !== undefined){ searchSheet(b.t); $('#q').value = b.q; doSearch(b.q.trim()); } else if (b && b.p) platSheet(b.p); else genreSheet(b); return; } UI.back = null; $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); }
 
 function showSheet(id, keep){
   const sh = D.series[id]; if (!sh) return;
@@ -1062,15 +1062,15 @@ async function doSearch(q){
       }
       if (!list.length){ box.innerHTML = '<div class="hint">Nessuna serie trovata.</div>'; return; }
       box.innerHTML = list.map(s => { const inList = s.src === 'tvm' ? D.series[s.id] : Object.values(D.series).find(x => x.tmdb === s.id);
-        return `<div class="res fadein">${poster(s.img, s.title, 'pimg')}<div class="tx"><b>${esc(s.title)}</b><small>${esc([s.year, s.net, s.orig !== s.title ? s.orig : ''].filter(Boolean).join(' · '))}</small><small>${esc(s.plot || '')}</small></div>
-        <button class="add ${inList ? 'done' : ''}" data-act="addShow" data-src="${s.src}" data-id="${s.id}">${inList ? '✓ In lista' : '+ Aggiungi'}</button></div>`; }).join('');
+        return `<div class="res fadein" ${inList ? `data-act="openShow" data-id="${inList.id}" data-from="search" role="button"` : ''}>${poster(s.img, s.title, 'pimg')}<div class="tx"><b>${esc(s.title)}</b><small>${esc([s.year, s.net, s.orig !== s.title ? s.orig : ''].filter(Boolean).join(' · '))}</small><small>${esc(s.plot || '')}</small></div>
+        ${inList ? `<button class="add done" data-act="openShow" data-id="${inList.id}" data-from="search">✓ In lista ›</button>` : `<button class="add" data-act="addShow" data-src="${s.src}" data-id="${s.id}">+ Aggiungi</button>`}</div>`; }).join('');
     } else {
       if (!C.tmdb){ box.innerHTML = `<div class="hint">Per cercare i film serve la chiave TMDB (la trovi nella scheda <b>Io</b>).<br><br>Intanto puoi aggiungerlo a mano:</div><div class="acts"><button class="btn ghost" data-act="manual" data-q="${esc(q)}">Aggiungi "${esc(q)}" a Da vedere</button></div>`; return; }
       const r = await tmdb('/search/movie', {query:q, region:'IT'});
       if (!r.results.length){ box.innerHTML = '<div class="hint">Nessun film trovato.</div>'; return; }
       box.innerHTML = r.results.slice(0, 15).map(m => { const st = D.movies[m.id]?.state;
-        return `<div class="res fadein">${poster(m.poster_path ? IMG + 'w185' + m.poster_path : '', m.title, 'pimg')}<div class="tx"><b>${esc(m.title)}</b><small>${esc([(m.release_date || '').slice(0, 4), m.original_title !== m.title ? m.original_title : ''].filter(Boolean).join(' · '))}</small><small>${esc(m.overview || '')}</small></div>
-        ${st ? `<button class="add done">${st === 'seen' ? '✓ Visto' : '✓ In lista'}</button>` : `<div class="addcol"><button class="add" data-act="addMovie" data-id="${m.id}" data-s="todo">Da vedere</button><button class="add alt" data-act="addMovie" data-id="${m.id}" data-s="seen">Già visto</button></div>`}</div>`; }).join('');
+        return `<div class="res fadein" ${st ? `data-act="openMovie" data-id="${m.id}" data-from="search" role="button"` : ''}>${poster(m.poster_path ? IMG + 'w185' + m.poster_path : '', m.title, 'pimg')}<div class="tx"><b>${esc(m.title)}</b><small>${esc([(m.release_date || '').slice(0, 4), m.original_title !== m.title ? m.original_title : ''].filter(Boolean).join(' · '))}</small><small>${esc(m.overview || '')}</small></div>
+        ${st ? `<button class="add done">${st === 'seen' ? '✓ Visto ›' : '✓ In lista ›'}</button>` : `<div class="addcol"><button class="add" data-act="addMovie" data-id="${m.id}" data-s="todo">Da vedere</button><button class="add alt" data-act="addMovie" data-id="${m.id}" data-s="seen">Già visto</button></div>`}</div>`; }).join('');
     }
   } catch(e){ box.innerHTML = `<div class="hint">Non riesco a cercare adesso (${esc(e.message)}). Controlla la connessione.</div>`; }
 }
@@ -1100,8 +1100,8 @@ const A = {
   search(){ searchSheet(); },
   sType(d){ const q = $('#q')?.value || ''; searchSheet(d.s); $('#q').value = q; doSearch(q.trim()); },
   closeSheet(){ closeSheet(); },
-  openShow(d){ if (UI.open?.type === 'genre') UI.back = UI.open.p ? {p:UI.open.p} : UI.open.g; showSheet(+d.id); },
-  openMovie(d){ if (UI.open?.type === 'genre') UI.back = UI.open.p ? {p:UI.open.p} : UI.open.g; movieSheet(d.id); },
+  openShow(d){ if (d.from === 'search') UI.back = {q:$('#q')?.value || '', t:UI.searchType}; else if (UI.open?.type === 'genre') UI.back = UI.open.p ? {p:UI.open.p} : UI.open.g; showSheet(+d.id); },
+  openMovie(d){ if (d.from === 'search') UI.back = {q:$('#q')?.value || '', t:UI.searchType}; else if (UI.open?.type === 'genre') UI.back = UI.open.p ? {p:UI.open.p} : UI.open.g; movieSheet(d.id); },
   async addShow(d, el){
     if (el.classList.contains('done')) return;
     el.textContent = 'Aggiungo…';
