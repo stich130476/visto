@@ -376,7 +376,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.9.5';
+const VERSIONE = '1.9.6';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -409,7 +409,7 @@ let C = Object.assign({tmdb:'', ghUser:'', ghRepo:'visto-dati', ghToken:'', intr
 let UI = {tab:'serie', filmSeg:'todo', season:{}, searchType:null, busy:false};
 function load(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
 function saveCfg(){ try { localStorage.setItem(CFG, JSON.stringify(C)); } catch(e){} }
-function save(sync = true){ D.upd = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){} if (sync) pushLater(); }
+function save(sync = true){ D.upd = Date.now(); if (C.tmdb) D.tmdbKey = C.tmdb; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){} if (sync) pushLater(); }
 
 /* ---------- API ---------- */
 async function tvm(path){
@@ -1161,7 +1161,10 @@ async function pull(pushIfOlder){
     let remote = null;
     if (j.content) remote = JSON.parse(b64d(j.content));
     else { const raw = await fetch(j.download_url, {headers:ghH(), cache:'no-store'}); remote = await raw.json(); }
-    if (remote && remote.upd > D.upd){ D = remote; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){} if (!$('#sheet').classList.contains('open')) render(); }
+    const vuoto = !Object.keys(D.series).length && !Object.keys(D.movies).length;
+    if (remote && remote.tmdbKey && !C.tmdb){ C.tmdb = remote.tmdbKey; saveCfg(); }
+    const remotoPieno = remote && (Object.keys(remote.series || {}).length || Object.keys(remote.movies || {}).length);
+    if (remote && ((vuoto && remotoPieno) || remote.upd > D.upd)){ D = remote; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){} if (!$('#sheet').classList.contains('open')) render(); }
     else if (remote && D.upd > remote.upd && pushIfOlder !== false) await push();
     C.syncErr = ''; C.lastSync = Date.now(); saveCfg();
   } catch(e){ C.syncErr = e.message; saveCfg(); }
