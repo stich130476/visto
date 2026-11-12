@@ -433,7 +433,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.3.3';
+const VERSIONE = '2.4';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -792,6 +792,7 @@ function renderIo(){
     <div class="lbl">Token</div><input class="fld" id="ghToken" type="password" value="${esc(C.ghToken)}" placeholder="github_pat_…" autocapitalize="off" spellcheck="false">
     <div class="acts"><button class="btn small" data-act="saveGh">Salva e sincronizza</button></div>
   </div>
+  <div class="box"><h4>Importa la tua cronologia</h4><p class="plot" style="font-size:14px;margin-bottom:10px">Carica il file "Attività di visione" scaricato da Netflix: serie e film vengono aggiunti già spuntati, con le date vere.</p><div class="acts" style="margin-top:0"><button class="btn small" data-act="netflix">📥 Importa da Netflix</button></div></div>
   <div class="box"><h4>Backup</h4><div class="acts" style="margin-top:0"><button class="btn small ghost" data-act="export">Esporta copia</button><button class="btn small ghost" data-act="import">Importa copia</button></div></div>
   <div class="ver">Visto! · versione <b>${VERSIONE}</b><br>Dati serie: TVmaze · Dati film: TMDB</div>`;
 }
@@ -929,10 +930,10 @@ async function loadRecs(force){
   const sseeds = Object.values(D.series).filter(s => s.tmdb && Object.keys(s.watched).length).sort((a, b) => (b.lastW || 0) - (a.lastW || 0)).slice(0, 6);
   const agg = async (list, path, map) => { const sc = {};
     for (const it of list){ try { const r = await tmdb(path(it)); r.results.slice(0, 10).forEach((x, i) => { if (!x.poster_path) return;
-      const e = sc[x.id] || (sc[x.id] = Object.assign(map(x), {s:0, why:map.name(it)})); e.s += 10 - i + (x.vote_average || 0); }); } catch(e){} await sleep(100); }
+      const e = sc[x.id] || (sc[x.id] = Object.assign(map(x), {s:0, why:map.why(it)})); e.s += 10 - i + (x.vote_average || 0); }); } catch(e){} await sleep(100); }
     return Object.values(sc).sort((a, b) => b.s - a.s).slice(0, 20); };
-  const mm = x => ({id:x.id, title:x.title, year:(x.release_date || '').slice(0, 4), poster:x.poster_path, plot:x.overview, vote:x.vote_average}); mm.name = it => it.title;
-  const sm = x => ({id:x.id, title:x.name, year:(x.first_air_date || '').slice(0, 4), poster:x.poster_path, plot:x.overview, vote:x.vote_average}); sm.name = it => showName(it);
+  const mm = x => ({id:x.id, title:x.title, year:(x.release_date || '').slice(0, 4), poster:x.poster_path, plot:x.overview, vote:x.vote_average}); mm.why = it => it.title;
+  const sm = x => ({id:x.id, title:x.name, year:(x.first_air_date || '').slice(0, 4), poster:x.poster_path, plot:x.overview, vote:x.vote_average}); sm.why = it => showName(it);
   const out = {at:Date.now(), movies:await agg(seeds, it => `/movie/${it.id}/recommendations`, mm), shows:await agg(sseeds, it => `/tv/${it.tmdb}/recommendations`, sm)};
   try { localStorage.setItem(RECS, JSON.stringify(out)); } catch(e){}
   if (!$('#sheet').classList.contains('open')) render();
@@ -1185,6 +1186,17 @@ const A = {
   year(){ yearSheet(); },
   genre(d){ genreSheet(d.g); },
   plat(d){ platSheet(d.p); },
+  netflix(){
+    const i = document.createElement('input'); i.type = 'file'; i.accept = '.csv,text/csv,text/comma-separated-values';
+    i.onchange = async () => { const txt = await i.files[0].text(); const a = analizzaNetflix(txt);
+      if (!a.serie.length && !a.film.length) return toast('File non riconosciuto');
+      $('#mcard').innerHTML = `<h3>Importa da Netflix</h3><div class="s">Ho trovato <b>${a.serie.length} serie</b> (${a.serie.reduce((x, s) => x + s.eps.length, 0)} episodi) e <b>${a.film.length} film</b>.</div>
+        <p class="plot" style="font-size:14px">Li aggiungo a Visto! già segnati come visti, ognuno con la sua data. Ci vorrà un minuto o due: tieni l'app aperta.</p>
+        <div class="mrow"><button class="btn ghost" data-act="closeModal">Annulla</button><button class="btn" data-act="netflixGo">Importa</button></div>`;
+      UI.nfx = txt; $('#modal').classList.add('open'); };
+    i.click();
+  },
+  netflixGo(){ $('#modal').classList.remove('open'); importaNetflix(UI.nfx); },
   async posters(d){
     const it = d.k === 's' ? D.series[d.id] : D.movies[d.id];
     $('#mcard').innerHTML = `<h3>Scegli la locandina</h3><div class="s">${esc(d.k === 's' ? showName(it) : it.title)}</div><div class="pgrid" id="pg"><p class="hint" style="grid-column:1/-1">Cerco le locandine…</p></div>
@@ -1428,6 +1440,106 @@ async function migGeneri(){
   if (!ok){ save(); return; }
   Object.values(D.movies).forEach(m => m.genres = normGen(m.genres || []));
   D.mig18 = true; save(); if (!$('#sheet').classList.contains('open')) render();
+}
+
+/* ---------- IMPORTA DA NETFLIX ---------- */
+const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+function parseCsv(txt){
+  const rows = []; let i = 0, f = '', row = [], q = false;
+  for (; i < txt.length; i++){
+    const c = txt[i];
+    if (q){ if (c === '"'){ if (txt[i + 1] === '"'){ f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true; else if (c === ','){ row.push(f); f = ''; } else if (c === '\n' || c === '\r'){ if (f || row.length){ row.push(f); rows.push(row); } row = []; f = ''; if (c === '\r' && txt[i + 1] === '\n') i++; }
+    else f += c;
+  }
+  if (f || row.length){ row.push(f); rows.push(row); }
+  return rows;
+}
+function netflixDate(d){ const [m, g, y] = d.split('/').map(Number); if (!m || !g) return null; const yy = y < 100 ? 2000 + y : y; return `${yy}-${String(m).padStart(2, '0')}-${String(g).padStart(2, '0')}`; }
+function analizzaNetflix(txt){
+  const rows = parseCsv(txt.replace(/^﻿/, '')).filter(r => r[0] && r[0] !== 'Title');
+  const serie = {}, film = [];
+  for (const [title, date] of rows){
+    const d = netflixDate(date || ''); if (!d) continue;
+    const parts = title.split(': ').map(x => x.trim()).filter(Boolean);
+    if (parts.length >= 3){
+      const SEAS = /^(?:stagione|volume|parte|season|part)\s*\d+$|^miniserie$|^limited series$/i;
+      const k = parts.findIndex((x, j) => j > 0 && SEAS.test(x));
+      const name = k > 0 ? parts.slice(0, k).join(': ') : parts[0];
+      const sLab = k > 0 ? parts[k] : parts[1];
+      const ep = parts.slice(k > 0 ? k + 1 : 2).join(': ') || sLab;
+      const m = sLab.match(/(?:stagione|volume|parte|season|part)\s*(\d+)/i);
+      const season = m ? +m[1] : /miniserie|limited/i.test(sLab) ? 1 : null;
+      (serie[name] = serie[name] || {name, alt:k > 0 ? null : `${parts[0]}: ${parts[1]}`, eps:[]}).eps.push({season, sLab, ep, d});
+    } else film.push({title, d});
+  }
+  return {serie:Object.values(serie), film};
+}
+async function trovaSerie(name, alt){
+  let t = null;
+  if (alt){ const r0 = await tmdb('/search/tv', {query:alt}); t = r0.results?.[0] || null; }
+  if (!t){ const r = await tmdb('/search/tv', {query:name}); t = r.results?.[0]; }
+  if (!t) return null;
+  const esistente = Object.values(D.series).find(x => x.tmdb === t.id); if (esistente) return esistente.id;
+  const ex = await tmdb(`/tv/${t.id}/external_ids`);
+  let found = null;
+  if (ex.imdb_id) found = await tvm('/lookup/shows?imdb=' + ex.imdb_id).catch(() => null);
+  if (!found && ex.tvdb_id) found = await tvm('/lookup/shows?thetvdb=' + ex.tvdb_id).catch(() => null);
+  if (!found) return null;
+  if (!D.series[found.id]){
+    const sh = await fetchShow(found.id); await enrichShow(sh, t.id);
+    D.series[found.id] = Object.assign(sh, {watched:{}, paused:false, notes:'', added:Date.now()});
+  }
+  return found.id;
+}
+async function importaNetflix(txt){
+  if (!C.tmdb) return toast('Serve la chiave TMDB');
+  const {serie, film} = analizzaNetflix(txt);
+  const tot = serie.length + film.length; let n = 0;
+  const ok = {serie:[], film:[]}, ko = [];
+  const prog = () => toast(`📥 Importo da Netflix… ${++n} di ${tot}`, null, null, 60000);
+  for (const s of serie){
+    prog();
+    try {
+      const id = await trovaSerie(s.name, s.alt); if (!id){ ko.push(s.name); continue; }
+      const sh = D.series[id]; let segnati = 0;
+      for (const e of s.eps){
+        const nt = norm(e.ep), num = (e.ep.match(/^(?:episodio|episode|capitolo)\s*(\d+)$/i) || [])[1];
+        const cand = sh.eps.filter(x => e.season == null || x.s === e.season);
+        let hit = num ? cand.find(x => x.n === +num) : null;
+        if (!hit) hit = cand.find(x => norm(epT(sh, x)) === nt || norm(x.t) === nt);
+        if (!hit) hit = cand.find(x => { const a = norm(epT(sh, x)), b = norm(x.t); return nt.length > 4 && (a.includes(nt) || nt.includes(a) || b.includes(nt) || nt.includes(b)); });
+        if (!hit && /pilot/i.test(e.ep)) hit = cand.find(x => x.n === 1);
+        if (!hit && e.season == null && /\S/.test(e.sLab)){ // stagione con un nome (es. "La storia di Ed Gein"): cerca in tutte
+          hit = sh.eps.find(x => norm(epT(sh, x)) === nt || norm(x.t) === nt);
+        }
+        if (hit && !(sh.watched[hit.i] > 1e11)){ sh.watched[hit.i] = new Date(e.d + 'T21:00').getTime(); segnati++; }
+      }
+      const last = Math.max(0, ...Object.values(sh.watched).filter(v => v > 1e11)); if (last) sh.lastW = Math.max(sh.lastW || 0, last);
+      ok.serie.push({id, nome:showName(sh), segnati, tot:s.eps.length});
+      await sleep(150);
+    } catch(e){ ko.push(s.name); }
+  }
+  for (const f of film){
+    prog();
+    try {
+      let r = await tmdb('/search/movie', {query:f.title, region:'IT'}); let t = r.results?.[0];
+      if (!t && /[:–-]/.test(f.title)){ for (const q of f.title.split(/\s*[:–]\s*|\s+-\s+/).filter(x => x.length > 3)){ r = await tmdb('/search/movie', {query:q, region:'IT'}); t = r.results?.[0]; if (t) break; } }
+      if (!t){ ko.push(f.title); continue; }
+      if (D.movies[t.id]?.state === 'seen'){ if (!D.movies[t.id].seenAt) D.movies[t.id].seenAt = f.d; ok.film.push({id:t.id, nome:D.movies[t.id].title}); continue; }
+      const m = await fetchMovie(t.id);
+      D.movies[m.id] = Object.assign(D.movies[m.id] || {rating:0, comment:''}, m, {state:'seen', seenAt:f.d, added:D.movies[m.id]?.added || Date.now()});
+      ok.film.push({id:m.id, nome:m.title});
+      await sleep(120);
+    } catch(e){ ko.push(f.title); }
+  }
+  save(); render();
+  $('#toast').classList.remove('on');
+  openSheet(`<div class="yhero" style="padding-bottom:22px"><div class="yy" style="font-size:44px;letter-spacing:-1px">Netflix ✓</div><p>${ok.serie.length} serie · ${ok.film.length} film importati con le date vere</p></div>
+    <div class="pad"><div class="box"><h4>Serie</h4>${ok.serie.map(x => `<div class="set" data-act="openShow" data-id="${x.id}" role="button"><div class="l"><b>${esc(x.nome)}</b><small>${x.segnati} episodi segnati${x.segnati < x.tot ? ` (su ${x.tot} nel file)` : ''}</small></div><span class="lnk">›</span></div>`).join('') || '<p class="cap2">Nessuna</p>'}</div>
+    <div class="box"><h4>Film</h4><p class="plot" style="font-size:14px">${ok.film.map(x => esc(x.nome)).join(' · ') || 'Nessuno'}</p></div>
+    ${ko.length ? `<div class="box"><h4>Non riconosciuti (${ko.length})</h4><p class="plot" style="font-size:14px">${ko.map(esc).join(' · ')}</p><p class="cap2" style="white-space:normal;margin-top:8px">Questi puoi aggiungerli a mano con la ricerca.</p></div>` : ''}
+    <p class="cap2" style="white-space:normal;text-align:center;margin-top:14px">Controlla pure che sia tutto giusto: ogni cosa si può correggere dalla scheda del titolo.</p></div>`);
 }
 
 /* ---------- NOTIFICHE PUSH ---------- */
