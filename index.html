@@ -93,6 +93,19 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .news-ok{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;background:var(--card);border:1px solid var(--line);color:var(--mut);font-size:14px}
 .news-ok svg{width:18px;height:18px;color:var(--ok);flex:none}
 
+/* HERO NUOVA STAGIONE */
+.nhero{position:relative;display:block;width:100%;height:180px;border-radius:24px;overflow:hidden;margin:4px 0 14px;text-align:left;isolation:isolate;
+  box-shadow:0 0 0 1.5px rgba(255,170,90,.75),0 18px 50px rgba(255,94,98,.35);animation:glow 2.6s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 0 1.5px rgba(255,200,87,.95),0 18px 60px rgba(255,140,80,.55)}}
+.nhero .bk{position:absolute;inset:0;background-size:cover;background-position:center 30%;z-index:-2;transform:scale(1.05);animation:kb 14s ease-in-out infinite alternate}
+@keyframes kb{to{transform:scale(1.15) translateX(-2%)}}
+.nhero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(10,9,16,.92),rgba(10,9,16,.55) 60%,rgba(10,9,16,.2)),linear-gradient(0deg,rgba(10,9,16,.7),transparent 60%)}
+.nhero .in{position:absolute;left:18px;right:18px;bottom:16px}
+.nhero .lab{display:inline-block;font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:5px 10px;border-radius:99px;background:var(--grad);color:#2a0d05}
+.nhero h3{font:800 30px/1.05 var(--serif);letter-spacing:-.5px;margin:10px 0 4px;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.nhero p{color:#e8e3f2;font-size:14px}
+.nhero .x{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;background:rgba(10,9,16,.55);display:grid;place-items:center;color:#fff}
+
 /* CONTINUE */
 .cw{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
 .cwc{display:flex;gap:14px;padding:12px;border-radius:20px;background:var(--card);border:1px solid var(--line);position:relative;overflow:hidden}
@@ -360,7 +373,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.5.1';
+const VERSIONE = '1.6';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -503,8 +516,14 @@ function renderNews(){
     if (!Object.keys(D.series).length && !Object.keys(D.movies).length) return '';
     return `<div class="news fadein"><div class="news-ok">${I.ok}<span>Nessuna novità${last ? ` · ultimo controllo ${last}` : ''}</span></div></div>`;
   }
-  return `<div class="news fadein"><div class="news-h"><b><span class="dot"></span>Novità della settimana</b><button data-act="readAll">Segna come lette</button></div>
-    <div class="nrow">${items.map(n => `<div class="ncard" data-act="openNews" data-id="${esc(n.id)}" role="button">
+  const heroes = items.filter(n => n.hero);
+  const rest = items.filter(n => !n.hero);
+  const heroHtml = heroes.map(n => `<div class="nhero fadein" data-act="openNews" data-id="${esc(n.id)}" role="button"><div class="bk" style="background-image:url('${esc(n.bg || n.img)}')"></div>
+    <div class="in"><span class="lab">✨ ${esc(n.k)} di</span><h3>${esc(n.t)}</h3><p>${esc(n.d2)}</p></div>
+    <button class="x" data-act="dismiss" data-id="${esc(n.id)}" aria-label="Chiudi">${I.x}</button></div>`).join('');
+  if (!rest.length) return `<div class="news">${heroHtml}</div>`;
+  return `<div class="news fadein">${heroHtml}<div class="news-h"><b><span class="dot"></span>Novità della settimana</b><button data-act="readAll">Segna come lette</button></div>
+    <div class="nrow">${rest.map(n => `<div class="ncard" data-act="openNews" data-id="${esc(n.id)}" role="button">
       ${n.img ? `<img src="${esc(n.img)}" alt="" onerror="this.remove()">` : '<div class="ph" style="background:#2a2140"></div>'}
       <div style="min-width:0;padding-right:14px"><div class="k ${n.kind === 'soon' ? 'soon' : ''}">${esc(n.k)}</div><div class="t">${esc(n.t)}</div><div class="d">${esc(n.d2)}</div></div>
       <button class="x" data-act="dismiss" data-id="${esc(n.id)}" aria-label="Chiudi">${I.x}</button></div>`).join('')}</div></div>`;
@@ -1035,9 +1054,11 @@ async function checkNews(force){
       D.series[old.id] = Object.assign(nu, keep);
       const sh = D.series[old.id], name = showName(sh), img = showImg(sh, 'w185');
       if (C.tmdb && (fresh.length || nu.eps.length !== old.eps.length)) await enrichShow(sh, sh.tmdb);
+      const prem = fresh.find(e => e.n === 1 && e.s > 1);
+      if (prem && !(newMax > oldMax && oldMax > 0)) addNews({id:`ss-${sh.id}-${prem.s}`, ref:'show', rid:sh.id, kind:'new', hero:true, bg:showBack(sh), img, t:name, d:prem.d, k:'Nuova stagione', d2:`La stagione ${prem.s} è iniziata ${fGiorno(prem.d)}`});
       if (fresh.length) addNews({id:`ep-${sh.id}-${fresh[fresh.length - 1].i}`, ref:'show', rid:sh.id, kind:'new', img, t:name, d:fresh[fresh.length - 1].d,
         k:fresh.length > 1 ? `${fresh.length} nuovi episodi` : 'Nuovo episodio', d2:fresh.length > 1 ? `Da ${epCode(fresh[0])} a ${epCode(fresh[fresh.length - 1])}` : `${epCode(fresh[0])} · ${epT(sh, fresh[0])} · uscito ${fGiorno(fresh[0].d)}`});
-      if (newMax > oldMax && oldMax > 0) addNews({id:`ss-${sh.id}-${newMax}`, ref:'show', rid:sh.id, kind:'new', img, t:name, d:t, k:'Nuova stagione', d2:`Annunciata la stagione ${newMax}` + (sh.eps.find(e => e.s === newMax)?.d ? ` · dal ${fData(sh.eps.find(e => e.s === newMax).d, false)}` : '')});
+      if (newMax > oldMax && oldMax > 0) addNews({id:`ss-${sh.id}-${newMax}`, ref:'show', rid:sh.id, kind:'new', hero:true, bg:showBack(sh), img, t:name, d:t, k:'Nuova stagione', d2:`Annunciata la stagione ${newMax}` + (sh.eps.find(e => e.s === newMax)?.d ? ` · dal ${fData(sh.eps.find(e => e.s === newMax).d, false)}` : '')});
       if (sh.next?.d && sh.next.d > t && sh.next.d <= week) addNews({id:`soon-${sh.id}-${sh.next.s}-${sh.next.n}`, ref:'show', rid:sh.id, kind:'soon', img, t:name, d:sh.next.d, k:'In arrivo', d2:`${epCode(sh.next)} esce ${fGiorno(sh.next.d)}`});
       await sleep(250);
     } catch(e){ errs++; }
