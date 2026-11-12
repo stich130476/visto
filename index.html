@@ -136,7 +136,7 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
 .btn.small{padding:9px 14px;font-size:14px;border-radius:12px}
 .btn:active{transform:scale(.97)}
-.btn svg{width:18px;height:18px}
+.btn svg{width:18px;height:18px;flex:none}
 
 /* SEGMENT */
 .seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;margin:6px 0 16px}
@@ -360,7 +360,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.3';
+const VERSIONE = '1.4';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -649,7 +649,8 @@ function showSheet(id, keep){
       ${x.next ? `<p>Prossimo: <b style="font-size:14px;color:var(--txt)">${epCode(x.next)}</b> · ${esc(epT(sh, x.next))}</p>` : ''}
       ${sh.next?.d ? `<p>Nuovo episodio ${epCode(sh.next)}: <b style="font-size:14px;color:var(--a2)">${esc(fGiorno(sh.next.d))}</b></p>` : (sh.status === 'Ended' ? '<p>Serie conclusa</p>' : '')}</div></div>
       <div class="acts">${x.next ? `<button class="btn" data-act="quick" data-id="${id}">${I.check}Segna ${epCode(x.next)}</button>` : ''}
-        <button class="btn ghost" data-act="pause" data-id="${id}">${sh.paused ? 'Riprendi' : 'Metti in pausa'}</button></div></div>
+        <button class="btn ghost" data-act="pause" data-id="${id}">${sh.paused ? 'Riprendi' : 'Metti in pausa'}</button></div>
+      ${x.left ? `<div class="acts" style="margin-top:10px"><button class="btn ghost" data-act="allShow" data-id="${id}">✓ Vista tutta la serie</button></div>` : ''}</div>
     ${sh.prov?.length ? `<div class="box"><h4>Dove vederla</h4><div class="prov">${sh.prov.map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div></div>` : ''}
     ${(sh.itPlot || sh.summary) ? `<div class="box"><h4>Trama</h4><p class="plot">${esc(sh.itPlot || sh.summary)}</p></div>` : ''}
     <div class="box"><h4>Episodi</h4>
@@ -929,6 +930,11 @@ const A = {
     const sh = D.series[d.id], t = oggi(), eps = sh.eps.filter(e => e.s == d.s && e.d && e.d <= t);
     const all = eps.every(e => sh.watched[e.i]); eps.forEach(e => markEp(sh, e.i, !all)); save(); showSheet(+d.id, true);
     toast(all ? `Stagione ${d.s}: spunte tolte` : `Stagione ${d.s} segnata come vista`);
+  },
+  allShow(d){
+    const sh = D.series[d.id], t = oggi(), todo = sh.eps.filter(e => e.d && e.d <= t && !sh.watched[e.i]);
+    todo.forEach(e => markEp(sh, e.i, true)); save(); showSheet(+d.id, true); burst(document.querySelector('.ring') || document.body);
+    toast(`🎉 <b>${esc(showName(sh))}</b>: tutta vista!`, 'Annulla', () => { todo.forEach(e => markEp(sh, e.i, false)); save(); refreshView(); }, 6000);
   },
   pause(d){ const sh = D.series[d.id]; sh.paused = !sh.paused; save(); showSheet(+d.id, true); toast(sh.paused ? 'Serie messa in pausa' : 'Bentornato!'); },
   removeShow(d){ const sh = D.series[d.id]; delete D.series[d.id]; save(); closeSheet(); toast(`<b>${esc(showName(sh))}</b> rimossa`, 'Annulla', () => { D.series[d.id] = sh; save(); render(); }); },
