@@ -376,7 +376,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.7';
+const VERSIONE = '1.7.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -683,7 +683,7 @@ function showSheet(id, keep){
       <div class="seasact"><span>${sW} di ${eps.length} visti${eps.length > sAired.length ? ` · ${eps.length - sAired.length} in arrivo` : ''}</span>
         ${sAired.length ? `<button class="lnk" data-act="seasonAll" data-id="${id}" data-s="${cur}">${sW === sAired.length ? 'Togli tutte le spunte' : 'Segna tutta la stagione'}</button>` : ''}</div>
       ${eps.map(e => { const fut = !e.d || e.d > t, on = !!sh.watched[e.i];
-        return `<div class="ep ${fut ? 'fut' : ''}"><div class="n">E${String(e.n).padStart(2, '0')}</div><div class="nm"><b>${esc(epT(sh, e))}</b><small>${e.d ? (fut ? 'Esce ' + esc(fGiorno(e.d)) : esc(fData(e.d))) : 'Data da annunciare'}${e.r ? ' · ' + e.r + ' min' : ''}${on && sh.watched[e.i] > 1e11 ? ' · visto il ' + esc(fData(new Date(sh.watched[e.i]).toLocaleDateString('sv'), false)) : ''}</small></div>
+        return `<div class="ep ${fut ? 'fut' : ''}"><div class="n">E${String(e.n).padStart(2, '0')}</div><div class="nm" ${on ? `data-act="epWhen" data-id="${id}" data-e="${e.i}" role="button"` : ''}><b>${esc(epT(sh, e))}</b><small>${e.d ? (fut ? 'Esce ' + esc(fGiorno(e.d)) : esc(fData(e.d))) : 'Data da annunciare'}${e.r ? ' · ' + e.r + ' min' : ''}${on ? (sh.watched[e.i] > 1e11 ? ' · visto il ' + esc(fData(new Date(sh.watched[e.i]).toLocaleDateString('sv'), false)) : ' · <span style="color:var(--a2)">visto in passato ›</span>') : ''}</small></div>
         ${fut ? '' : `<button class="ck ${on ? 'on' : ''}" data-act="ep" data-id="${id}" data-e="${e.i}" aria-label="Visto">${I.check}</button>`}</div>`; }).join('')}
     </div>
     <div class="box"><h4>Il mio giudizio</h4>${sh.myRating ? `<div style="font-size:22px;margin-bottom:6px">${stars(sh.myRating)}</div>` : ''}
@@ -981,6 +981,21 @@ const A = {
   removeMovie(d){ const m = D.movies[d.id]; delete D.movies[d.id]; save(); closeSheet(); toast(`<b>${esc(m.title)}</b> rimosso`, 'Annulla', () => { D.movies[d.id] = m; save(); render(); }); },
   unsee(d){ const m = D.movies[d.id]; m.state = 'todo'; save(); movieSheet(d.id); },
   rate(d){ rateModal(d.id); },
+  epWhen(d){
+    const sh = D.series[d.id], e = sh.eps.find(x => x.i == d.e), v = sh.watched[d.e];
+    UI.ew = {id:d.id, e:d.e};
+    $('#mcard').innerHTML = `<h3>${esc(showName(sh))} · ${epCode(e)}</h3><div class="s">${esc(epT(sh, e))}</div>
+      <div class="lbl">Quando l'hai visto?</div>
+      <div class="tchips" style="margin:0 0 8px"><button class="${v > 1e11 ? 'on' : ''}" data-act="whenD" data-w="d">In questa data</button><button class="${v > 1e11 ? '' : 'on'}" data-act="whenD" data-w="p">Tempo fa</button></div>
+      <input class="fld ${v > 1e11 ? '' : 'hide'}" type="date" id="rDate" value="${v > 1e11 ? new Date(v).toLocaleDateString('sv') : oggi()}" max="${oggi()}">
+      <div class="mrow"><button class="btn ghost" data-act="closeModal">Annulla</button><button class="btn" data-act="saveEpWhen">Salva</button></div>`;
+    $('#modal').classList.add('open');
+  },
+  saveEpWhen(){
+    const sh = D.series[UI.ew.id], past = $('#rDate').classList.contains('hide');
+    sh.watched[UI.ew.e] = past ? 1 : new Date(($('#rDate').value || oggi()) + 'T21:00').getTime();
+    save(); $('#modal').classList.remove('open'); refreshView(); toast(past ? 'Segnato come visto in passato' : '✓ Data aggiornata');
+  },
   whenD(d, el){ el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); $('#rDate').classList.toggle('hide', d.w === 'p'); },
   toggleArch(){ C.archivio = !C.archivio; saveCfg(); render(); toast(C.archivio ? 'Modalità archivio attiva: le spunte non contano nelle statistiche del periodo' : 'Modalità archivio disattivata: da ora conta tutto con la data di oggi', null, null, 5000); },
   tonight(){ UI.tn = null; tonightModal(UI.tab === 'film' ? 150 : 60); },
