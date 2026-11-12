@@ -290,7 +290,8 @@ textarea.notes{min-height:110px;line-height:1.5}
 .stat-ok{color:var(--ok)}.stat-ko{color:#ff7b7b}
 ol.steps{padding-left:20px;color:#ddd8e8;font-size:14px;line-height:1.6}
 ol.steps li{margin-bottom:6px}
-.ver{text-align:center;color:var(--mut2);font-size:12px;margin-top:26px}
+.ver{text-align:center;color:#cfc9dc;font-size:15px;line-height:1.5;margin-top:26px}
+.ver b{color:var(--a2);font-size:17px}
 
 /* STASERA / CONSIGLIATI / ANNO */
 .tonight{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;margin:4px 0 6px;border-radius:18px;text-align:left;
@@ -376,7 +377,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.9.6';
+const VERSIONE = '1.9.7';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -656,7 +657,7 @@ function renderIo(){
     <div class="acts"><button class="btn small" data-act="saveGh">Salva e sincronizza</button></div>
   </div>
   <div class="box"><h4>Backup</h4><div class="acts" style="margin-top:0"><button class="btn small ghost" data-act="export">Esporta copia</button><button class="btn small ghost" data-act="import">Importa copia</button></div></div>
-  <div class="ver">Visto! · versione ${VERSIONE}<br>Dati serie: TVmaze · Dati film: TMDB</div>`;
+  <div class="ver">Visto! · versione <b>${VERSIONE}</b><br>Dati serie: TVmaze · Dati film: TMDB</div>`;
 }
 
 /* ---------- SCHEDA SERIE ---------- */
