@@ -376,7 +376,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.7.1';
+const VERSIONE = '1.8';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -394,6 +394,8 @@ const epCode = e => `S${e.s}E${String(e.n).padStart(2, '0')}`;
 
 const GENERI = {Drama:'Dramma',Comedy:'Commedia','Science-Fiction':'Fantascienza',Horror:'Horror',Thriller:'Thriller',Crime:'Crime',Mystery:'Mistero',Fantasy:'Fantasy',Action:'Azione',Adventure:'Avventura',Romance:'Sentimentale',Family:'Famiglia',Supernatural:'Soprannaturale',History:'Storico',War:'Guerra',Western:'Western',Anime:'Anime',Music:'Musica',Sports:'Sport',Medical:'Medico',Legal:'Legale',Espionage:'Spionaggio',Children:'Ragazzi',Food:'Cucina',Travel:'Viaggi',Nature:'Natura'};
 const genIt = g => GENERI[g] || g;
+const SPLIT = {'Sci-Fi & Fantasy':['Fantascienza','Fantasy'],'Action & Adventure':['Azione','Avventura'],'War & Politics':['Guerra','Politica'],'Kids':['Ragazzi'],'Talk':['Talk show'],'Soap':['Soap opera'],'Science Fiction':['Fantascienza'],'Animation':['Animazione'],'Documentary':['Documentario'],'Mystery':['Mistero'],'Drama':['Dramma']};
+const normGen = (...lists) => [...new Set(lists.flat().filter(Boolean).flatMap(g => SPLIT[g] || [genIt(g)]))];
 
 /* ---------- STATO ---------- */
 let D = load(KEY) || {v:1, upd:0, series:{}, movies:{}, news:[], lastCheck:0};
@@ -428,7 +430,7 @@ const provList = (wp, kind = 'flatrate') => ((wp?.results?.IT || {})[kind] || []
 function packShow(s){
   const e = s._embedded || {};
   return {
-    id:s.id, name:s.name, img:s.image?.medium || '', big:s.image?.original || '', genres:(s.genres || []).map(genIt),
+    id:s.id, name:s.name, img:s.image?.medium || '', big:s.image?.original || '', tvg:(s.genres || []).map(genIt), genres:(s.genres || []).map(genIt),
     status:s.status, premiered:s.premiered || '', ended:s.ended || '', net:(s.network || s.webChannel)?.name || '',
     rating:s.rating?.average || null, summary:strip(s.summary), imdb:s.externals?.imdb || '', tvdb:s.externals?.thetvdb || '',
     runtime:s.averageRuntime || s.runtime || 0,
@@ -445,7 +447,7 @@ async function enrichShow(sh, tmdbId){
     if (!tmdbId) return;
     const t = await tmdb(`/tv/${tmdbId}`, {append_to_response:'watch/providers'});
     Object.assign(sh, {tmdb:tmdbId, itName:t.name, itPlot:t.overview || '', back:t.backdrop_path || '', poster:t.poster_path || '',
-      prov:provList(t['watch/providers']), genres:(t.genres || []).map(g => g.name).length ? t.genres.map(g => g.name) : sh.genres});
+      prov:provList(t['watch/providers']), tmg:(t.genres || []).map(g => g.name), genres:normGen(sh.tvg || [], (t.genres || []).map(g => g.name))});
     const itEp = Object.assign({}, sh.itEp || {});
     for (const se of (t.seasons || []).filter(x => x.season_number > 0)){
       try { const r = await tmdb(`/tv/${tmdbId}/season/${se.season_number}`);
@@ -479,7 +481,7 @@ function packMovie(m){
   const th = rd.filter(r => r.type === 3 || r.type === 2).map(r => r.release_date.slice(0,10)).sort()[0];
   const dg = rd.filter(r => r.type === 4).map(r => r.release_date.slice(0,10)).sort()[0];
   return {id:m.id, title:m.title, orig:m.original_title, year:(m.release_date || '').slice(0,4), rel:th || m.release_date || '', digital:dg || '',
-    poster:m.poster_path || '', back:m.backdrop_path || '', plot:m.overview || '', runtime:m.runtime || 0, genres:(m.genres || []).map(g => g.name),
+    poster:m.poster_path || '', back:m.backdrop_path || '', plot:m.overview || '', runtime:m.runtime || 0, genres:normGen((m.genres || []).map(g => g.name)),
     director:(m.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name).join(', '),
     cast:(m.credits?.cast || []).slice(0,5).map(c => c.name).join(', '),
     vote:m.vote_average || null, prov:provList(m['watch/providers']), rent:provList(m['watch/providers'], 'rent')};
@@ -604,7 +606,7 @@ function renderIo(){
   const rated = seen.filter(m => m.rating);
   const avg = rated.length ? (rated.reduce((a, m) => a + m.rating, 0) / rated.length).toFixed(1).replace('.', ',') : '–';
   seen.forEach(m => (m.genres || []).forEach(g => gen[g] = (gen[g] || 0) + 1));
-  const top = Object.entries(gen).sort((a, b) => b[1] - a[1]).slice(0, 5), mx = top[0]?.[1] || 1;
+  const top = Object.entries(gen).sort((a, b) => b[1] - a[1]).slice(0, 8), mx = top[0]?.[1] || 1;
   const filmYear = seen.filter(m => (m.seenAt || '').startsWith(y)).length;
   const sync = C.ghToken && C.ghUser ? (C.syncErr ? `<span class="stat-ko">Errore: ${esc(C.syncErr)}</span>` : C.lastSync ? `<span class="stat-ok">Sincronizzato ${new Date(C.lastSync).toLocaleString('it-IT', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>` : 'Non ancora sincronizzato') : 'Non attiva';
   return `<h1 class="big">Io</h1><div class="sub">Il tuo divano, in numeri</div>
@@ -1074,7 +1076,7 @@ async function checkNews(force){
       const oldMax = Math.max(0, ...old.eps.map(e => e.s)), newMax = Math.max(0, ...nu.eps.map(e => e.s));
       const fresh = nu.eps.filter(e => e.d && e.d > since && e.d <= t && !old.watched[e.i]);
       const keep = {watched:old.watched, paused:old.paused, notes:old.notes, myRating:old.myRating, lastFull:old.lastFull, added:old.added, lastW:old.lastW, tmdb:old.tmdb, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
-      if (old.tmdb) keep.genres = old.genres;
+      keep.tmg = old.tmg; keep.genres = normGen(nu.tvg, old.tmg || []);
       D.series[old.id] = Object.assign(nu, keep);
       const sh = D.series[old.id], name = showName(sh), img = showImg(sh, 'w185');
       if (C.tmdb && (fresh.length || nu.eps.length !== old.eps.length)) await enrichShow(sh, sh.tmdb);
@@ -1197,6 +1199,16 @@ if (!D.mig17){
   D.mig17 = true; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){}
 }
 
+async function migGeneri(){
+  if (D.mig18) return;
+  for (const sh of Object.values(D.series)){
+    if (!sh.tvg) try { const t = await tvm('/shows/' + sh.id); sh.tvg = (t.genres || []).map(genIt); await sleep(200); } catch(e){ return; }
+    sh.genres = normGen(sh.tvg || [], sh.tmg || sh.genres || []);
+  }
+  Object.values(D.movies).forEach(m => m.genres = normGen(m.genres || []));
+  D.mig18 = true; save(); if (!$('#sheet').classList.contains('open')) render();
+}
+
 /* ---------- AVVIO ---------- */
 (async function init(){
   render();
@@ -1208,6 +1220,7 @@ if (!D.mig17){
   await pull();
   if (C.tmdb && Object.values(D.series).some(s => !s.tmdb || !s.itEp)) enrichAll();
   await checkNews(false);
+  migGeneri();
   loadRecs();
 })();
 </script>
