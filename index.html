@@ -431,7 +431,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.2';
+const VERSIONE = '2.2.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -508,6 +508,17 @@ function packShow(s){
   };
 }
 async function fetchShow(id){ return packShow(await tvm(`/shows/${id}?embed[]=episodes&embed[]=nextepisode`)); }
+// sceglie in automatico la locandina più rappresentativa della serie (la più apprezzata, preferendo l'italiano)
+async function bestPoster(sh){
+  if (!C.tmdb || !sh.tmdb) return;
+  try {
+    const r = await tmdb(`/tv/${sh.tmdb}/images`, {language:'', include_image_language:'it,en,null'});
+    const ps = (r.posters || []).filter(p => p.vote_count > 0);
+    if (!ps.length) return;
+    const score = p => p.vote_average * Math.log10(p.vote_count + 1) * 10 + (p.iso_639_1 === 'it' ? 4 : p.iso_639_1 === 'en' ? 1 : 0);
+    sh.poster = ps.sort((a, b) => score(b) - score(a))[0].file_path; sh.autoP = 1;
+  } catch(e){}
+}
 async function enrichShow(sh, tmdbId){
   if (!C.tmdb) return;
   try {
@@ -524,6 +535,7 @@ async function enrichShow(sh, tmdbId){
       } catch(e){}
     }
     sh.itEp = itEp;
+    await bestPoster(sh);
   } catch(e){}
 }
 function showStats(sh){
@@ -1226,7 +1238,7 @@ async function checkNews(force){
       const nu = await fetchShow(old.id);
       const oldMax = Math.max(0, ...old.eps.map(e => e.s)), newMax = Math.max(0, ...nu.eps.map(e => e.s));
       const fresh = nu.eps.filter(e => e.d && e.d > since && e.d <= t && !old.watched[e.i]);
-      const keep = {watched:old.watched, paused:old.paused, notes:old.notes, myRating:old.myRating, lastFull:old.lastFull, added:old.added, lastW:old.lastW, tmdb:old.tmdb, myGen:old.myGen, myPoster:old.myPoster, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
+      const keep = {watched:old.watched, paused:old.paused, notes:old.notes, myRating:old.myRating, lastFull:old.lastFull, added:old.added, lastW:old.lastW, tmdb:old.tmdb, myGen:old.myGen, myPoster:old.myPoster, autoP:old.autoP, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
       keep.tmg = old.tmg; keep.genres = normGen(nu.tvg, old.tmg || []);
       D.series[old.id] = Object.assign(nu, keep);
       const sh = D.series[old.id], name = showName(sh), img = showImg(sh, 'w185');
@@ -1353,6 +1365,12 @@ if (!D.mig17){
   D.mig17 = true; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){}
 }
 
+async function migPoster(){
+  if (!C.tmdb) return;
+  let n = 0;
+  for (const sh of Object.values(D.series)) if (sh.tmdb && !sh.autoP){ await bestPoster(sh); n++; await sleep(150); }
+  if (n){ save(); if (!$('#sheet').classList.contains('open')) render(); }
+}
 async function migGeneri(){
   if (D.mig18 && Object.values(D.series).every(sh => sh.tvg)) return;
   let ok = true;
@@ -1426,7 +1444,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
   await pull();
   if (C.tmdb && Object.values(D.series).some(s => !s.tmdb || !s.itEp)) enrichAll();
   await checkNews(false);
-  migGeneri();
+  migGeneri().then(migPoster);
   loadRecs();
 })();
 </script>
