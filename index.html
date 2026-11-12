@@ -381,20 +381,20 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 .badge i{font-style:normal;font-size:20px;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--grad)}
 .badge.off{opacity:.6}.badge.off i{background:var(--card);filter:grayscale(1)}
 .badge small{display:block;font-weight:500;color:var(--mut);font-size:11px}
-.tfam{margin-bottom:14px}
+.tfam{margin-bottom:10px}
 .tfh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-.tfh span{font-weight:700;font-size:15px}.tfh em{font-style:normal;font-size:12px;color:var(--mut)}
+.tfh span{font-weight:700;font-size:14px}.tfh em{font-style:normal;font-size:12px;color:var(--mut)}
 .tpath{display:flex;align-items:center;overflow-x:auto;margin:0 -16px;padding:4px 16px 6px;scrollbar-width:none}
 .tpath::-webkit-scrollbar{display:none}
-.tier{flex:none;width:112px;padding:10px 8px;border-radius:16px;background:var(--card2);text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}
-.tier>i{font-style:normal;font-size:22px;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;margin-bottom:4px;background:var(--card)}
-.tier b{font-size:12.5px;line-height:1.15}.tier small{font-size:11px;color:var(--mut)}
+.tier{flex:none;width:92px;padding:8px 6px;border-radius:13px;background:var(--card2);text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tier>i{font-style:normal;font-size:17px;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;margin-bottom:3px;background:var(--card)}
+.tier b{font-size:11px;line-height:1.15}.tier small{font-size:10px;color:var(--mut);line-height:1.2}
 .tier.done>i{background:var(--grad);box-shadow:0 6px 16px rgba(255,120,80,.35)}
 .tier.next{outline:2px solid rgba(255,154,77,.7);background:rgba(255,154,77,.10)}
-.tier.next .bar{display:block;flex:none;width:100%;height:5px;margin-top:6px}
+.tier.next .bar{display:block;flex:none;width:100%;height:4px;margin-top:5px}
 .tier.next .tp{color:var(--a2);font-weight:700}
 .tier.lock{opacity:.45}.tier.lock>i{filter:grayscale(1)}
-.tlink{flex:none;width:14px;height:3px;background:var(--line);border-radius:2px}
+.tlink{flex:none;width:10px;height:3px;background:var(--line);border-radius:2px}
 .tlink.on{background:var(--grad)}
 .wrank{display:flex;flex-direction:column;gap:7px}
 .wr{display:flex;align-items:center;gap:10px;font-size:14px}
@@ -460,7 +460,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.8';
+const VERSIONE = '2.8.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -639,7 +639,7 @@ function render(){
     <button class="rb" data-act="search" aria-label="Cerca">${I.search}</button></div>`;
   const body = UI.tab === 'serie' ? renderSerie() : UI.tab === 'film' ? renderFilm() : renderIo();
   $('#app').innerHTML = top + (UI.tab !== 'io' ? renderNews() : '') + body;
-  requestAnimationFrame(() => document.querySelectorAll('.tpath').forEach(p => { const n = p.querySelector('.next'); if (n) p.scrollLeft = Math.max(0, n.offsetLeft - p.offsetLeft - 140); }));
+  requestAnimationFrame(() => document.querySelectorAll('.tpath').forEach(p => { const n = p.querySelector('.next'); if (n) p.scrollLeft = Math.max(0, n.offsetLeft - p.offsetLeft - 110); }));
 }
 
 function renderNews(){
