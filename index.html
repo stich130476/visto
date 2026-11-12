@@ -376,7 +376,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.6.3';
+const VERSIONE = '1.7';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -397,7 +397,7 @@ const genIt = g => GENERI[g] || g;
 
 /* ---------- STATO ---------- */
 let D = load(KEY) || {v:1, upd:0, series:{}, movies:{}, news:[], lastCheck:0};
-let C = Object.assign({tmdb:'', ghUser:'', ghRepo:'visto-dati', ghToken:'', intro:true, sha:'', lastSync:0, syncErr:''}, load(CFG) || {});
+let C = Object.assign({tmdb:'', ghUser:'', ghRepo:'visto-dati', ghToken:'', intro:true, archivio:true, sha:'', lastSync:0, syncErr:''}, load(CFG) || {});
 let UI = {tab:'serie', filmSeg:'todo', season:{}, searchType:null, busy:false};
 function load(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
 function saveCfg(){ try { localStorage.setItem(CFG, JSON.stringify(C)); } catch(e){} }
@@ -585,7 +585,7 @@ function renderFilm(){
   if (!seen.length) return h + `<div class="empty fadein"><div class="ic">🎬</div><h3>Il tuo diario è vuoto</h3><p>Quando vedi un film, segnalo come visto: qui ritroverai il tuo voto e i tuoi commenti.</p></div>`;
   let cur = '';
   return h + seen.map(m => {
-    const mo = m.seenAt ? new Date(m.seenAt + 'T12:00').toLocaleDateString('it-IT', {month:'long', year:'numeric'}) : 'Senza data';
+    const mo = m.seenAt ? new Date(m.seenAt + 'T12:00').toLocaleDateString('it-IT', {month:'long', year:'numeric'}) : 'Visti in passato';
     const head = mo !== cur ? `<div class="month">${esc(mo)}</div>` : ''; cur = mo;
     return head + `<button class="dia fadein" data-act="openMovie" data-id="${m.id}">${poster(movImg(m, 'w185'), m.title, 'pimg')}
       <div style="min-width:0"><div class="tt">${esc(m.title)}</div><div class="mt">${esc([m.year, m.director].filter(Boolean).join(' · '))}${m.seenAt ? ' · visto il ' + esc(fData(m.seenAt)) : ''}</div>
@@ -608,6 +608,7 @@ function renderIo(){
   const filmYear = seen.filter(m => (m.seenAt || '').startsWith(y)).length;
   const sync = C.ghToken && C.ghUser ? (C.syncErr ? `<span class="stat-ko">Errore: ${esc(C.syncErr)}</span>` : C.lastSync ? `<span class="stat-ok">Sincronizzato ${new Date(C.lastSync).toLocaleString('it-IT', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>` : 'Non ancora sincronizzato') : 'Non attiva';
   return `<h1 class="big">Io</h1><div class="sub">Il tuo divano, in numeri</div>
+  ${C.archivio ? `<div class="box" style="border-color:rgba(125,107,255,.5);margin-bottom:14px"><p class="plot" style="font-size:14px">🗂️ <b>Modalità archivio attiva.</b> Quello che spunti adesso conta nei totali ma non nelle statistiche di periodo (anno, mesi, abitudini). Quando hai finito di inserire il passato, disattivala in Impostazioni.</p></div>` : ''}
   <div class="tiles">
     <div class="tile fadein" style="--c:#ff5e62"><b>${eps}</b><span>episodi visti</span></div>
     <div class="tile fadein" style="--c:#ffb648"><b>${ore(epMin)}</b><span>passate sulle serie</span></div>
@@ -621,6 +622,7 @@ function renderIo(){
   <h2 class="sec">Impostazioni</h2>
   <div class="box">
     <div class="set"><div class="l"><b>Intro all'avvio</b><small>Il collage di locandine quando apri l'app</small></div><button class="sw ${C.intro ? 'on' : ''}" data-act="toggleIntro" aria-label="Intro"></button></div>
+    <div class="set"><div class="l"><b>Modalità archivio</b><small>Attivala mentre inserisci serie e film visti in passato: non falseranno le statistiche di oggi</small></div><button class="sw ${C.archivio ? 'on' : ''}" data-act="toggleArch" aria-label="Archivio"></button></div>
     <div class="set"><div class="l"><b>Novità</b><small>${D.lastCheck ? 'Ultimo controllo ' + new Date(D.lastCheck).toLocaleString('it-IT', {weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Mai controllato'} · automatico ogni settimana</small></div><button class="btn small ghost" data-act="checkNews">Controlla</button></div>
   </div>
   <div class="box"><h4>Chiave TMDB (film e trame in italiano)</h4>
@@ -681,7 +683,7 @@ function showSheet(id, keep){
       <div class="seasact"><span>${sW} di ${eps.length} visti${eps.length > sAired.length ? ` · ${eps.length - sAired.length} in arrivo` : ''}</span>
         ${sAired.length ? `<button class="lnk" data-act="seasonAll" data-id="${id}" data-s="${cur}">${sW === sAired.length ? 'Togli tutte le spunte' : 'Segna tutta la stagione'}</button>` : ''}</div>
       ${eps.map(e => { const fut = !e.d || e.d > t, on = !!sh.watched[e.i];
-        return `<div class="ep ${fut ? 'fut' : ''}"><div class="n">E${String(e.n).padStart(2, '0')}</div><div class="nm"><b>${esc(epT(sh, e))}</b><small>${e.d ? (fut ? 'Esce ' + esc(fGiorno(e.d)) : esc(fData(e.d))) : 'Data da annunciare'}${e.r ? ' · ' + e.r + ' min' : ''}${on && typeof sh.watched[e.i] === 'number' ? ' · visto il ' + esc(fData(new Date(sh.watched[e.i]).toLocaleDateString('sv'), false)) : ''}</small></div>
+        return `<div class="ep ${fut ? 'fut' : ''}"><div class="n">E${String(e.n).padStart(2, '0')}</div><div class="nm"><b>${esc(epT(sh, e))}</b><small>${e.d ? (fut ? 'Esce ' + esc(fGiorno(e.d)) : esc(fData(e.d))) : 'Data da annunciare'}${e.r ? ' · ' + e.r + ' min' : ''}${on && sh.watched[e.i] > 1e11 ? ' · visto il ' + esc(fData(new Date(sh.watched[e.i]).toLocaleDateString('sv'), false)) : ''}</small></div>
         ${fut ? '' : `<button class="ck ${on ? 'on' : ''}" data-act="ep" data-id="${id}" data-e="${e.i}" aria-label="Visto">${I.check}</button>`}</div>`; }).join('')}
     </div>
     <div class="box"><h4>Il mio giudizio</h4>${sh.myRating ? `<div style="font-size:22px;margin-bottom:6px">${stars(sh.myRating)}</div>` : ''}
@@ -722,7 +724,9 @@ function rateModal(id){
   UI.rate = {id, r:m.rating || 0};
   $('#mcard').innerHTML = `<h3>${esc(m.title)}</h3><div class="s">Com'è stato?</div>
     <div class="rate">${[1,2,3,4,5].map(n => `<button class="${n <= UI.rate.r ? 'on' : ''}" data-act="star" data-n="${n}">★</button>`).join('')}</div>
-    <div class="lbl">Quando l'hai visto</div><input class="fld" type="date" id="rDate" value="${esc(m.seenAt || oggi())}" max="${oggi()}">
+    <div class="lbl">Quando l'hai visto</div>
+    <div class="tchips" style="margin:0 0 8px"><button class="${m.seenAt || (m.state !== 'seen' && !C.archivio) ? 'on' : ''}" data-act="whenD" data-w="d">In questa data</button><button class="${(m.state === 'seen' && !m.seenAt) || (m.state !== 'seen' && C.archivio) ? 'on' : ''}" data-act="whenD" data-w="p">Tempo fa</button></div>
+    <input class="fld ${(m.state === 'seen' && !m.seenAt) || (m.state !== 'seen' && C.archivio) ? 'hide' : ''}" type="date" id="rDate" value="${esc(m.seenAt || oggi())}" max="${oggi()}">
     <div class="lbl">Il tuo commento</div><div class="notes ce" id="rCom" contenteditable="true" role="textbox" aria-multiline="true" autocorrect="on" autocapitalize="sentences" spellcheck="true" data-ph="Di cosa parlava, cosa ti è rimasto, con chi l'hai visto…">${esc(m.comment || '')}</div>
     <div class="mrow"><button class="btn ghost" data-act="closeModal">Annulla</button><button class="btn" data-act="saveRate">Salva</button></div>`;
   $('#modal').classList.add('open');
@@ -878,7 +882,7 @@ async function doSearch(q){
 }
 
 /* ---------- AZIONI ---------- */
-function markEp(sh, epId, on){ if (on){ sh.watched[epId] = Date.now(); sh.lastW = Date.now(); } else delete sh.watched[epId]; }
+function markEp(sh, epId, on, past){ if (on){ sh.watched[epId] = (past || C.archivio) ? 1 : Date.now(); sh.lastW = Date.now(); } else delete sh.watched[epId]; }
 function burst(el){
   const r = el.getBoundingClientRect(), cols = ['#ff5e62','#ffb648','#ffc857','#7d6bff','#22b8aa'];
   for (let i = 0; i < 14; i++){
@@ -931,7 +935,7 @@ const A = {
     const col = el.parentElement; col.innerHTML = '<button class="add alt">…</button>';
     try {
       const m = await fetchMovie(d.id);
-      D.movies[m.id] = Object.assign(m, {state:d.s, added:Date.now(), rating:0, comment:'', seenAt:d.s === 'seen' ? oggi() : ''});
+      D.movies[m.id] = Object.assign(m, {state:d.s, added:Date.now(), rating:0, comment:'', seenAt:d.s === 'seen' && !C.archivio ? oggi() : ''});
       if (!D.lastCheck) D.lastCheck = Date.now();
       save(); col.innerHTML = `<button class="add done">${d.s === 'seen' ? '✓ Visto' : '✓ In lista'}</button>`; burst(col);
       if (d.s === 'seen') setTimeout(() => rateModal(m.id), d.rec ? 400 : 0); else { toast(`<b>${esc(m.title)}</b> tra i film da vedere`); if (d.rec) setTimeout(() => { $('#modal').classList.remove('open'); render(); }, 500); }
@@ -956,19 +960,19 @@ const A = {
     if (on){
       const t = oggi(), ep = sh.eps.find(e => e.i == d.e);
       const prev = sh.eps.filter(e => (e.s < ep.s || (e.s === ep.s && e.n < ep.n)) && e.d && e.d <= t && !sh.watched[e.i]);
-      if (prev.length) toast(`Ci sono ${prev.length} episodi precedenti non spuntati`, 'Segna anche quelli', () => { prev.forEach(e => markEp(sh, e.i, true)); save(); refreshView(); }, 6000);
+      if (prev.length) toast(`Ci sono ${prev.length} episodi precedenti non spuntati`, 'Segna anche quelli', () => { prev.forEach(e => markEp(sh, e.i, true, true)); save(); refreshView(); }, 6000);
     }
     setTimeout(refreshView, 300);
   },
   season(d){ UI.season[d.id] = +d.s; showSheet(+d.id, true); },
   seasonAll(d){
     const sh = D.series[d.id], t = oggi(), eps = sh.eps.filter(e => e.s == d.s && e.d && e.d <= t);
-    const all = eps.every(e => sh.watched[e.i]); eps.forEach(e => markEp(sh, e.i, !all)); save(); showSheet(+d.id, true);
+    const all = eps.every(e => sh.watched[e.i]); eps.forEach(e => markEp(sh, e.i, !all, true)); save(); showSheet(+d.id, true);
     toast(all ? `Stagione ${d.s}: spunte tolte` : `Stagione ${d.s} segnata come vista`);
   },
   allShow(d){
     const sh = D.series[d.id], t = oggi(), todo = sh.eps.filter(e => e.d && e.d <= t && !sh.watched[e.i]);
-    todo.forEach(e => markEp(sh, e.i, true)); save(); showSheet(+d.id, true); burst(document.querySelector('.ring') || document.body);
+    todo.forEach(e => markEp(sh, e.i, true, true)); save(); showSheet(+d.id, true); burst(document.querySelector('.ring') || document.body);
     toast(`🎉 <b>${esc(showName(sh))}</b>: tutta vista!`, 'Annulla', () => { todo.forEach(e => markEp(sh, e.i, false)); save(); refreshView(); }, 6000);
     if (!sh.myRating) setTimeout(() => rateShowModal(sh.id, sh.status === 'Ended'), 1200);
   },
@@ -977,6 +981,8 @@ const A = {
   removeMovie(d){ const m = D.movies[d.id]; delete D.movies[d.id]; save(); closeSheet(); toast(`<b>${esc(m.title)}</b> rimosso`, 'Annulla', () => { D.movies[d.id] = m; save(); render(); }); },
   unsee(d){ const m = D.movies[d.id]; m.state = 'todo'; save(); movieSheet(d.id); },
   rate(d){ rateModal(d.id); },
+  whenD(d, el){ el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); $('#rDate').classList.toggle('hide', d.w === 'p'); },
+  toggleArch(){ C.archivio = !C.archivio; saveCfg(); render(); toast(C.archivio ? 'Modalità archivio attiva: le spunte non contano nelle statistiche del periodo' : 'Modalità archivio disattivata: da ora conta tutto con la data di oggi', null, null, 5000); },
   tonight(){ UI.tn = null; tonightModal(UI.tab === 'film' ? 150 : 60); },
   tonightT(d){ UI.tn = null; tonightModal(+d.m); },
   tonightNext(){ UI.tn.i++; tonightModal(UI.tn.mins); },
@@ -988,7 +994,7 @@ const A = {
   saveRate(){
     if (UI.rate.show){ const sh = D.series[UI.rate.id]; sh.myRating = UI.rate.r; sh.notes = $('#rCom').innerText.trim(); save(); $('#modal').classList.remove('open'); toast('✓ Giudizio salvato'); refreshView(); return; }
     const m = D.movies[UI.rate.id], first = m.state !== 'seen';
-    Object.assign(m, {state:'seen', rating:UI.rate.r, seenAt:$('#rDate').value || oggi(), comment:$('#rCom').innerText.trim()});
+    Object.assign(m, {state:'seen', rating:UI.rate.r, seenAt:$('#rDate').classList.contains('hide') ? '' : ($('#rDate').value || oggi()), comment:$('#rCom').innerText.trim()});
     save(); $('#modal').classList.remove('open');
     if (first) toast(`🎬 <b>${esc(m.title)}</b> è nel tuo diario`);
     if (UI.open?.type === 'movie') movieSheet(m.id); else { UI.filmSeg = 'seen'; render(); }
@@ -1167,6 +1173,13 @@ function buildWall(list){
 function introStats(){
   const ns = Object.keys(D.series).length, nm = Object.values(D.movies).filter(m => m.state === 'seen').length, nn = D.news.filter(n => !n.read).length;
   $('#introStats').textContent = ns || nm ? `${ns} serie · ${nm} film visti${nn ? ` · ${nn} novità` : ''}` : '';
+}
+
+/* ---------- MIGRAZIONE 1.7: tutto ciò che è stato inserito finora è storico ---------- */
+if (!D.mig17){
+  Object.values(D.series).forEach(sh => Object.keys(sh.watched || {}).forEach(k => sh.watched[k] = 1));
+  Object.values(D.movies).forEach(m => { if (m.state === 'seen' && m.seenAt && m.added && m.seenAt === new Date(m.added).toLocaleDateString('sv')) m.seenAt = ''; });
+  D.mig17 = true; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){}
 }
 
 /* ---------- AVVIO ---------- */
