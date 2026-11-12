@@ -434,7 +434,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.7.1';
+const VERSIONE = '2.7.2';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1579,8 +1579,9 @@ async function controllaImport(){
     if (imp.soloDate){
       let n = 0;
       for (const f of imp.film){ const m = Object.values(D.movies).find(x => norm(x.title) === norm(f.title)); if (m && m.state === 'seen' && !m.seenAt){ m.seenAt = f.d; n++; } }
+      for (const e of (imp.episodi || [])){ const sh = D.series[e.s]; if (sh && sh.watched[e.e] === 1){ sh.watched[e.e] = e.ts; n++; } }
       D.importati = [...(D.importati || []), imp.id]; save(); render();
-      if (n) toast(`📅 Ripristinate le date di ${n} film`, null, null, 5000);
+      if (n) toast(`📅 Ripristinate ${n} date di visione`, null, null, 5000);
       return;
     }
     UI.imp = imp;
