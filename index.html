@@ -431,7 +431,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.2.1';
+const VERSIONE = '2.2.2';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1337,14 +1337,16 @@ async function posterPool(){
 function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function buildWall(list){
   const mine = [...Object.values(D.series).map(s => showImg(s)), ...Object.values(D.movies).map(m => movImg(m))].filter(Boolean);
-  let pool = shuffle([...new Set([...mine, ...list])]);
+  // con abbastanza titoli tuoi, il collage è fatto solo di quelli (serie e film visti, in lista o in corso), mescolati ogni volta
+  const mieUniche = [...new Set(mine)];
+  let pool = mieUniche.length >= 12 ? shuffle(mieUniche) : shuffle([...new Set([...mieUniche, ...list])]);
   const ncol = 9, per = 10, wall = $('#wall'); if (!wall) return;
   let html = '';
   for (let c = 0; c < ncol; c++){
     let items = '';
     const col = [];
     for (let i = 0; i < per; i++){
-      const k = c * per + i;
+      const k = (c * per + i + c * 3) % Math.max(1, pool.length) + (pool.length ? 0 : c * per + i);
       col.push(pool.length ? `<div class="wp"><img src="${esc(pool[k % pool.length])}" alt="" onload="this.classList.add('ok')"></div>`
         : `<div class="wp fake" style="background:linear-gradient(160deg,${PH_COL[k % 6]},#0d0b14)">${esc(FALLBACK[k % FALLBACK.length])}</div>`);
     }
