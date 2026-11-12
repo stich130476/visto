@@ -360,7 +360,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.5';
+const VERSIONE = '1.5.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1024,12 +1024,13 @@ async function checkNews(force){
   const t = oggi(), since = D.lastCheck ? new Date(D.lastCheck).toLocaleDateString('sv') : addDays(t, -7), week = addDays(t, 7);
   let errs = 0;
   for (const old of ss){
-    if (old.status === 'Ended' && showStats(old).st === 'finite') continue;
+    if (old.status === 'Ended' && showStats(old).st === 'finite' && Date.now() - (old.lastFull || 0) < 30 * 864e5) continue;
+    if (old.status === 'Ended') old.lastFull = Date.now();
     try {
       const nu = await fetchShow(old.id);
       const oldMax = Math.max(0, ...old.eps.map(e => e.s)), newMax = Math.max(0, ...nu.eps.map(e => e.s));
       const fresh = nu.eps.filter(e => e.d && e.d > since && e.d <= t && !old.watched[e.i]);
-      const keep = {watched:old.watched, paused:old.paused, notes:old.notes, myRating:old.myRating, added:old.added, lastW:old.lastW, tmdb:old.tmdb, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
+      const keep = {watched:old.watched, paused:old.paused, notes:old.notes, myRating:old.myRating, lastFull:old.lastFull, added:old.added, lastW:old.lastW, tmdb:old.tmdb, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
       if (old.tmdb) keep.genres = old.genres;
       D.series[old.id] = Object.assign(nu, keep);
       const sh = D.series[old.id], name = showName(sh), img = showImg(sh, 'w185');
