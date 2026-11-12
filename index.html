@@ -331,6 +331,43 @@ ol.steps li{margin-bottom:6px}
 .feat .pimg{width:76px;height:114px;border-radius:12px;overflow:hidden;flex:none}
 .feat b{font:800 19px var(--serif);display:block}
 
+
+/* ---------- MODALITÀ GIORNO ---------- */
+html[data-theme=light]{--bg:#f5efe6;--bg2:#fffcf7;--card:#fffcf7;--card2:#efe7da;--line:rgba(70,45,30,.11);--txt:#21171f;--mut:#6b6070;--mut2:#9b8f99;--a2:#c4600f;--ok:#1f9d63;color-scheme:light}
+html[data-theme=light] body::before{background:radial-gradient(70% 32% at 50% -6%,rgba(255,196,120,.38),transparent 70%),radial-gradient(45% 30% at 0% 18%,rgba(125,107,255,.10),transparent 70%),radial-gradient(45% 30% at 100% 30%,rgba(255,94,98,.10),transparent 70%)}
+html[data-theme=light] .app::before{content:"";display:block;height:6px;margin:0 -18px 6px;opacity:.16;background:repeating-linear-gradient(90deg,#21171f 0 10px,transparent 10px 22px)}
+html[data-theme=light] :is(.cwc,.box,.tile,.dia,.empty,.news-ok,.res,.tonight){box-shadow:0 8px 24px rgba(70,40,20,.07)}
+html[data-theme=light] .bar{background:rgba(70,45,30,.10)}
+html[data-theme=light] .cwc .bgb{opacity:.10}
+html[data-theme=light] .tabbar{background:rgba(255,252,247,.82);border-color:rgba(70,45,30,.10);box-shadow:0 16px 40px rgba(70,40,20,.16)}
+html[data-theme=light] .tabbar button.on{background:rgba(70,45,30,.07)}
+html[data-theme=light] .tabbar button.on svg{color:#e0602a}
+html[data-theme=light] .close,html[data-theme=light] .rb{background:rgba(255,252,247,.78);border-color:rgba(70,45,30,.12);color:var(--txt)}
+html[data-theme=light] .hero::after{background:linear-gradient(180deg,rgba(245,239,230,0),rgba(245,239,230,.25) 45%,var(--bg) 98%)}
+html[data-theme=light] .hhead .pimg{box-shadow:0 16px 36px rgba(70,40,20,.28)}
+html[data-theme=light] .mcard{background:#fffcf7}
+html[data-theme=light] .modal{background:rgba(40,25,30,.32)}
+html[data-theme=light] :is(.rate button,.stars .off){color:rgba(70,45,30,.20)}
+html[data-theme=light] .rate button.on{color:#f0a020}
+html[data-theme=light] .stars{color:#e8930f}
+html[data-theme=light] :is(.plot,.pill,.gbar span,.dia .cm,.yhero p,.yearbtn small,ol.steps){color:#3a2f3a}
+html[data-theme=light] .ck{border-color:rgba(70,45,30,.28)}
+html[data-theme=light] :is(textarea.notes,.fld,.notes.ce){background:#fff}
+html[data-theme=light] .sw{background:rgba(70,45,30,.16)}
+html[data-theme=light] .toast{background:rgba(255,252,247,.97);border-color:rgba(70,45,30,.12);box-shadow:0 16px 40px rgba(70,40,20,.2)}
+html[data-theme=light] .seg button.on{background:#fff;box-shadow:0 3px 10px rgba(70,40,20,.12)}
+html[data-theme=light] .yearbtn{background:radial-gradient(120% 140% at 0% 0%,rgba(125,107,255,.20),transparent 60%),radial-gradient(120% 140% at 100% 100%,rgba(255,94,98,.18),transparent 60%),var(--bg2);border-color:rgba(70,45,30,.10)}
+html[data-theme=light] .yhero{background:radial-gradient(80% 60% at 20% 10%,rgba(125,107,255,.22),transparent 70%),radial-gradient(80% 60% at 90% 40%,rgba(255,94,98,.2),transparent 70%),radial-gradient(60% 50% at 50% 100%,rgba(255,200,87,.25),transparent 70%)}
+html[data-theme=light] .ver{color:#5b5060}
+html[data-theme=light] .pst,html[data-theme=light] .pimg{box-shadow:0 8px 20px rgba(70,40,20,.18)}
+html[data-theme=light] .ncard{background:linear-gradient(var(--bg2),var(--bg2)) padding-box,linear-gradient(135deg,rgba(255,94,98,.8),rgba(255,180,70,.7),rgba(125,107,255,.6)) border-box}
+html[data-theme=light] .pill.lab,html[data-theme=light] .schip.on{background:rgba(224,96,42,.12)}
+html[data-theme=light] .tile::after{opacity:.22}
+html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparent)}
+.theme3{display:flex;gap:6px;background:var(--card2);border-radius:12px;padding:3px}
+.theme3 button{padding:7px 10px;border-radius:9px;font-size:13px;font-weight:600;color:var(--mut)}
+.theme3 button.on{background:var(--bg2);color:var(--txt);box-shadow:0 2px 8px rgba(0,0,0,.15)}
+
 /* TOAST */
 .toast{position:fixed;left:50%;bottom:calc(96px + var(--sb));transform:translate(-50%,30px);z-index:90;display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:16px;background:rgba(36,31,48,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);box-shadow:0 16px 40px rgba(0,0,0,.5);font-size:14px;opacity:0;pointer-events:none;transition:.35s cubic-bezier(.2,.9,.2,1);max-width:92vw;width:max-content}
 .toast span{flex:1}
@@ -377,7 +414,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.9.7';
+const VERSIONE = '2.0';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -408,6 +445,14 @@ const normGen = (...lists) => [...new Set(lists.flat().filter(Boolean).flatMap(g
 let D = load(KEY) || {v:1, upd:0, series:{}, movies:{}, news:[], lastCheck:0};
 let C = Object.assign({tmdb:'', ghUser:'', ghRepo:'visto-dati', ghToken:'', intro:true, archivio:true, sha:'', lastSync:0, syncErr:''}, load(CFG) || {});
 let UI = {tab:'serie', filmSeg:'todo', season:{}, searchType:null, busy:false};
+const MQ = matchMedia('(prefers-color-scheme: light)');
+function applyTheme(){
+  const t = (C.theme || 'auto') === 'auto' ? (MQ.matches ? 'light' : 'dark') : C.theme;
+  document.documentElement.dataset.theme = t;
+  document.querySelector('meta[name=theme-color]').content = t === 'light' ? '#f5efe6' : '#0a0910';
+}
+MQ.addEventListener?.('change', () => applyTheme());
+applyTheme();
 function load(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
 function saveCfg(){ try { localStorage.setItem(CFG, JSON.stringify(C)); } catch(e){} }
 function save(sync = true){ D.upd = Date.now(); if (C.tmdb) D.tmdbKey = C.tmdb; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){} if (sync) pushLater(); }
@@ -636,6 +681,7 @@ function renderIo(){
     <p class="cap2" style="margin-top:8px;white-space:normal">Tocca un genere per vedere i titoli · le frecce mostrano come cambia la classifica rispetto alla settimana scorsa</p></div>` : ''}
   <h2 class="sec">Impostazioni</h2>
   <div class="box">
+    <div class="set"><div class="l"><b>Aspetto</b><small>Giorno, notte o automatico come l'iPhone</small></div><div class="theme3">${[['auto','Auto'],['light','☀︎ Giorno'],['dark','☾ Notte']].map(([v, l]) => `<button class="${(C.theme || 'auto') === v ? 'on' : ''}" data-act="theme" data-v="${v}">${l}</button>`).join('')}</div></div>
     <div class="set"><div class="l"><b>Intro all'avvio</b><small>Il collage di locandine quando apri l'app</small></div><button class="sw ${C.intro ? 'on' : ''}" data-act="toggleIntro" aria-label="Intro"></button></div>
     <div class="set"><div class="l"><b>Modalità archivio</b><small>Attivala mentre inserisci serie e film visti in passato: non falseranno le statistiche di oggi</small></div><button class="sw ${C.archivio ? 'on' : ''}" data-act="toggleArch" aria-label="Archivio"></button></div>
     <div class="set"><div class="l"><b>Novità</b><small>${D.lastCheck ? 'Ultimo controllo ' + new Date(D.lastCheck).toLocaleString('it-IT', {weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Mai controllato'} · automatico ogni settimana</small></div><button class="btn small ghost" data-act="checkNews">Controlla</button></div>
@@ -1063,6 +1109,7 @@ const A = {
   dismiss(d){ const n = D.news.find(x => x.id === d.id); if (n) n.read = true; save(); render(); },
   readAll(){ D.news.forEach(n => n.read = true); save(); render(); },
   checkNews(){ checkNews(true); },
+  theme(d){ C.theme = d.v; saveCfg(); applyTheme(); render(); },
   toggleIntro(){ C.intro = !C.intro; saveCfg(); render(); },
   async saveTmdb(){
     C.tmdb = $('#tmdbKey').value.trim(); saveCfg();
