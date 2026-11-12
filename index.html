@@ -376,7 +376,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.9';
+const VERSIONE = '1.9.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -399,6 +399,8 @@ const MACRO = {Horror:'Horror', Soprannaturale:'Horror', Commedia:'Commedia', Th
   Dramma:'Drammatico', Medico:'Drammatico', Sentimentale:'Drammatico', Storico:'Drammatico', Storia:'Drammatico', Romance:'Drammatico', 'Soap opera':'Drammatico', Animazione:'Animazione', Anime:'Animazione',
   Avventura:'Avventura', Azione:'Avventura', Western:'Avventura', Guerra:'Avventura', Mistero:'Mistero', Fantascienza:'Fantascienza', Fantasy:'Altro'};
 const macro = list => { const m = [...new Set((list || []).map(g => MACRO[g]).filter(Boolean))]; return m.length ? m : ['Altro']; };
+const PRIO = ['Animazione','Horror','Commedia','Fantascienza','Thriller & Crime','Mistero','Avventura','Drammatico'];
+const mainGen = it => { if (it.myGen) return it.myGen; const m = macro(it.genres).filter(g => g !== 'Altro'); return PRIO.find(g => m.includes(g)) || 'Altro'; };
 const normGen = (...lists) => [...new Set(lists.flat().filter(Boolean).flatMap(g => SPLIT[g] || [genIt(g)]))];
 
 /* ---------- STATO ---------- */
@@ -604,12 +606,12 @@ function renderIo(){
   let eps = 0, epMin = 0, epYear = 0; const y = String(new Date().getFullYear()); const gen = {};
   ss.forEach(sh => { const byId = Object.fromEntries(sh.eps.map(e => [e.i, e]));
     Object.entries(sh.watched).forEach(([id, ts]) => { eps++; epMin += byId[id]?.r || sh.runtime || 45; if (new Date(ts).getFullYear() == y) epYear++; });
-    if (Object.keys(sh.watched).length) macro(sh.genres).forEach(g => gen[g] = (gen[g] || 0) + 1); });
+    if (Object.keys(sh.watched).length){ const g = mainGen(sh); gen[g] = (gen[g] || 0) + 1; } });
   const seen = ms.filter(m => m.state === 'seen');
   const fMin = seen.reduce((a, m) => a + (m.runtime || 110), 0);
   const rated = seen.filter(m => m.rating);
   const avg = rated.length ? (rated.reduce((a, m) => a + m.rating, 0) / rated.length).toFixed(1).replace('.', ',') : '–';
-  seen.forEach(m => macro(m.genres).forEach(g => gen[g] = (gen[g] || 0) + 1));
+  seen.forEach(m => { const g = mainGen(m); gen[g] = (gen[g] || 0) + 1; });
   const ORD = ['Horror','Commedia','Thriller & Crime','Drammatico','Animazione','Avventura','Mistero','Fantascienza','Altro'];
   const top = ORD.map(g => [g, gen[g] || 0]).sort((a, b) => b[1] - a[1] || ORD.indexOf(a[0]) - ORD.indexOf(b[0])), mx = top[0]?.[1] || 1;
   const order = top.map(t => t[0]);
@@ -678,7 +680,8 @@ function showSheet(id, keep){
   <div class="hero"><div class="bk ${sh.back ? '' : 'blur'}" style="background-image:url('${esc(showBack(sh))}')"></div></div>
   <div class="hhead">${poster(showImg(sh), showName(sh), 'pimg')}<div style="min-width:0;padding-bottom:4px"><h2>${esc(showName(sh))}</h2>
     ${sh.itName && sh.itName !== sh.name ? `<div class="it">${esc(sh.name)}</div>` : ''}
-    <div class="meta">${[years, sh.net, ...(sh.genres || []).slice(0, 2)].filter(Boolean).map(g => `<span class="pill">${esc(g)}</span>`).join('')}${sh.rating ? `<span class="pill">★ ${sh.rating}</span>` : ''}</div></div></div>
+    <div class="meta">${[years, sh.net, ...(sh.genres || []).slice(0, 2)].filter(Boolean).map(g => `<span class="pill">${esc(g)}</span>`).join('')}${sh.rating ? `<span class="pill">★ ${sh.rating}</span>` : ''}</div>
+    <button class="pill" style="margin-top:8px;background:rgba(255,154,77,.16);color:var(--a2)" data-act="pickGen" data-k="s" data-id="${id}">🏷️ ${esc(mainGen(sh))} ›</button></div></div>
   <div class="pad">
     <div class="box"><div class="prog"><div class="ring"><svg viewBox="0 0 72 72"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5e62"/><stop offset="1" stop-color="#ffc857"/></linearGradient></defs><circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="7"/><circle cx="36" cy="36" r="30" fill="none" stroke="url(#rg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C2}" stroke-dashoffset="${C2 * (1 - x.pct / 100)}"/></svg><b>${x.pct}%</b></div>
       <div class="tx"><b>${stato}</b><p>${x.w} di ${x.aired} episodi visti${x.left ? ` · ne mancano ${x.left} (circa ${ore(x.leftMin)})` : ''}</p>
@@ -715,7 +718,8 @@ function movieSheet(id, keep){
   <div class="hero"><div class="bk ${m.back ? '' : 'blur'}" style="background-image:url('${esc(m.back ? IMG + 'w1280' + m.back : movImg(m))}')"></div></div>
   <div class="hhead">${poster(movImg(m), m.title, 'pimg')}<div style="min-width:0;padding-bottom:4px"><h2>${esc(m.title)}</h2>
     ${m.orig && m.orig !== m.title ? `<div class="it">${esc(m.orig)}</div>` : ''}
-    <div class="meta">${[m.year, runtime, ...(m.genres || []).slice(0, 2)].filter(Boolean).map(g => `<span class="pill">${esc(g)}</span>`).join('')}${m.vote ? `<span class="pill">★ ${m.vote.toFixed(1)}</span>` : ''}</div></div></div>
+    <div class="meta">${[m.year, runtime, ...(m.genres || []).slice(0, 2)].filter(Boolean).map(g => `<span class="pill">${esc(g)}</span>`).join('')}${m.vote ? `<span class="pill">★ ${m.vote.toFixed(1)}</span>` : ''}</div>
+    <button class="pill" style="margin-top:8px;background:rgba(255,154,77,.16);color:var(--a2)" data-act="pickGen" data-k="m" data-id="${id}">🏷️ ${esc(mainGen(m))} ›</button></div></div>
   <div class="pad">
     ${m.state === 'seen' ? `<div class="box"><h4>Il mio ricordo</h4><div style="font-size:22px">${stars(m.rating) || '<span class="cap2">Nessun voto</span>'}</div>
       <p class="cap2" style="margin:4px 0 10px">${m.seenAt ? 'Visto il ' + esc(fData(m.seenAt)) : ''}</p>
@@ -855,8 +859,8 @@ function rateShowModal(id, fin){
 
 function genreSheet(g){
   UI.open = {type:'genre', g};
-  const ss = Object.values(D.series).filter(sh => Object.keys(sh.watched).length && macro(sh.genres).includes(g));
-  const ms = Object.values(D.movies).filter(m => m.state === 'seen' && macro(m.genres).includes(g));
+  const ss = Object.values(D.series).filter(sh => Object.keys(sh.watched).length && mainGen(sh) === g);
+  const ms = Object.values(D.movies).filter(m => m.state === 'seen' && mainGen(m) === g);
   const card = (act, id, img, t, sub) => `<button class="pc-it fadein" data-act="${act}" data-id="${id}">${poster(img, t)}<div class="cap">${esc(t)}</div><div class="cap2">${esc(sub)}</div></button>`;
   openSheet(`<div class="yhero" style="padding-bottom:22px"><div class="yy" style="font-size:52px;letter-spacing:-1px">${esc(g)}</div><p>${ss.length} serie · ${ms.length} film</p></div>
     <div class="pad">${ss.length ? `<h2 class="sec">Serie <small>${ss.length}</small></h2><div class="grid">${ss.map(sh => { const x = showStats(sh); return card('openShow', sh.id, showImg(sh), showName(sh), sh.myRating ? '★'.repeat(sh.myRating) : x.pct + '% visto'); }).join('')}</div>` : ''}
@@ -1028,6 +1032,15 @@ const A = {
   recOpen(d){ recModal(d.k, d.id); },
   year(){ yearSheet(); },
   genre(d){ genreSheet(d.g); },
+  pickGen(d){
+    const it = d.k === 's' ? D.series[d.id] : D.movies[d.id], cur = mainGen(it);
+    UI.pg = {k:d.k, id:d.id};
+    $('#mcard').innerHTML = `<h3>Genere nella tua classifica</h3><div class="s">${esc(d.k === 's' ? showName(it) : it.title)} · scelto in automatico: ${esc((() => { const x = Object.assign({}, it, {myGen:null}); return mainGen(x); })())}</div>
+      <div class="tchips" style="flex-wrap:wrap">${[...PRIO, 'Altro'].map(g => `<button style="flex:1 1 30%" class="${g === cur ? 'on' : ''}" data-act="setGen" data-g="${esc(g)}">${esc(g)}</button>`).join('')}</div>
+      <div class="mrow">${it.myGen ? '<button class="btn ghost" data-act="setGen" data-g="">Torna automatico</button>' : ''}<button class="btn ghost" data-act="closeModal">Chiudi</button></div>`;
+    $('#modal').classList.add('open');
+  },
+  setGen(d){ const it = UI.pg.k === 's' ? D.series[UI.pg.id] : D.movies[UI.pg.id]; it.myGen = d.g || null; save(); $('#modal').classList.remove('open'); refreshView(); toast('🏷️ Genere: ' + esc(mainGen(it))); },
   star(d){ UI.rate.r = UI.rate.r === +d.n ? 0 : +d.n; document.querySelectorAll('.rate button').forEach((b, i) => b.classList.toggle('on', i < UI.rate.r)); },
   rateShow(d){ rateShowModal(d.id); },
   saveRate(){
@@ -1097,7 +1110,7 @@ async function checkNews(force){
       const nu = await fetchShow(old.id);
       const oldMax = Math.max(0, ...old.eps.map(e => e.s)), newMax = Math.max(0, ...nu.eps.map(e => e.s));
       const fresh = nu.eps.filter(e => e.d && e.d > since && e.d <= t && !old.watched[e.i]);
-      const keep = {watched:old.watched, paused:old.paused, notes:old.notes, myRating:old.myRating, lastFull:old.lastFull, added:old.added, lastW:old.lastW, tmdb:old.tmdb, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
+      const keep = {watched:old.watched, paused:old.paused, notes:old.notes, myRating:old.myRating, lastFull:old.lastFull, added:old.added, lastW:old.lastW, tmdb:old.tmdb, myGen:old.myGen, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
       keep.tmg = old.tmg; keep.genres = normGen(nu.tvg, old.tmg || []);
       D.series[old.id] = Object.assign(nu, keep);
       const sh = D.series[old.id], name = showName(sh), img = showImg(sh, 'w185');
@@ -1222,11 +1235,13 @@ if (!D.mig17){
 }
 
 async function migGeneri(){
-  if (D.mig18) return;
+  if (D.mig18 && Object.values(D.series).every(sh => sh.tvg)) return;
+  let ok = true;
   for (const sh of Object.values(D.series)){
-    if (!sh.tvg) try { const t = await tvm('/shows/' + sh.id); sh.tvg = (t.genres || []).map(genIt); await sleep(200); } catch(e){ return; }
+    if (!sh.tvg) try { const t = await tvm('/shows/' + sh.id); sh.tvg = (t.genres || []).map(genIt); await sleep(250); } catch(e){ ok = false; continue; }
     sh.genres = normGen(sh.tvg || [], sh.tmg || sh.genres || []);
   }
+  if (!ok){ save(); return; }
   Object.values(D.movies).forEach(m => m.genres = normGen(m.genres || []));
   D.mig18 = true; save(); if (!$('#sheet').classList.contains('open')) render();
 }
