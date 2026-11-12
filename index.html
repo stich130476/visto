@@ -381,6 +381,21 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 .badge i{font-style:normal;font-size:20px;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--grad)}
 .badge.off{opacity:.6}.badge.off i{background:var(--card);filter:grayscale(1)}
 .badge small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+.tfam{margin-bottom:14px}
+.tfh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.tfh span{font-weight:700;font-size:15px}.tfh em{font-style:normal;font-size:12px;color:var(--mut)}
+.tpath{display:flex;align-items:center;overflow-x:auto;margin:0 -16px;padding:4px 16px 6px;scrollbar-width:none}
+.tpath::-webkit-scrollbar{display:none}
+.tier{flex:none;width:112px;padding:10px 8px;border-radius:16px;background:var(--card2);text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tier>i{font-style:normal;font-size:22px;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;margin-bottom:4px;background:var(--card)}
+.tier b{font-size:12.5px;line-height:1.15}.tier small{font-size:11px;color:var(--mut)}
+.tier.done>i{background:var(--grad);box-shadow:0 6px 16px rgba(255,120,80,.35)}
+.tier.next{outline:2px solid rgba(255,154,77,.7);background:rgba(255,154,77,.10)}
+.tier.next .bar{display:block;flex:none;width:100%;height:5px;margin-top:6px}
+.tier.next .tp{color:var(--a2);font-weight:700}
+.tier.lock{opacity:.45}.tier.lock>i{filter:grayscale(1)}
+.tlink{flex:none;width:14px;height:3px;background:var(--line);border-radius:2px}
+.tlink.on{background:var(--grad)}
 .wrank{display:flex;flex-direction:column;gap:7px}
 .wr{display:flex;align-items:center;gap:10px;font-size:14px}
 .wr .wn{width:16px;color:var(--mut2);font-weight:800;font-size:12px}
@@ -445,7 +460,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.7.7';
+const VERSIONE = '2.8';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -624,6 +639,7 @@ function render(){
     <button class="rb" data-act="search" aria-label="Cerca">${I.search}</button></div>`;
   const body = UI.tab === 'serie' ? renderSerie() : UI.tab === 'film' ? renderFilm() : renderIo();
   $('#app').innerHTML = top + (UI.tab !== 'io' ? renderNews() : '') + body;
+  requestAnimationFrame(() => document.querySelectorAll('.tpath').forEach(p => { const n = p.querySelector('.next'); if (n) p.scrollLeft = Math.max(0, n.offsetLeft - p.offsetLeft - 140); }));
 }
 
 function renderNews(){
@@ -773,19 +789,20 @@ function renderIo(){
   const scala = (cur, livelli, mk) => { const out = livelli.map(([g, ic, t]) => T(ic, t, mk(g), cur, g)); let g = livelli[livelli.length - 1][0], k = 1;
     while (cur >= g){ g *= 2; out.push(T('🚀', `${livelli[livelli.length - 1][2]} ${['II','III','IV','V','VI','VII','VIII','IX','X'][k - 1] || k + 1}`, mk(g), cur, g)); k++; } return out; };
   const fmtN = n => n.toLocaleString('it-IT');
-  const BADGE = [
-    ...scala(eps, [[10,'📺','Primi passi'],[100,'🛋️','Divano d\'oro'],[250,'🥉','Divano di platino'],[500,'🏆','Leggenda del divano'],[1000,'👑','Re del telecomando'],[2500,'🌌','Oltre l\'infinito']], g => `${fmtN(g)} episodi`),
-    ...scala(finite, [[5,'✅','Serial finisher'],[15,'🎖️','Collezionista'],[30,'🏅','Archivista'],[50,'💎','Enciclopedia vivente']], g => `${g} serie complete`),
-    ...scala(seen.length, [[10,'🎬','Cinefilo'],[50,'🎞️','Cineteca'],[100,'🍿','Cinema d\'essai'],[250,'🎥','Palma d\'oro']], g => `${g} film`),
-    T('🏃','Maratoneta','6 episodi in un giorno',marN,6), T('⚡','Binge-watcher','10 episodi in un giorno',marN,10),
-    T('🔥','Abitudinario','7 giorni di fila',streak,7), T('🗓️','Mese da record','30 giorni di fila',streak,30),
-    T('🦉','Nottambulo','un episodio dopo mezzanotte',+notturno,1), T('⏱️','Puntuale','un episodio il giorno d\'uscita',+puntuale,1),
-    ...scala(maxSerie, [[100,'❤️','Fedelissimo']], g => `${g} episodi della stessa serie`),
-    ...scala(commenti, [[10,'✍️','Critico'],[30,'📝','Recensore'],[100,'📚','Penna d\'oro']], g => `${g} commenti`),
-    T('⭐','Pignolo','25 voti dati',votati,25), T('🌟','Cinque stelle','10 titoli da 5 stelle',cinque,10),
-    T('🌍','Esploratore','6 generi diversi',generi,6), T('🧭','Onnivoro','tutti i 10 generi',generi,10),
-    T('📅','Anno pieno','visioni in tutti i 12 mesi',mesi,12)];
-  BADGE.sort((a, b) => b[3] - a[3]);
+  // traguardi raggruppati in percorsi (livelli in sequenza) + sfide singole
+  const FAM = [
+    ['📺','Episodi visti', scala(eps, [[10,'📺','Primi passi'],[100,'🛋️','Divano d\'oro'],[250,'🥉','Divano di platino'],[500,'🏆','Leggenda del divano'],[1000,'👑','Re del telecomando'],[2500,'🌌','Oltre l\'infinito']], g => `${fmtN(g)} episodi`)],
+    ['✅','Serie complete', scala(finite, [[5,'✅','Serial finisher'],[15,'🎖️','Collezionista'],[30,'🏅','Archivista'],[50,'💎','Enciclopedia vivente']], g => `${g} serie`)],
+    ['🎬','Film visti', scala(seen.length, [[10,'🎬','Cinefilo'],[50,'🎞️','Cineteca'],[100,'🍿','Cinema d\'essai'],[250,'🎥','Palma d\'oro']], g => `${g} film`)],
+    ['❤️','Una serie del cuore', scala(maxSerie, [[100,'❤️','Fedelissimo']], g => `${g} episodi di una serie`)],
+    ['🏃','Maratone', [T('🏃','Maratoneta','6 episodi in un giorno',marN,6), T('⚡','Binge-watcher','10 episodi in un giorno',marN,10)]],
+    ['🔥','Costanza', [T('🔥','Abitudinario','7 giorni di fila',streak,7), T('🗓️','Mese da record','30 giorni di fila',streak,30)]],
+    ['✍️','Commenti', scala(commenti, [[10,'✍️','Critico'],[30,'📝','Recensore'],[100,'📚','Penna d\'oro']], g => `${g} commenti`)],
+    ['🌍','Varietà', [T('🌍','Esploratore','6 generi diversi',generi,6), T('🧭','Onnivoro','tutti i 10 generi',generi,10)]]];
+  const SINGLE = [T('🦉','Nottambulo','un episodio dopo mezzanotte',+notturno,1), T('⏱️','Puntuale','un episodio il giorno d\'uscita',+puntuale,1),
+    T('⭐','Pignolo','25 voti dati',votati,25), T('🌟','Cinque stelle','10 titoli da 5 stelle',cinque,10), T('📅','Anno pieno','visioni in tutti i 12 mesi',mesi,12)];
+  SINGLE.sort((a, b) => b[3] - a[3]);
+  const BADGE = [...FAM.flatMap(f => f[2]), ...SINGLE];
   const sync = C.ghToken && C.ghUser ? (C.syncErr ? `<span class="stat-ko">Errore: ${esc(C.syncErr)}</span>` : C.lastSync ? `<span class="stat-ok">Sincronizzato ${new Date(C.lastSync).toLocaleString('it-IT', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>` : 'Non ancora sincronizzato') : 'Non attiva';
   return `<h1 class="big">Io</h1><div class="sub">Il tuo divano, in numeri</div>
   ${C.archivio ? `<div class="box" style="border-color:rgba(125,107,255,.5);margin-bottom:14px"><p class="plot" style="font-size:14px">🗂️ <b>Modalità archivio attiva.</b> Quello che spunti adesso conta nei totali ma non nelle statistiche di periodo (anno, mesi, abitudini). Quando hai finito di inserire il passato, disattivala in Impostazioni.</p></div>` : ''}
@@ -809,7 +826,11 @@ function renderIo(){
       <div class="wsplit"><div style="flex:${fer || 1}"><b>${fer}%</b><span>lun–ven</span></div><div style="flex:${we || 1}"><b>${we}%</b><span>weekend</span></div></div>
       <p class="plot" style="font-size:14px;margin-top:12px">Il tuo giorno preferito è il <b>${GIORNI[wbest]}</b> (${pct(wd[wbest])}% delle visioni)${ord[6][1] < ord[0][1] ? `, quello in cui guardi meno è il <b>${GIORNI[ord[6][0]]}</b> (${pct(ord[6][1])}%)` : ''}.${mar && mar[1].n > 1 ? ` Record di maratona: <b>${mar[1].n} episodi</b> in un giorno (${esc(fData(mar[0]))}), soprattutto di <i>${esc(marShow)}</i>.` : ''}</p>`; })()
     : `<p class="plot" style="font-size:14px">Qui compariranno il tuo giorno della settimana preferito e i record di maratona, man mano che segni cosa guardi${C.archivio ? ' (con la modalità archivio spenta)' : ''}.</p>`}</div>
-  <div class="box"><h4>Traguardi · ${BADGE.filter(b => b[3]).length} di ${BADGE.length}</h4><div class="badges">${BADGE.map(([ic, t, sub, ok, cur, goal]) => `<div class="badge ${ok ? '' : 'off'}"><i>${ic}</i><span>${t}<small>${sub}${!ok && goal > 1 ? ` · <b style="color:var(--a2)">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</b>` : ''}</small>${!ok && goal > 1 && cur > 0 ? `<span class="bar" style="display:block;height:4px;margin-top:4px;width:100%"><i style="width:${Math.min(100, cur / goal * 100)}%"></i></span>` : ''}</span></div>`).join('')}</div></div>
+  <div class="box"><h4>Traguardi · ${BADGE.filter(b => b[3]).length} di ${BADGE.length}</h4>
+    ${FAM.map(([fi, fn, items]) => { const done = items.filter(b => b[3]).length, nx = items.findIndex(b => !b[3]);
+      return `<div class="tfam"><div class="tfh"><span>${fi} ${fn}</span><em>livello ${done} di ${items.length}</em></div><div class="tpath">${items.map(([ic, t, sub, ok, cur, goal], i) => `${i ? `<div class="tlink ${ok ? 'on' : ''}"></div>` : ''}<div class="tier ${ok ? 'done' : i === nx ? 'next' : 'lock'}"><i>${ic}</i><b>${t}</b><small>${sub}</small>${i === nx && goal > 1 ? `<span class="bar"><i style="width:${Math.min(100, cur / goal * 100)}%"></i></span><small class="tp">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</small>` : ''}</div>`).join('')}</div></div>`; }).join('')}
+    <div class="tfh" style="margin-top:14px"><span>🎯 Sfide</span><em>${SINGLE.filter(b => b[3]).length} di ${SINGLE.length}</em></div>
+    <div class="badges">${SINGLE.map(([ic, t, sub, ok, cur, goal]) => `<div class="badge ${ok ? '' : 'off'}"><i>${ic}</i><span>${t}<small>${sub}${!ok && goal > 1 ? ` · <b style="color:var(--a2)">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</b>` : ''}</small></span></div>`).join('')}</div></div>
   <h2 class="sec">Impostazioni</h2>
   <div class="box">
     <div class="set"><div class="l"><b>Aspetto</b><small>Giorno, notte o automatico come l'iPhone</small></div><div class="theme3">${[['auto','Auto'],['light','☀︎ Giorno'],['dark','☾ Notte']].map(([v, l]) => `<button class="${(C.theme || 'auto') === v ? 'on' : ''}" data-act="theme" data-v="${v}">${l}</button>`).join('')}</div></div>
