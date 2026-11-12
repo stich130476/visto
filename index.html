@@ -376,7 +376,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.9.1';
+const VERSIONE = '1.9.2';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1246,9 +1246,20 @@ async function migGeneri(){
   D.mig18 = true; save(); if (!$('#sheet').classList.contains('open')) render();
 }
 
+/* ---------- AGGIORNAMENTO AUTOMATICO ---------- */
+async function checkUpdate(){
+  try {
+    const r = await fetch('./index.html?nc=' + Date.now(), {cache:'no-store'});
+    const m = (await r.text()).match(/const VERSIONE = '([0-9.]+)'/);
+    if (m && m[1] !== VERSIONE){ toast(`✨ Aggiorno Visto! alla versione ${m[1]}…`); setTimeout(() => location.replace('./?v=' + m[1]), 1200); }
+  } catch(e){}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
+
 /* ---------- AVVIO ---------- */
 (async function init(){
   render();
+  checkUpdate();
   if (C.intro){
     introStats();
     const cache = load(POSTERS); buildWall(cache?.list || []);
