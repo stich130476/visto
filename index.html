@@ -376,7 +376,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.8';
+const VERSIONE = '1.8.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -395,6 +395,10 @@ const epCode = e => `S${e.s}E${String(e.n).padStart(2, '0')}`;
 const GENERI = {Drama:'Dramma',Comedy:'Commedia','Science-Fiction':'Fantascienza',Horror:'Horror',Thriller:'Thriller',Crime:'Crime',Mystery:'Mistero',Fantasy:'Fantasy',Action:'Azione',Adventure:'Avventura',Romance:'Sentimentale',Family:'Famiglia',Supernatural:'Soprannaturale',History:'Storico',War:'Guerra',Western:'Western',Anime:'Anime',Music:'Musica',Sports:'Sport',Medical:'Medico',Legal:'Legale',Espionage:'Spionaggio',Children:'Ragazzi',Food:'Cucina',Travel:'Viaggi',Nature:'Natura'};
 const genIt = g => GENERI[g] || g;
 const SPLIT = {'Sci-Fi & Fantasy':['Fantascienza','Fantasy'],'Action & Adventure':['Azione','Avventura'],'War & Politics':['Guerra','Politica'],'Kids':['Ragazzi'],'Talk':['Talk show'],'Soap':['Soap opera'],'Science Fiction':['Fantascienza'],'Animation':['Animazione'],'Documentary':['Documentario'],'Mystery':['Mistero'],'Drama':['Dramma']};
+const MACRO = {Horror:'Horror', Soprannaturale:'Horror', Commedia:'Commedia', Thriller:'Thriller & Crime', Crime:'Thriller & Crime', Spionaggio:'Thriller & Crime', Legale:'Thriller & Crime',
+  Dramma:'Drammatico', Medico:'Drammatico', Sentimentale:'Drammatico', Storico:'Drammatico', Storia:'Drammatico', Romance:'Drammatico', 'Soap opera':'Drammatico', Animazione:'Animazione', Anime:'Animazione',
+  Avventura:'Avventura', Azione:'Avventura', Western:'Avventura', Guerra:'Avventura', Mistero:'Mistero', Fantascienza:'Fantascienza', Fantasy:'Fantascienza'};
+const macro = list => [...new Set((list || []).map(g => MACRO[g]).filter(Boolean))];
 const normGen = (...lists) => [...new Set(lists.flat().filter(Boolean).flatMap(g => SPLIT[g] || [genIt(g)]))];
 
 /* ---------- STATO ---------- */
@@ -600,12 +604,12 @@ function renderIo(){
   let eps = 0, epMin = 0, epYear = 0; const y = String(new Date().getFullYear()); const gen = {};
   ss.forEach(sh => { const byId = Object.fromEntries(sh.eps.map(e => [e.i, e]));
     Object.entries(sh.watched).forEach(([id, ts]) => { eps++; epMin += byId[id]?.r || sh.runtime || 45; if (new Date(ts).getFullYear() == y) epYear++; });
-    if (Object.keys(sh.watched).length) (sh.genres || []).forEach(g => gen[g] = (gen[g] || 0) + 1); });
+    if (Object.keys(sh.watched).length) macro(sh.genres).forEach(g => gen[g] = (gen[g] || 0) + 1); });
   const seen = ms.filter(m => m.state === 'seen');
   const fMin = seen.reduce((a, m) => a + (m.runtime || 110), 0);
   const rated = seen.filter(m => m.rating);
   const avg = rated.length ? (rated.reduce((a, m) => a + m.rating, 0) / rated.length).toFixed(1).replace('.', ',') : '–';
-  seen.forEach(m => (m.genres || []).forEach(g => gen[g] = (gen[g] || 0) + 1));
+  seen.forEach(m => macro(m.genres).forEach(g => gen[g] = (gen[g] || 0) + 1));
   const top = Object.entries(gen).sort((a, b) => b[1] - a[1]).slice(0, 8), mx = top[0]?.[1] || 1;
   const filmYear = seen.filter(m => (m.seenAt || '').startsWith(y)).length;
   const sync = C.ghToken && C.ghUser ? (C.syncErr ? `<span class="stat-ko">Errore: ${esc(C.syncErr)}</span>` : C.lastSync ? `<span class="stat-ok">Sincronizzato ${new Date(C.lastSync).toLocaleString('it-IT', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>` : 'Non ancora sincronizzato') : 'Non attiva';
