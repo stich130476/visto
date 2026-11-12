@@ -373,7 +373,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.6.1';
+const VERSIONE = '1.6.2';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -533,7 +533,7 @@ function renderSerie(){
   const all = Object.values(D.series).map(sh => ({sh, ...showStats(sh)}));
   let h = `<h1 class="big">Serie</h1>`;
   if (!all.length) return h + `<div class="empty fadein"><div class="ic">📺</div><h3>Nessuna serie, per ora</h3><p>Aggiungi le serie che stai guardando o che vuoi iniziare: al resto penso io.</p><button class="btn" data-act="search">${I.search}Cerca una serie</button></div>`;
-  const by = k => all.filter(x => x.st === k);
+  const by = k => all.filter(x => x.st === k).sort((a, b) => Math.max(b.sh.added || 0, b.sh.lastW || 0) - Math.max(a.sh.added || 0, a.sh.lastW || 0));
   const corso = by('corso').sort((a, b) => (b.sh.lastW || 0) - (a.sh.lastW || 0));
   const totLeft = corso.reduce((a, x) => a + x.left, 0);
   h += `<div class="sub">${all.length} serie · ${totLeft} episodi da recuperare</div>` + tonightCard();
@@ -551,7 +551,7 @@ function renderSerie(){
     <button class="pc-it fadein" data-act="openShow" data-id="${x.sh.id}">${poster(showImg(x.sh), showName(x.sh), 'pst', (badge(x) || '') + (x.pct && x.pct < 100 ? `<div class="pb"><i style="width:${x.pct}%"></i></div>` : ''))}
     <div class="cap">${esc(showName(x.sh))}</div><div class="cap2">${esc(capSerie(x))}</div></button>`).join('')}</div>` : '';
   h += grid('Al passo, in attesa', by('attesa'), x => x.sh.next?.d ? `<span class="bdg hot">${esc(fGiorno(x.sh.next.d))}</span>` : '');
-  h += grid('Da iniziare', by('nuove'), x => x.sh.next?.d && !x.aired ? `<span class="bdg">Esce ${esc(fData(x.sh.next.d, false))}</span>` : '');
+  h += grid('Da iniziare', by('nuove'), x => Date.now() - (x.sh.added || 0) < 2 * 864e5 ? '<span class="bdg hot">Appena aggiunta</span>' : x.sh.next?.d && !x.aired ? `<span class="bdg">Esce ${esc(fData(x.sh.next.d, false))}</span>` : '');
   h += grid('In pausa', by('pausa'), () => '<span class="bdg">In pausa</span>');
   h += grid('Finite', by('finite'), x => `<span class="bdg">${x.sh.myRating ? '★'.repeat(x.sh.myRating) : '✓ Vista'}</span>`);
   return h + recRow('shows');
