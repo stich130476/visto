@@ -360,7 +360,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.4';
+const VERSIONE = '1.5';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -534,7 +534,7 @@ function renderSerie(){
   h += grid('Al passo, in attesa', by('attesa'), x => x.sh.next?.d ? `<span class="bdg hot">${esc(fGiorno(x.sh.next.d))}</span>` : '');
   h += grid('Da iniziare', by('nuove'), x => x.sh.next?.d && !x.aired ? `<span class="bdg">Esce ${esc(fData(x.sh.next.d, false))}</span>` : '');
   h += grid('In pausa', by('pausa'), () => '<span class="bdg">In pausa</span>');
-  h += grid('Finite', by('finite'), () => '<span class="bdg">✓ Vista</span>');
+  h += grid('Finite', by('finite'), x => `<span class="bdg">${x.sh.myRating ? '★'.repeat(x.sh.myRating) : '✓ Vista'}</span>`);
   return h + recRow('shows');
 }
 function capSerie(x){
@@ -662,7 +662,9 @@ function showSheet(id, keep){
         return `<div class="ep ${fut ? 'fut' : ''}"><div class="n">E${String(e.n).padStart(2, '0')}</div><div class="nm"><b>${esc(epT(sh, e))}</b><small>${e.d ? (fut ? 'Esce ' + esc(fGiorno(e.d)) : esc(fData(e.d))) : 'Data da annunciare'}${e.r ? ' · ' + e.r + ' min' : ''}${on && typeof sh.watched[e.i] === 'number' ? ' · visto il ' + esc(fData(new Date(sh.watched[e.i]).toLocaleDateString('sv'), false)) : ''}</small></div>
         ${fut ? '' : `<button class="ck ${on ? 'on' : ''}" data-act="ep" data-id="${id}" data-e="${e.i}" aria-label="Visto">${I.check}</button>`}</div>`; }).join('')}
     </div>
-    <div class="box"><h4>I miei appunti</h4><textarea class="notes" data-notes="show" data-id="${id}" placeholder="A che punto sei, cosa ti è piaciuto, chi te l'ha consigliata…">${esc(sh.notes || '')}</textarea></div>
+    <div class="box"><h4>Il mio giudizio</h4>${sh.myRating ? `<div style="font-size:22px;margin-bottom:6px">${stars(sh.myRating)}</div>` : ''}
+      ${sh.notes ? `<p class="plot" style="font-style:italic">“${esc(sh.notes)}”</p>` : '<p class="cap2" style="font-size:14px">Ancora nessun voto né commento: com\'è questa serie? Di cosa parla, cosa ti ha colpito?</p>'}
+      <div class="acts"><button class="btn ghost" data-act="rateShow" data-id="${id}">${sh.myRating || sh.notes ? 'Modifica voto e commento' : '★ Vota e commenta'}</button></div></div>
     <button class="danger" data-act="removeShow" data-id="${id}">Rimuovi dalla mia lista</button>
   </div>`, keep);
 }
@@ -803,6 +805,16 @@ function yearSheet(){
   </div>`);
 }
 
+function rateShowModal(id, fin){
+  const sh = D.series[id];
+  UI.rate = {id, r:sh.myRating || 0, show:true};
+  $('#mcard').innerHTML = `<h3>${esc(showName(sh))}</h3><div class="s">${fin ? 'Hai finito la serie! Com\'è stata?' : 'Com\'è questa serie?'}</div>
+    <div class="rate">${[1,2,3,4,5].map(n => `<button class="${n <= UI.rate.r ? 'on' : ''}" data-act="star" data-n="${n}">★</button>`).join('')}</div>
+    <div class="lbl">Il tuo commento</div><textarea class="notes" id="rCom" placeholder="Di cosa parla, cosa ti è piaciuto, i personaggi, con chi la guardi…">${esc(sh.notes || '')}</textarea>
+    <div class="mrow"><button class="btn ghost" data-act="closeModal">${fin ? 'Più tardi' : 'Annulla'}</button><button class="btn" data-act="saveRate">Salva</button></div>`;
+  $('#modal').classList.add('open');
+}
+
 /* ---------- RICERCA ---------- */
 function searchSheet(type){
   UI.searchType = type || (UI.tab === 'film' ? 'film' : 'serie');
@@ -914,6 +926,7 @@ const A = {
     const fin = showStats(sh);
     toast(fin.st === 'finite' ? `🎉 Hai finito <b>${esc(showName(sh))}</b>!` : fin.st === 'attesa' ? `Sei al passo con <b>${esc(showName(sh))}</b>` : `${epCode(ep)} segnato come visto`, 'Annulla', () => { markEp(sh, ep.i, false); save(); refreshView(); });
     setTimeout(refreshView, 250);
+    if (fin.st === 'finite' && !sh.myRating) setTimeout(() => rateShowModal(sh.id, true), 1200);
   },
   ep(d, el){
     const sh = D.series[d.id], on = !sh.watched[d.e]; markEp(sh, d.e, on); save();
@@ -935,6 +948,7 @@ const A = {
     const sh = D.series[d.id], t = oggi(), todo = sh.eps.filter(e => e.d && e.d <= t && !sh.watched[e.i]);
     todo.forEach(e => markEp(sh, e.i, true)); save(); showSheet(+d.id, true); burst(document.querySelector('.ring') || document.body);
     toast(`🎉 <b>${esc(showName(sh))}</b>: tutta vista!`, 'Annulla', () => { todo.forEach(e => markEp(sh, e.i, false)); save(); refreshView(); }, 6000);
+    if (!sh.myRating) setTimeout(() => rateShowModal(sh.id, sh.status === 'Ended'), 1200);
   },
   pause(d){ const sh = D.series[d.id]; sh.paused = !sh.paused; save(); showSheet(+d.id, true); toast(sh.paused ? 'Serie messa in pausa' : 'Bentornato!'); },
   removeShow(d){ const sh = D.series[d.id]; delete D.series[d.id]; save(); closeSheet(); toast(`<b>${esc(showName(sh))}</b> rimossa`, 'Annulla', () => { D.series[d.id] = sh; save(); render(); }); },
@@ -948,7 +962,9 @@ const A = {
   recOpen(d){ recModal(d.k, d.id); },
   year(){ yearSheet(); },
   star(d){ UI.rate.r = UI.rate.r === +d.n ? 0 : +d.n; document.querySelectorAll('.rate button').forEach((b, i) => b.classList.toggle('on', i < UI.rate.r)); },
+  rateShow(d){ rateShowModal(d.id); },
   saveRate(){
+    if (UI.rate.show){ const sh = D.series[UI.rate.id]; sh.myRating = UI.rate.r; sh.notes = $('#rCom').value.trim(); save(); $('#modal').classList.remove('open'); toast('✓ Giudizio salvato'); refreshView(); return; }
     const m = D.movies[UI.rate.id], first = m.state !== 'seen';
     Object.assign(m, {state:'seen', rating:UI.rate.r, seenAt:$('#rDate').value || oggi(), comment:$('#rCom').value.trim()});
     save(); $('#modal').classList.remove('open');
@@ -1013,7 +1029,7 @@ async function checkNews(force){
       const nu = await fetchShow(old.id);
       const oldMax = Math.max(0, ...old.eps.map(e => e.s)), newMax = Math.max(0, ...nu.eps.map(e => e.s));
       const fresh = nu.eps.filter(e => e.d && e.d > since && e.d <= t && !old.watched[e.i]);
-      const keep = {watched:old.watched, paused:old.paused, notes:old.notes, added:old.added, lastW:old.lastW, tmdb:old.tmdb, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
+      const keep = {watched:old.watched, paused:old.paused, notes:old.notes, myRating:old.myRating, added:old.added, lastW:old.lastW, tmdb:old.tmdb, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
       if (old.tmdb) keep.genres = old.genres;
       D.series[old.id] = Object.assign(nu, keep);
       const sh = D.series[old.id], name = showName(sh), img = showImg(sh, 'w185');
