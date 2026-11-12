@@ -354,6 +354,7 @@ html[data-theme=light] :is(.plot,.pill,.gbar span,.dia .cm,.yhero p,.yearbtn sma
 html[data-theme=light] .ck{border-color:rgba(70,45,30,.28)}
 html[data-theme=light] :is(textarea.notes,.fld,.notes.ce){background:#fff}
 html[data-theme=light] .sw{background:rgba(70,45,30,.16)}
+html[data-theme=light] .sw.on{background:var(--ok)}
 html[data-theme=light] .toast{background:rgba(255,252,247,.97);border-color:rgba(70,45,30,.12);box-shadow:0 16px 40px rgba(70,40,20,.2)}
 html[data-theme=light] .seg button.on{background:#fff;box-shadow:0 3px 10px rgba(70,40,20,.12)}
 html[data-theme=light] .yearbtn{background:radial-gradient(120% 140% at 0% 0%,rgba(125,107,255,.20),transparent 60%),radial-gradient(120% 140% at 100% 100%,rgba(255,94,98,.18),transparent 60%),var(--bg2);border-color:rgba(70,45,30,.10)}
@@ -414,7 +415,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.0.1';
+const VERSIONE = '2.0.2';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -661,9 +662,10 @@ function renderIo(){
   const ORD = ['Horror & Mistero','Commedia','Thriller & Crime','Drammatico','Animazione','Avventura','Fantascienza','Fantasy','Storico','Altro'];
   const top = ORD.map(g => [g, gen[g] || 0]).sort((a, b) => b[1] - a[1] || ORD.indexOf(a[0]) - ORD.indexOf(b[0])), mx = top[0]?.[1] || 1;
   const order = top.map(t => t[0]);
-  if (!D.genSnap || Date.now() - D.genSnap.at > 7 * 864e5){ D.genPrev = D.genSnap ? D.genSnap.order : order; D.genSnap = {at:Date.now(), order}; save(false); }
+  if (!D.genSnap || D.genSnap.v !== 2){ D.genSnap = {v:2, at:Date.now(), order}; D.genPrev = null; save(false); }
+  else if (Date.now() - D.genSnap.at > 7 * 864e5){ D.genPrev = D.genSnap.order; D.genSnap = {v:2, at:Date.now(), order}; save(false); }
   const prev = D.genPrev || order;
-  const move = g => { const d = prev.indexOf(g) - order.indexOf(g); return d > 0 ? `<b style="color:var(--ok);font-size:11px">▲${d}</b>` : d < 0 ? `<b style="color:#ff7b7b;font-size:11px">▼${-d}</b>` : '<b style="color:var(--mut2);font-size:11px">–</b>'; };
+  const move = g => { if (!prev.includes(g)) return '<b style="color:var(--mut2);font-size:11px">–</b>'; const d = prev.indexOf(g) - order.indexOf(g); return d > 0 ? `<b style="color:var(--ok);font-size:11px">▲${d}</b>` : d < 0 ? `<b style="color:#ff7b7b;font-size:11px">▼${-d}</b>` : '<b style="color:var(--mut2);font-size:11px">–</b>'; };
   const filmYear = seen.filter(m => (m.seenAt || '').startsWith(y)).length;
   const sync = C.ghToken && C.ghUser ? (C.syncErr ? `<span class="stat-ko">Errore: ${esc(C.syncErr)}</span>` : C.lastSync ? `<span class="stat-ok">Sincronizzato ${new Date(C.lastSync).toLocaleString('it-IT', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>` : 'Non ancora sincronizzato') : 'Non attiva';
   return `<h1 class="big">Io</h1><div class="sub">Il tuo divano, in numeri</div>
