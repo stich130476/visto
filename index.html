@@ -434,7 +434,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.6';
+const VERSIONE = '2.7';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -657,12 +657,13 @@ function capSerie(x){
 
 function renderFilm(){
   const all = Object.values(D.movies);
-  const todo = all.filter(m => m.state === 'todo').sort((a, b) => b.added - a.added);
-  const seen = all.filter(m => m.state === 'seen').sort((a, b) => (b.seenAt || '').localeCompare(a.seenAt || '') || b.added - a.added);
+  const boc = all.filter(m => m.dropped).sort((a, b) => (b.seenAt || '').localeCompare(a.seenAt || '') || b.added - a.added);
+  const todo = all.filter(m => m.state === 'todo' && !m.dropped).sort((a, b) => b.added - a.added);
+  const seen = all.filter(m => m.state === 'seen' && !m.dropped).sort((a, b) => (b.seenAt || '').localeCompare(a.seenAt || '') || b.added - a.added);
   let h = `<h1 class="big">Film</h1>`;
   if (!C.tmdb) h += `<div class="box fadein" style="border-color:rgba(255,154,77,.4)"><h4>Un passo prima di iniziare</h4><p class="plot">Per cercare i film con locandine, trame in italiano e "dove vederlo" serve una chiave gratuita di TMDB. Si fa una volta sola, ci vogliono due minuti.</p><div class="acts"><button class="btn small" data-act="tab" data-t="io">Imposta la chiave</button></div></div>`;
   if (all.length) h += tonightCard();
-  h += `<div class="seg"><button class="${UI.filmSeg === 'todo' ? 'on' : ''}" data-act="filmSeg" data-s="todo">Da vedere<span>${todo.length}</span></button><button class="${UI.filmSeg === 'seen' ? 'on' : ''}" data-act="filmSeg" data-s="seen">Visti<span>${seen.length}</span></button></div>`;
+  h += `<div class="seg"><button class="${UI.filmSeg === 'todo' ? 'on' : ''}" data-act="filmSeg" data-s="todo">Da vedere<span>${todo.length}</span></button><button class="${UI.filmSeg === 'seen' ? 'on' : ''}" data-act="filmSeg" data-s="seen">Visti<span>${seen.length}</span></button>${boc.length ? `<button class="${UI.filmSeg === 'boc' ? 'on' : ''}" data-act="filmSeg" data-s="boc">👎 Bocciati<span>${boc.length}</span></button>` : ''}</div>`;
   if (UI.filmSeg === 'todo'){
     if (!todo.length) return h + `<div class="empty fadein"><div class="ic">🍿</div><h3>La tua lista è vuota</h3><p>Aggiungi i film che vuoi vedere prima o poi. Ti avviso io quando escono.</p><button class="btn" data-act="search">${I.search}Cerca un film</button></div>` + recRow('movies');
     const t = oggi();
@@ -670,6 +671,12 @@ function renderFilm(){
       const b = m.rel && m.rel > t ? `<span class="bdg hot">Esce ${esc(fData(m.rel, false))}</span>` : (m.prov?.length ? `<span class="bdg">${esc(m.prov[0].n)}</span>` : '');
       return `<button class="pc-it fadein" data-act="openMovie" data-id="${m.id}">${poster(movImg(m), m.title, 'pst', b)}<div class="cap">${esc(m.title)}</div><div class="cap2">${esc([m.year, m.genres?.[0]].filter(Boolean).join(' · '))}</div></button>`;
     }).join('')}</div>` + recRow('movies');
+  }
+  if (UI.filmSeg === 'boc'){
+    if (!boc.length){ UI.filmSeg = 'seen'; return renderFilm(); }
+    return h + boc.map(m => `<button class="dia fadein" data-act="openMovie" data-id="${m.id}">${poster(movImg(m, 'w185'), m.title, 'pimg')}
+      <div style="min-width:0"><div class="tt">👎 ${esc(m.title)}</div><div class="mt">${esc([m.year, m.director].filter(Boolean).join(' · '))}${m.state === 'seen' ? (m.seenAt ? ' · visto il ' + esc(fData(m.seenAt)) : ' · visto') : ' · non mi interessa'}</div>
+      ${stars(m.rating)}${m.comment ? `<div class="cm">“${esc(m.comment)}”</div>` : ''}</div></button>`).join('');
   }
   if (!seen.length) return h + `<div class="empty fadein"><div class="ic">🎬</div><h3>Il tuo diario è vuoto</h3><p>Quando vedi un film, segnalo come visto: qui ritroverai il tuo voto e i tuoi commenti.</p></div>`;
   let cur = '';
@@ -873,6 +880,7 @@ function movieSheet(id, keep){
     ${(m.prov?.length || m.rent?.length) ? `<div class="box"><h4>Dove vederlo</h4><div class="prov">${(m.prov || []).map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div>
       ${m.rent?.length ? `<p class="cap2" style="margin:10px 0 8px">A noleggio</p><div class="prov">${m.rent.slice(0, 4).map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div>` : ''}</div>` : ''}
     ${m.plot ? `<div class="box"><h4>Trama</h4><p class="plot">${esc(m.plot)}</p>${m.director ? `<p class="cap2" style="margin-top:10px">Regia di ${esc(m.director)}</p>` : ''}${m.cast ? `<p class="cap2">Con ${esc(m.cast)}</p>` : ''}</div>` : ''}
+    <div class="acts" style="margin-top:14px"><button class="btn ghost" data-act="dropM" data-id="${id}">${m.dropped ? '↩︎ Dai un\'altra possibilità' : m.state === 'seen' ? '👎 Bocciato' : '👎 Non mi interessa più'}</button></div>
     ${m.state === 'seen' ? `<button class="danger" style="color:var(--a2)" data-act="unsee" data-id="${id}">Rimetti tra i film da vedere</button>` : ''}
     <button class="danger" data-act="removeMovie" data-id="${id}">Rimuovi dalla mia lista</button>
   </div>`, keep);
@@ -905,7 +913,7 @@ function tonightList(mins){
       d:`${epCode(x.next)} · ${epT(sh, x.next)}${n > 1 ? ` · ci stanno ${n} episodi` : ` · ${r} min`}`});
   });
   if (mins >= 90) Object.values(D.movies).forEach(m => {
-    if (m.state !== 'todo' || (m.rel && m.rel > t)) return;
+    if (m.state !== 'todo' || m.dropped || (m.rel && m.rel > t)) return;
     if (m.runtime && m.runtime > mins + 10) return;
     let sc = 3 + (m.prov?.length ? 3 : 0) + (m.vote || 6) / 3;
     const dur = m.runtime ? `${Math.floor(m.runtime / 60)} h ${m.runtime % 60} min` : '';
@@ -1161,6 +1169,11 @@ const A = {
     toast(`🎉 <b>${esc(showName(sh))}</b>: tutta vista!`, 'Annulla', () => { todo.forEach(e => markEp(sh, e.i, false)); save(); refreshView(); }, 6000);
     if (!sh.myRating) setTimeout(() => rateShowModal(sh.id, sh.status === 'Ended'), 1200);
   },
+  dropM(d){
+    const m = D.movies[d.id]; m.dropped = !m.dropped; save(); movieSheet(d.id, true);
+    if (m.dropped){ toast('👎 Film bocciato', 'Annulla', () => { m.dropped = false; save(); refreshView(); }, 6000); if (m.state === 'seen' && !m.comment) setTimeout(() => rateModal(m.id), 900); }
+    else toast('Ok, un\'altra possibilità!');
+  },
   drop(d){
     const sh = D.series[d.id]; sh.dropped = !sh.dropped; if (sh.dropped) sh.paused = false; save(); showSheet(+d.id, true);
     if (sh.dropped){ toast('👎 Serie bocciata: niente più avvisi per lei', 'Annulla', () => { sh.dropped = false; save(); refreshView(); }, 6000); if (!sh.notes) setTimeout(() => rateShowModal(sh.id, false, true), 900); }
@@ -1294,7 +1307,7 @@ async function checkNews(force){
   if (UI.busy) return;
   const WEEK = 7 * 864e5;
   if (!force && D.lastCheck && Date.now() - D.lastCheck < WEEK) return;
-  const ss = Object.values(D.series), ms = Object.values(D.movies).filter(m => m.state === 'todo' && typeof m.id === 'number');
+  const ss = Object.values(D.series), ms = Object.values(D.movies).filter(m => m.state === 'todo' && !m.dropped && typeof m.id === 'number');
   if (!ss.length && !ms.length){ if (force) toast('Aggiungi qualche serie o film, poi controllo io'); return; }
   UI.busy = true; render();
   const t = oggi(), since = D.lastCheck ? new Date(D.lastCheck).toLocaleDateString('sv') : addDays(t, -7), week = addDays(t, 7);
