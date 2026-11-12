@@ -445,7 +445,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.7.4';
+const VERSIONE = '2.7.5';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -532,6 +532,22 @@ async function bestPoster(sh){
     const score = p => p.vote_average * Math.log10(p.vote_count + 1) * 10 + (p.iso_639_1 === 'it' ? 4 : p.iso_639_1 === 'en' ? 1 : 0);
     sh.poster = ps.sort((a, b) => score(b) - score(a))[0].file_path; sh.autoP = 1;
   } catch(e){}
+}
+// se TVmaze non trova la serie tramite gli ID, la cerca per nome (originale e italiano) e anno
+async function tvmDaTmdb(tmdbId){
+  const ex = await tmdb(`/tv/${tmdbId}/external_ids`);
+  let found = null;
+  if (ex.imdb_id) found = await tvm('/lookup/shows?imdb=' + ex.imdb_id).catch(() => null);
+  if (!found && ex.tvdb_id) found = await tvm('/lookup/shows?thetvdb=' + ex.tvdb_id).catch(() => null);
+  if (found) return found;
+  const t = await tmdb(`/tv/${tmdbId}`, {language:'en-US'}).catch(() => null);
+  const anno = (t?.first_air_date || '').slice(0, 4);
+  for (const q of [...new Set([t?.original_name, t?.name].filter(Boolean))]){
+    const r = await tvm('/search/shows?q=' + encodeURIComponent(q)).catch(() => []);
+    const hit = r.map(x => x.show).find(sh => (sh.premiered || '').slice(0, 4) === anno) || (anno ? null : r[0]?.show);
+    if (hit) return hit;
+  }
+  return null;
 }
 async function enrichShow(sh, tmdbId){
   if (!C.tmdb) return;
@@ -1123,10 +1139,8 @@ const A = {
     try {
       let tvId = +d.id, tmdbId = null;
       if (d.src === 'tmdb'){
-        tmdbId = +d.id; const ex = await tmdb(`/tv/${tmdbId}/external_ids`);
-        let found = null;
-        if (ex.imdb_id) found = await tvm('/lookup/shows?imdb=' + ex.imdb_id).catch(() => null);
-        if (!found && ex.tvdb_id) found = await tvm('/lookup/shows?thetvdb=' + ex.tvdb_id).catch(() => null);
+        tmdbId = +d.id;
+        const found = await tvmDaTmdb(tmdbId);
         if (!found){ el.textContent = 'Non trovata'; return; }
         tvId = found.id;
       }
@@ -1522,10 +1536,7 @@ async function trovaSerie(name, alt){
   if (!t){ const r = await tmdb('/search/tv', {query:name}); t = r.results?.[0]; }
   if (!t) return null;
   const esistente = Object.values(D.series).find(x => x.tmdb === t.id); if (esistente) return esistente.id;
-  const ex = await tmdb(`/tv/${t.id}/external_ids`);
-  let found = null;
-  if (ex.imdb_id) found = await tvm('/lookup/shows?imdb=' + ex.imdb_id).catch(() => null);
-  if (!found && ex.tvdb_id) found = await tvm('/lookup/shows?thetvdb=' + ex.tvdb_id).catch(() => null);
+  const found = await tvmDaTmdb(t.id);
   if (!found) return null;
   if (!D.series[found.id]){
     const sh = await fetchShow(found.id); await enrichShow(sh, t.id);
