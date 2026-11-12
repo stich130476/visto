@@ -431,7 +431,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.2.2';
+const VERSIONE = '2.3';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -715,10 +715,32 @@ function renderIo(){
   // traguardi
   const finite = ss.filter(sh => ['finite','attesa'].includes(showStats(sh).st) && Object.keys(sh.watched).length).length;
   const commenti = ss.filter(sh => sh.notes).length + seen.filter(m => m.comment).length;
-  const BADGE = [['📺','Primi passi','10 episodi',eps >= 10],['🛋️','Divano d\'oro','100 episodi',eps >= 100],['🏆','Leggenda del divano','500 episodi',eps >= 500],
-    ['✅','Serial finisher','5 serie complete',finite >= 5],['🎖️','Collezionista','15 serie complete',finite >= 15],
-    ['🎬','Cinefilo','10 film',seen.length >= 10],['🎞️','Cineteca','50 film',seen.length >= 50],
-    ['🏃','Maratoneta','6 episodi in un giorno',(mar?.[1].n || 0) >= 6],['✍️','Critico','10 commenti',commenti >= 10],['🌍','Esploratore','6 generi diversi',Object.values(gen).filter(Boolean).length >= 6]];
+  // dati extra per i traguardi
+  const allTs = []; ss.forEach(sh => Object.values(sh.watched).forEach(ts => { if (ts > 1e11) allTs.push(ts); }));
+  const giorni = [...new Set([...allTs.map(ts => new Date(ts).toLocaleDateString('sv')), ...seen.filter(m => m.seenAt).map(m => m.seenAt)])].sort();
+  let streak = 0, run = 0; for (let i = 0; i < giorni.length; i++){ run = i && (new Date(giorni[i]) - new Date(giorni[i - 1])) === 864e5 ? run + 1 : 1; streak = Math.max(streak, run); }
+  const notturno = allTs.some(ts => { const h = new Date(ts).getHours(); return h >= 0 && h < 5; });
+  const puntuale = ss.some(sh => sh.eps.some(e => { const ts = sh.watched[e.i]; return ts > 1e11 && e.d && new Date(ts).toLocaleDateString('sv') === e.d; }));
+  const maxSerie = Math.max(0, ...ss.map(sh => Object.keys(sh.watched).length));
+  const cinque = ss.filter(sh => sh.myRating === 5).length + seen.filter(m => m.rating === 5).length;
+  const votati = ss.filter(sh => sh.myRating).length + seen.filter(m => m.rating).length;
+  const mesi = new Set(giorni.filter(g => g.startsWith(y)).map(g => g.slice(5, 7))).size;
+  const generi = Object.values(gen).filter(Boolean).length;
+  const marN = mar?.[1].n || 0;
+  const BADGE = [
+    ['📺','Primi passi','10 episodi',eps >= 10],['🛋️','Divano d\'oro','100 episodi',eps >= 100],['🥉','Divano di platino','250 episodi',eps >= 250],
+    ['🏆','Leggenda del divano','500 episodi',eps >= 500],['👑','Re del telecomando','1.000 episodi',eps >= 1000],['🌌','Oltre l\'infinito','2.500 episodi',eps >= 2500],
+    ['✅','Serial finisher','5 serie complete',finite >= 5],['🎖️','Collezionista','15 serie complete',finite >= 15],['🏅','Archivista','30 serie complete',finite >= 30],['💎','Enciclopedia vivente','50 serie complete',finite >= 50],
+    ['🎬','Cinefilo','10 film',seen.length >= 10],['🎞️','Cineteca','50 film',seen.length >= 50],['🍿','Cinema d\'essai','100 film',seen.length >= 100],['🎥','Palma d\'oro','250 film',seen.length >= 250],
+    ['🏃','Maratoneta','6 episodi in un giorno',marN >= 6],['⚡','Binge-watcher','10 episodi in un giorno',marN >= 10],
+    ['🔥','Abitudinario','7 giorni di fila',streak >= 7],['🗓️','Mese da record','30 giorni di fila',streak >= 30],
+    ['🦉','Nottambulo','un episodio dopo mezzanotte',notturno],['⏱️','Puntuale','un episodio il giorno d\'uscita',puntuale],
+    ['❤️','Fedelissimo','100 episodi della stessa serie',maxSerie >= 100],
+    ['✍️','Critico','10 commenti',commenti >= 10],['📝','Recensore','30 commenti',commenti >= 30],['📚','Penna d\'oro','100 commenti',commenti >= 100],
+    ['⭐','Pignolo','25 voti dati',votati >= 25],['🌟','Cinque stelle','10 titoli da 5 stelle',cinque >= 10],
+    ['🌍','Esploratore','6 generi diversi',generi >= 6],['🧭','Onnivoro','tutti i 10 generi',generi >= 10],
+    ['📅','Anno pieno','visioni in tutti i 12 mesi',mesi >= 12]];
+  BADGE.sort((a, b) => b[3] - a[3]);
   const sync = C.ghToken && C.ghUser ? (C.syncErr ? `<span class="stat-ko">Errore: ${esc(C.syncErr)}</span>` : C.lastSync ? `<span class="stat-ok">Sincronizzato ${new Date(C.lastSync).toLocaleString('it-IT', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>` : 'Non ancora sincronizzato') : 'Non attiva';
   return `<h1 class="big">Io</h1><div class="sub">Il tuo divano, in numeri</div>
   ${C.archivio ? `<div class="box" style="border-color:rgba(125,107,255,.5);margin-bottom:14px"><p class="plot" style="font-size:14px">🗂️ <b>Modalità archivio attiva.</b> Quello che spunti adesso conta nei totali ma non nelle statistiche di periodo (anno, mesi, abitudini). Quando hai finito di inserire il passato, disattivala in Impostazioni.</p></div>` : ''}
