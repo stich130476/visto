@@ -445,7 +445,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.7.5';
+const VERSIONE = '2.7.6';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -919,6 +919,7 @@ function movieSheet(id, keep){
 
 function rateModal(id){
   const m = D.movies[id];
+  if (m.state !== 'seen' && m.seenAt){ m.seenAt = ''; }
   UI.rate = {id, r:m.rating || 0};
   $('#mcard').innerHTML = `<h3>${esc(m.title)}</h3><div class="s">Com'è stato?</div>
     <div class="rate">${[1,2,3,4,5].map(n => `<button class="${n <= UI.rate.r ? 'on' : ''}" data-act="star" data-n="${n}">★</button>`).join('')}</div>
@@ -1212,7 +1213,7 @@ const A = {
   pause(d){ const sh = D.series[d.id]; sh.paused = !sh.paused; save(); showSheet(+d.id, true); toast(sh.paused ? 'Serie messa in pausa' : 'Bentornato!'); },
   removeShow(d){ const sh = D.series[d.id]; delete D.series[d.id]; save(); closeSheet(); toast(`<b>${esc(showName(sh))}</b> rimossa`, 'Annulla', () => { D.series[d.id] = sh; save(); render(); }); },
   removeMovie(d){ const m = D.movies[d.id]; delete D.movies[d.id]; save(); closeSheet(); toast(`<b>${esc(m.title)}</b> rimosso`, 'Annulla', () => { D.movies[d.id] = m; save(); render(); }); },
-  unsee(d){ const m = D.movies[d.id]; m.state = 'todo'; save(); movieSheet(d.id); },
+  unsee(d){ const m = D.movies[d.id]; m.state = 'todo'; m.seenAt = ''; save(); movieSheet(d.id); },
   rate(d){ rateModal(d.id); },
   epWhen(d){
     const sh = D.series[d.id], e = sh.eps.find(x => x.i == d.e), v = sh.watched[d.e];
