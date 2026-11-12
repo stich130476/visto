@@ -445,7 +445,7 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 
 <script>
 'use strict';
-const VERSIONE = '2.7.6';
+const VERSIONE = '2.7.7';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -578,7 +578,7 @@ function showStats(sh){
   if (sh.dropped) st = 'bocciate';
   else if (sh.paused) st = 'pausa';
   else if (!aired.length || w === 0) st = 'nuove';
-  else if (w >= aired.length) st = sh.status === 'Ended' ? 'finite' : 'attesa';
+  else if (w >= aired.length) st = (sh.status === 'Ended' || sh.closed) && !sh.next?.d ? 'finite' : 'attesa';
   else st = 'corso';
   return {aired:aired.length, w, next, left:left.length, leftMin, st, pct:aired.length ? Math.round(w / aired.length * 100) : 0};
 }
@@ -866,7 +866,7 @@ function showSheet(id, keep){
     <div class="box"><div class="prog"><div class="ring"><svg viewBox="0 0 72 72"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5e62"/><stop offset="1" stop-color="#ffc857"/></linearGradient></defs><circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="7"/><circle cx="36" cy="36" r="30" fill="none" stroke="url(#rg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C2}" stroke-dashoffset="${C2 * (1 - x.pct / 100)}"/></svg><b>${x.pct}%</b></div>
       <div class="tx"><b>${stato}</b><p>${x.w} di ${x.aired} episodi visti${x.left ? ` · ne mancano ${x.left} (circa ${ore(x.leftMin)})` : ''}</p>
       ${x.next ? `<p>Prossimo: <b style="font-size:14px;color:var(--txt)">${epCode(x.next)}</b> · ${esc(epT(sh, x.next))}</p>` : ''}
-      ${sh.next?.d ? `<p>Nuovo episodio ${epCode(sh.next)}: <b style="font-size:14px;color:var(--a2)">${esc(fGiorno(sh.next.d))}</b></p>` : (sh.status === 'Ended' ? '<p>Serie conclusa</p>' : '')}</div></div>
+      ${sh.next?.d ? `<p>Nuovo episodio ${epCode(sh.next)}: <b style="font-size:14px;color:var(--a2)">${esc(fGiorno(sh.next.d))}</b></p>` : (sh.status === 'Ended' || sh.closed ? '<p>Serie conclusa</p>' : (x.st === 'attesa' ? `<p class="cap2" style="white-space:normal;margin-top:4px">Nessun nuovo episodio annunciato. <button class="lnk" data-act="closeShow" data-id="${id}">È finita? Segnala come conclusa ›</button></p>` : ''))}</div></div>
       <div class="acts">${x.next ? `<button class="btn" data-act="quick" data-id="${id}">${I.check}Segna ${epCode(x.next)}</button>` : ''}
         ${sh.dropped ? '' : `<button class="btn ghost" data-act="pause" data-id="${id}">${sh.paused ? 'Riprendi' : 'Metti in pausa'}</button>`}
         <button class="btn ghost" data-act="drop" data-id="${id}">${sh.dropped ? '↩︎ Dai un\'altra possibilità' : '👎 Bocciata'}</button></div>
@@ -1205,6 +1205,7 @@ const A = {
     if (m.dropped){ toast('👎 Film bocciato', 'Annulla', () => { m.dropped = false; save(); refreshView(); }, 6000); if (m.state === 'seen' && !m.comment) setTimeout(() => rateModal(m.id), 900); }
     else toast('Ok, un\'altra possibilità!');
   },
+  closeShow(d){ const sh = D.series[d.id]; sh.closed = true; save(); showSheet(+d.id, true); toast('✓ Serie segnata come conclusa: va tra le Finite. Se dovesse tornare, ti avviso comunque', null, null, 5000); },
   drop(d){
     const sh = D.series[d.id]; sh.dropped = !sh.dropped; if (sh.dropped) sh.paused = false; save(); showSheet(+d.id, true);
     if (sh.dropped){ toast('👎 Serie bocciata: niente più avvisi per lei', 'Annulla', () => { sh.dropped = false; save(); refreshView(); }, 6000); if (!sh.notes) setTimeout(() => rateShowModal(sh.id, false, true), 900); }
@@ -1351,7 +1352,7 @@ async function checkNews(force){
       const nu = await fetchShow(old.id);
       const oldMax = Math.max(0, ...old.eps.map(e => e.s)), newMax = Math.max(0, ...nu.eps.map(e => e.s));
       const fresh = nu.eps.filter(e => e.d && e.d > since && e.d <= t && !old.watched[e.i]);
-      const keep = {watched:old.watched, paused:old.paused, dropped:old.dropped, notes:old.notes, myRating:old.myRating, lastFull:old.lastFull, added:old.added, lastW:old.lastW, tmdb:old.tmdb, myGen:old.myGen, myPoster:old.myPoster, autoP:old.autoP, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
+      const keep = {watched:old.watched, paused:old.paused, dropped:old.dropped, closed:old.closed, notes:old.notes, myRating:old.myRating, lastFull:old.lastFull, added:old.added, lastW:old.lastW, tmdb:old.tmdb, myGen:old.myGen, myPoster:old.myPoster, autoP:old.autoP, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
       keep.tmg = old.tmg; keep.genres = normGen(nu.tvg, old.tmg || []);
       D.series[old.id] = Object.assign(nu, keep);
       const sh = D.series[old.id], name = showName(sh), img = showImg(sh, 'w185');
