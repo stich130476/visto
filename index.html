@@ -373,7 +373,7 @@ ol.steps li{margin-bottom:6px}
 
 <script>
 'use strict';
-const VERSIONE = '1.6';
+const VERSIONE = '1.6.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -720,7 +720,7 @@ function rateModal(id){
   $('#mcard').innerHTML = `<h3>${esc(m.title)}</h3><div class="s">Com'è stato?</div>
     <div class="rate">${[1,2,3,4,5].map(n => `<button class="${n <= UI.rate.r ? 'on' : ''}" data-act="star" data-n="${n}">★</button>`).join('')}</div>
     <div class="lbl">Quando l'hai visto</div><input class="fld" type="date" id="rDate" value="${esc(m.seenAt || oggi())}" max="${oggi()}">
-    <div class="lbl">Il tuo commento</div><textarea class="notes" id="rCom" placeholder="Di cosa parlava, cosa ti è rimasto, con chi l'hai visto…">${esc(m.comment || '')}</textarea>
+    <div class="lbl">Il tuo commento</div><textarea class="notes" id="rCom" name="commento-visto" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true" enterkeyhint="enter" placeholder="Di cosa parlava, cosa ti è rimasto, con chi l'hai visto…">${esc(m.comment || '')}</textarea>
     <div class="mrow"><button class="btn ghost" data-act="closeModal">Annulla</button><button class="btn" data-act="saveRate">Salva</button></div>`;
   $('#modal').classList.add('open');
 }
@@ -829,7 +829,7 @@ function rateShowModal(id, fin){
   UI.rate = {id, r:sh.myRating || 0, show:true};
   $('#mcard').innerHTML = `<h3>${esc(showName(sh))}</h3><div class="s">${fin ? 'Hai finito la serie! Com\'è stata?' : 'Com\'è questa serie?'}</div>
     <div class="rate">${[1,2,3,4,5].map(n => `<button class="${n <= UI.rate.r ? 'on' : ''}" data-act="star" data-n="${n}">★</button>`).join('')}</div>
-    <div class="lbl">Il tuo commento</div><textarea class="notes" id="rCom" placeholder="Di cosa parla, cosa ti è piaciuto, i personaggi, con chi la guardi…">${esc(sh.notes || '')}</textarea>
+    <div class="lbl">Il tuo commento</div><textarea class="notes" id="rCom" name="commento-visto" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true" enterkeyhint="enter" placeholder="Di cosa parla, cosa ti è piaciuto, i personaggi, con chi la guardi…">${esc(sh.notes || '')}</textarea>
     <div class="mrow"><button class="btn ghost" data-act="closeModal">${fin ? 'Più tardi' : 'Annulla'}</button><button class="btn" data-act="saveRate">Salva</button></div>`;
   $('#modal').classList.add('open');
 }
