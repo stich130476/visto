@@ -149,6 +149,10 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border-radius:14px;background:var(--grad);color:#2a0d05;font-weight:700}
 .btn{white-space:nowrap}
 .btn{text-decoration:none}
+.mmrow{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:15px}
+.mmlogo{font-weight:800;font-size:12px;letter-spacing:.3px;padding:3px 8px;border-radius:7px;background:#c8102e;color:#fff}
+.mmst{font-size:18px}
+.stars .half{background:linear-gradient(90deg,currentColor 50%,rgba(128,128,128,.3) 50%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
 .btn.small{padding:9px 14px;font-size:14px;border-radius:12px}
 .btn:active{transform:scale(.97)}
@@ -465,7 +469,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.9.4';
+const VERSIONE = '2.10';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -605,9 +609,19 @@ function showStats(sh){
 }
 const epT = (sh, e) => (sh.itEp && sh.itEp[e.s + '-' + e.n]) || e.t;
 const mmLink = (t, y, tipo) => 'https://www.google.com/search?q=' + encodeURIComponent(`mymovies ${t} ${y || ''} ${tipo}`.trim()) + '&btnI=1';
-const critica = (t, orig, y, voto, tipo) => `<div class="box"><h4>La critica</h4>
+let MM = load('visto-mymovies') || {};
+async function caricaMM(){
+  if (!C.ghToken || !C.ghUser) return;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/contents/mymovies.json?t=${Date.now()}`, {headers:Object.assign({}, ghH(), {Accept:'application/vnd.github.raw+json'}), cache:'no-store'});
+    if (!r.ok) return; MM = await r.json(); try { localStorage.setItem('visto-mymovies', JSON.stringify(MM)); } catch(e){}
+  } catch(e){}
+}
+const stelleMM = v => { const p = Math.round(v * 2) / 2; let h = ''; for (let i = 1; i <= 5; i++) h += i <= p ? '★' : (i - .5 === p ? '<span class="half">★</span>' : '<span class="off">★</span>'); return h; };
+const critica = (t, orig, y, voto, tipo, key) => { const mm = MM[key]; return `<div class="box"><h4>La critica</h4>
+  ${mm && mm.voto ? `<div class="mmrow"><span class="mmlogo">MYmovies</span><span class="stars mmst">${stelleMM(mm.voto)}</span><b>${String(mm.voto.toFixed(1)).replace('.', ',')}</b><span class="cap2">/5</span></div>` : ''}
   ${voto ? `<p class="plot" style="font-size:14px;margin-bottom:10px">Voto medio del pubblico su TMDB: <b>★ ${voto.toFixed(1)}</b>/10</p>` : ''}
-  <div class="acts" style="margin-top:0"><a class="btn ghost small" href="${esc(mmLink(t, y, tipo))}" target="_blank" rel="noopener">🎬 Recensione su MYmovies ›</a>${orig && orig !== t ? `<a class="btn ghost small" href="${esc(mmLink(orig, y, tipo))}" target="_blank" rel="noopener">Cerca col titolo originale</a>` : ''}</div></div>`;
+  <div class="acts" style="margin-top:0"><a class="btn ghost small" href="${esc(mm && mm.url ? mm.url : mmLink(t, y, tipo))}" target="_blank" rel="noopener">🎬 Recensione su MYmovies ›</a>${!(mm && mm.url) && orig && orig !== t ? `<a class="btn ghost small" href="${esc(mmLink(orig, y, tipo))}" target="_blank" rel="noopener">Cerca col titolo originale</a>` : ''}</div></div>`; };
 const showName = sh => sh.itName && sh.itName !== sh.name ? sh.itName : sh.name;
 const showImg = (sh, size = 'w342') => sh.myPoster ? (sh.myPoster.startsWith('http') ? sh.myPoster : IMG + size + sh.myPoster) : sh.poster ? IMG + size + sh.poster : sh.img;
 const showBack = sh => sh.back ? IMG + 'w1280' + sh.back : sh.big || sh.img;
@@ -905,7 +919,7 @@ function showSheet(id, keep){
       ${x.left && !sh.dropped ? `<div class="acts" style="margin-top:10px"><button class="btn ghost" data-act="allShow" data-id="${id}">✓ Vista tutta la serie</button></div>` : ''}</div>
     ${sh.prov?.length ? `<div class="box"><h4>Dove vederla</h4><div class="prov">${sh.prov.map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div></div>` : ''}
     ${(sh.itPlot || sh.summary) ? `<div class="box"><h4>Trama</h4><p class="plot">${esc(sh.itPlot || sh.summary)}</p></div>` : ''}
-    ${critica(showName(sh), sh.name, (sh.premiered || '').slice(0, 4), sh.rating, 'serie tv')}
+    ${critica(showName(sh), sh.name, (sh.premiered || '').slice(0, 4), sh.rating, 'serie tv', 's' + sh.id)}
     <div class="box"><h4>Episodi</h4>
       <div class="schips">${seasons.map(s => { const se = sh.eps.filter(e => e.s === s && e.d && e.d <= t), w = se.filter(e => sh.watched[e.i]).length;
         return `<button class="schip ${s === cur ? 'on' : ''} ${se.length && w === se.length ? 'done' : ''}" data-act="season" data-id="${id}" data-s="${s}">Stagione ${s}<i style="width:${se.length ? w / se.length * 100 : 0}%"></i></button>`; }).join('')}</div>
@@ -944,7 +958,7 @@ function movieSheet(id, keep){
     ${(m.prov?.length || m.rent?.length) ? `<div class="box"><h4>Dove vederlo</h4><div class="prov">${(m.prov || []).map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div>
       ${m.rent?.length ? `<p class="cap2" style="margin:10px 0 8px">A noleggio</p><div class="prov">${m.rent.slice(0, 4).map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div>` : ''}</div>` : ''}
     ${m.plot ? `<div class="box"><h4>Trama</h4><p class="plot">${esc(m.plot)}</p>${m.director ? `<p class="cap2" style="margin-top:10px">Regia di ${esc(m.director)}</p>` : ''}${m.cast ? `<p class="cap2">Con ${esc(m.cast)}</p>` : ''}</div>` : ''}
-    ${critica(m.title, m.orig, m.year, m.vote, 'film')}
+    ${critica(m.title, m.orig, m.year, m.vote, 'film', 'm' + m.id)}
     <div class="acts" style="margin-top:14px"><button class="btn ghost" data-act="dropM" data-id="${id}">${m.dropped ? '↩︎ Dai un\'altra possibilità' : m.state === 'seen' ? '👎 Bocciato' : '👎 Non mi interessa più'}</button></div>
     ${m.state === 'seen' ? `<button class="danger" style="color:var(--a2)" data-act="unsee" data-id="${id}">Rimetti tra i film da vedere</button>` : ''}
     <button class="danger" data-act="removeMovie" data-id="${id}">Rimuovi dalla mia lista</button>
@@ -1776,6 +1790,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
   } else $('#intro').remove();
   await pull();
   setTimeout(controllaImport, 1500);
+  caricaMM();
   if (C.tmdb && Object.values(D.series).some(s => !s.tmdb || !s.itEp)) enrichAll();
   await checkNews(false);
   migGeneri().then(migPoster);
