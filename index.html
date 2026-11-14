@@ -149,6 +149,11 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border-radius:14px;background:var(--grad);color:#2a0d05;font-weight:700}
 .btn{white-space:nowrap}
 .btn{text-decoration:none}
+.hvoti{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.hv{display:flex;align-items:center;gap:8px;font-size:14px}
+.hv .stars{font-size:16px}
+.hl{font-size:11px;font-weight:800;letter-spacing:.3px;padding:3px 8px;border-radius:7px;background:var(--grad);color:#2a0d05;min-width:72px;text-align:center}
+.hv .mmlogo{min-width:72px;text-align:center}
 .mmrow{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:15px}
 .mmlogo{font-weight:800;font-size:12px;letter-spacing:.3px;padding:3px 8px;border-radius:7px;background:#c8102e;color:#fff}
 .mmst{font-size:18px}
@@ -469,7 +474,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.10';
+const VERSIONE = '2.10.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -618,9 +623,10 @@ async function caricaMM(){
   } catch(e){}
 }
 const stelleMM = v => { const p = Math.round(v * 2) / 2; let h = ''; for (let i = 1; i <= 5; i++) h += i <= p ? '★' : (i - .5 === p ? '<span class="half">★</span>' : '<span class="off">★</span>'); return h; };
-const critica = (t, orig, y, voto, tipo, key) => { const mm = MM[key]; return `<div class="box"><h4>La critica</h4>
-  ${mm && mm.voto ? `<div class="mmrow"><span class="mmlogo">MYmovies</span><span class="stars mmst">${stelleMM(mm.voto)}</span><b>${String(mm.voto.toFixed(1)).replace('.', ',')}</b><span class="cap2">/5</span></div>` : ''}
-  ${voto ? `<p class="plot" style="font-size:14px;margin-bottom:10px">Voto medio del pubblico su TMDB: <b>★ ${voto.toFixed(1)}</b>/10</p>` : ''}
+const voti = (mio, key) => { const mm = MM[key];
+  return `<div class="hvoti">${mio ? `<div class="hv"><span class="hl">Il mio voto</span><span class="stars">${stars(mio).replace(/^<span class="stars">|<\/span>$/g, '')}</span></div>` : ''}
+    <div class="hv"><span class="mmlogo">MYmovies</span>${mm && mm.voto ? `<span class="stars">${stelleMM(mm.voto)}</span><b>${mm.voto.toFixed(1).replace('.', ',')}</b>` : `<span class="cap2">${mm && mm.at && !mm.url ? 'non trovato' : 'voto in arrivo'}</span>`}</div></div>`; };
+const critica = (t, orig, y, voto, tipo, key) => { const mm = MM[key]; return `<div class="box"><h4>MYmovies</h4>
   <div class="acts" style="margin-top:0"><a class="btn ghost small" href="${esc(mm && mm.url ? mm.url : mmLink(t, y, tipo))}" target="_blank" rel="noopener">🎬 Recensione su MYmovies ›</a>${!(mm && mm.url) && orig && orig !== t ? `<a class="btn ghost small" href="${esc(mmLink(orig, y, tipo))}" target="_blank" rel="noopener">Cerca col titolo originale</a>` : ''}</div></div>`; };
 const showName = sh => sh.itName && sh.itName !== sh.name ? sh.itName : sh.name;
 const showImg = (sh, size = 'w342') => sh.myPoster ? (sh.myPoster.startsWith('http') ? sh.myPoster : IMG + size + sh.myPoster) : sh.poster ? IMG + size + sh.poster : sh.img;
@@ -905,7 +911,7 @@ function showSheet(id, keep){
   <div class="hero"><div class="bk ${sh.back ? '' : 'blur'}" style="background-image:url('${esc(showBack(sh))}')"></div></div>
   <div class="hhead"><div data-act="posters" data-k="s" data-id="${id}" role="button" style="position:relative">${poster(showImg(sh), showName(sh), 'pimg')}<span class="pchg">🖼️</span></div><div style="min-width:0;padding-bottom:4px"><h2>${esc(showName(sh))}</h2>
     ${sh.itName && sh.itName !== sh.name ? `<div class="it">${esc(sh.name)}</div>` : ''}
-    <div class="meta">${[years, sh.net, ...(sh.genres || []).slice(0, 2)].filter(Boolean).map(g => `<span class="pill">${esc(g)}</span>`).join('')}${sh.rating ? `<span class="pill">★ ${sh.rating}</span>` : ''}</div>
+    <div class="meta">${[years, sh.net, ...(sh.genres || []).slice(0, 2)].filter(Boolean).map(g => `<span class="pill">${esc(g)}</span>`).join('')}</div>${voti(sh.myRating, 's' + sh.id)}
     <button class="pill" style="margin-top:8px;background:rgba(255,154,77,.16);color:var(--a2)" data-act="pickGen" data-k="s" data-id="${id}">🏷️ ${esc(mainGen(sh))} ›</button></div></div>
   <div class="pad">
     <div class="box"><div class="prog"><div class="ring"><svg viewBox="0 0 72 72"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5e62"/><stop offset="1" stop-color="#ffc857"/></linearGradient></defs><circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="7"/><circle cx="36" cy="36" r="30" fill="none" stroke="url(#rg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C2}" stroke-dashoffset="${C2 * (1 - x.pct / 100)}"/></svg><b>${x.pct}%</b></div>
@@ -946,7 +952,7 @@ function movieSheet(id, keep){
   <div class="hero"><div class="bk ${m.back ? '' : 'blur'}" style="background-image:url('${esc(m.back ? IMG + 'w1280' + m.back : movImg(m))}')"></div></div>
   <div class="hhead"><div data-act="posters" data-k="m" data-id="${id}" role="button" style="position:relative">${poster(movImg(m), m.title, 'pimg')}<span class="pchg">🖼️</span></div><div style="min-width:0;padding-bottom:4px"><h2>${esc(m.title)}</h2>
     ${m.orig && m.orig !== m.title ? `<div class="it">${esc(m.orig)}</div>` : ''}
-    <div class="meta">${[m.year, runtime, ...(m.genres || []).slice(0, 2)].filter(Boolean).map(g => `<span class="pill">${esc(g)}</span>`).join('')}${m.vote ? `<span class="pill">★ ${m.vote.toFixed(1)}</span>` : ''}</div>
+    <div class="meta">${[m.year, runtime, ...(m.genres || []).slice(0, 2)].filter(Boolean).map(g => `<span class="pill">${esc(g)}</span>`).join('')}</div>${voti(m.state === 'seen' ? m.rating : 0, 'm' + m.id)}
     <button class="pill" style="margin-top:8px;background:rgba(255,154,77,.16);color:var(--a2)" data-act="pickGen" data-k="m" data-id="${id}">🏷️ ${esc(mainGen(m))} ›</button></div></div>
   <div class="pad">
     ${m.state === 'seen' ? `<div class="box"><h4>Il mio ricordo</h4><div style="font-size:22px">${stars(m.rating) || '<span class="cap2">Nessun voto</span>'}</div>
