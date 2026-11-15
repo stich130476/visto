@@ -509,7 +509,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.13';
+const VERSIONE = '2.13.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1287,23 +1287,47 @@ async function personSheet(pid, seg){
       if (il.k === 'm') stato = il.it.state === 'seen' ? 'visto' : 'lista';
       else { const x = showStats(il.it); stato = x.w ? 'visto' : 'lista'; }
     }
-    lista.push({kind, id:c.id, t:c.title || c.name, d, y:d.slice(0, 4), ch, img:il ? (il.k === 'm' ? movImg(il.it) : showImg(il.it)) : (c.poster_path ? IMG + 'w342' + c.poster_path : ''), il, stato, plot:c.overview || '', pop:c.popularity || 0});
+    lista.push({kind, id:c.id, t:c.title || c.name, d, y:d.slice(0, 4), ch, img:il ? (il.k === 'm' ? movImg(il.it) : showImg(il.it)) : (c.poster_path ? IMG + 'w342' + c.poster_path : ''), il, stato, plot:c.overview || '', pop:c.popularity || 0, q:c.vote_average || 0, n:c.vote_count || 0, gen:genDaTmdb(c.genre_ids), ord:c.order ?? c.episode_count ?? 99, ep:c.episode_count || 0});
   }
   lista.sort((a, b) => (b.d || '9999').localeCompare(a.d || '9999'));
   p._lista = lista;
   const nV = lista.filter(x => x.stato === 'visto').length, nL = lista.filter(x => x.stato === 'lista').length;
-  const filt = UI.pseg === 'visti' ? lista.filter(x => x.stato === 'visto') : UI.pseg === 'lista' ? lista.filter(x => x.stato) : lista;
+  const sug = suggeriti(lista);
+  if (UI.pseg === 'sug' && !sug.length) UI.pseg = 'tutti';
+  const filt = UI.pseg === 'visti' ? lista.filter(x => x.stato === 'visto') : UI.pseg === 'lista' ? lista.filter(x => x.stato) : UI.pseg === 'sug' ? [] : lista;
   const anni = [];
   for (const x of filt){ const y = x.y || 'Senza data'; let g = anni.find(a => a.y === y); if (!g) anni.push(g = {y, l:[]}); g.l.push(x); }
   const card = x => {
     const sub = x.il && x.il.k === 's' ? (() => { const s2 = showStats(x.il.it); return s2.pct ? s2.pct + '% visto' : 'in lista'; })() : '';
-    const bdg = x.stato === 'visto' ? `<span class="bdg hot">✓ ${x.kind === 'tv' ? (sub === '100% visto' ? 'Vista' : sub) : 'Visto'}</span>` : x.stato === 'lista' ? '<span class="bdg">Da vedere</span>' : '';
-    return `<button class="pc-it fadein ${x.stato ? '' : 'dim'}" data-act="pOpen" data-k="${x.kind}" data-id="${x.id}">${poster(x.img, x.t, 'pst', bdg)}<div class="cap">${esc(x.t)}</div>${x.ch ? `<div class="cap2">${esc(x.ch)}</div>` : ''}</button>`;
+    const bdg = x.voto ? `<span class="bdg"><span class="st">★</span> ${x.voto}</span>${x.stato === 'lista' ? '<span class="bdg" style="left:auto;right:7px">In lista</span>' : ''}` : x.stato === 'visto' ? `<span class="bdg hot">✓ ${x.kind === 'tv' ? (sub === '100% visto' ? 'Vista' : sub) : 'Visto'}</span>` : x.stato === 'lista' ? '<span class="bdg">Da vedere</span>' : '';
+    const sub2 = x.why || x.ch;
+    return `<button class="pc-it fadein ${x.stato || x.why ? '' : 'dim'}" data-act="pOpen" data-k="${x.kind}" data-id="${x.id}">${poster(x.img, x.t, 'pst', bdg)}<div class="cap">${esc(x.t)}</div>${sub2 ? `<div class="cap2">${esc(sub2)}</div>` : ''}</button>`;
   };
   openSheet(`<div class="phero"><div class="ph2">${fotoP(p.profile_path, p.name)}</div><div><h1>${esc(p.name)}</h1>
       <p>${lista.length} titoli · <b style="color:var(--a2)">${nV} vist${nV === 1 ? 'o' : 'i'}</b>${nL ? ` · ${nL} da vedere` : ''}</p></div></div>
-    <div class="pad"><div class="pseg">${[['tutti', 'Tutti'], ['visti', 'Visti da me'], ['lista', 'In lista']].map(([k, l]) => `<button class="${UI.pseg === k ? 'on' : ''}" data-act="pSeg" data-s="${k}">${l}</button>`).join('')}</div>
-    ${anni.map(g => `<h2 class="sec">${esc(g.y)} <small>${g.l.length}</small></h2><div class="grid">${g.l.map(card).join('')}</div>`).join('') || '<p class="hint">Nessun titolo qui.</p>'}</div>`, !!seg);
+    <div class="pad"><div class="pseg">${[['tutti', 'Tutti'], ...(sug.length ? [['sug', '✨ Suggeriti']] : []), ['visti', 'Visti da me'], ['lista', 'In lista']].map(([k, l]) => `<button class="${UI.pseg === k ? 'on' : ''}" data-act="pSeg" data-s="${k}">${l}</button>`).join('')}</div>
+    ${UI.pseg === 'sug' ? `<p class="cap2" style="white-space:normal;margin:16px 2px 0">I suoi titoli migliori che non hai ancora visto, scelti anche in base ai generi che guardi di più.</p><div class="grid" style="margin-top:14px">${sug.map(card).join('')}</div>` : ''}
+    ${anni.map(g => `<h2 class="sec">${esc(g.y)} <small>${g.l.length}</small></h2><div class="grid">${g.l.map(card).join('')}</div>`).join('') || (UI.pseg === 'sug' ? '' : '<p class="hint">Nessun titolo qui.</p>')}</div>`, !!seg);
+}
+// Generi TMDB (id) -> i 10 generi di Visto!
+const TMG = {28:'Azione',12:'Avventura',16:'Animazione',35:'Commedia',80:'Crime',18:'Dramma',14:'Fantasy',36:'Storia',27:'Horror',9648:'Mistero',10749:'Romance',878:'Fantascienza',53:'Thriller',10752:'Guerra',37:'Western',10759:'Azione',10765:'Fantascienza',10768:'Guerra'};
+const genDaTmdb = ids => { const m = macro((ids || []).map(i => TMG[i]).filter(Boolean)).filter(g => g !== 'Altro'); const r = PRIO.find(g => m.includes(g)) || 'Altro'; return r === '_mistero' ? 'Horror & Mistero' : r; };
+// Quanto ti piace ogni genere: quanti titoli hai visto, con un peso in più per quelli che hai votato bene
+function gusti(){
+  const g = {}; let tot = 0;
+  const add = (gen, v) => { g[gen] = (g[gen] || 0) + v; tot += v; };
+  Object.values(D.movies).forEach(m => { if (m.state === 'seen') add(mainGen(m), 1 + (m.rating >= 4 ? 1.5 : m.rating && m.rating <= 2 ? -.7 : 0)); });
+  Object.values(D.series).forEach(sh => { if (Object.keys(sh.watched || {}).length) add(mainGen(sh), 1.5 + (sh.myRating >= 4 ? 1.5 : sh.myRating && sh.myRating <= 2 ? -.7 : 0)); });
+  const top = Object.entries(g).filter(([k]) => k !== 'Altro').sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
+  return {quota:k => tot ? Math.max(0, g[k] || 0) / tot : 0, top};
+}
+function suggeriti(lista){
+  const G = gusti();
+  return lista.filter(x => x.stato !== 'visto' && x.n >= (x.kind === 'tv' ? 60 : 150) && x.q >= 6)
+    .map(x => { const tuo = G.top.includes(x.gen);
+      return {...x, sc:x.q + 4 * G.quota(x.gen) + (x.kind === 'movie' ? (x.ord <= 2 ? .7 : x.ord <= 5 ? .3 : 0) : (x.ep >= 8 ? .5 : 0)),
+        why:tuo ? 'Il tuo genere' : x.q >= 7.5 ? 'Tra i suoi migliori' : 'Ben recensito', voto:x.q.toFixed(1).replace('.', ',')}; })
+    .sort((a, b) => b.sc - a.sc).slice(0, 12);
 }
 function pvModal(kind, id){
   const x = PERS[UI.open?.id]?._lista?.find(y => y.kind === kind && y.id == id); if (!x) return;
