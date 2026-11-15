@@ -223,6 +223,14 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .rent{display:flex;align-items:center;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
 .rent span{font-size:12px;color:var(--mut2);margin-right:4px;font-weight:600}
 .rent img{width:30px;height:30px;border-radius:8px;opacity:.85}
+.nlist{margin-top:2px}
+.nwr{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.nwr:last-child{border-bottom:0;padding-bottom:0}
+.nwr .pimg{width:40px;height:60px;border-radius:8px;overflow:hidden;flex:none}
+.nwr div:last-child{min-width:0}
+.nwr small{display:block;font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--a2)}
+.nwr b{display:block;font-size:15px;margin:1px 0}
+.nwr span{display:block;font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .plot.clamp{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
 .box h4{font-family:var(--serif);font-size:19px;letter-spacing:0;text-transform:none;color:var(--txt);font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:10px}
 .box h4::before{content:"";width:4px;height:17px;border-radius:2px;background:var(--grad);flex:none}
@@ -512,7 +520,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.15';
+const VERSIONE = '2.15.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -718,6 +726,12 @@ function render(){
   requestAnimationFrame(() => document.querySelectorAll('.tpath').forEach(p => { const n = p.querySelector('.next'); if (n) p.scrollLeft = Math.max(0, n.offsetLeft - p.offsetLeft - 110); }));
 }
 
+// Le novità ancora da leggere, in elenco compatto (pagina Io)
+function ioNews(){
+  const items = D.news.filter(n => !n.read).sort((a, b) => (a.kind === 'soon') - (b.kind === 'soon') || (b.d || '').localeCompare(a.d || ''));
+  if (!items.length) return '';
+  return `<div id="ioNews" class="nlist">${items.map(n => `<div class="nwr" data-act="openNews" data-id="${esc(n.id)}" role="button">${poster(n.img, n.t, 'pimg')}<div><small>${esc(n.k)}</small><b>${esc(n.t)}</b><span>${esc(n.d2 || '')}</span></div></div>`).join('')}</div>`;
+}
 function renderNews(){
   const items = D.news.filter(n => !n.read).sort((a, b) => (a.kind === 'soon') - (b.kind === 'soon') || (b.d || '').localeCompare(a.d || ''));
   const last = D.lastCheck ? fData(new Date(D.lastCheck).toLocaleDateString('sv'), false) : null;
@@ -914,6 +928,7 @@ function renderIo(){
     <div class="set"><div class="l"><b>Intro all'avvio</b><small>Il collage di locandine quando apri l'app</small></div><button class="sw ${C.intro ? 'on' : ''}" data-act="toggleIntro" aria-label="Intro"></button></div>
     <div class="set"><div class="l"><b>Modalità archivio</b><small>Attivala mentre inserisci serie e film visti in passato: non falseranno le statistiche di oggi</small></div><button class="sw ${C.archivio ? 'on' : ''}" data-act="toggleArch" aria-label="Archivio"></button></div>
     <div class="set"><div class="l"><b>Novità</b><small>${D.lastCheck ? 'Ultimo controllo ' + new Date(D.lastCheck).toLocaleString('it-IT', {weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Mai controllato'} · automatico ogni settimana</small></div><button class="btn small ghost" data-act="checkNews">Controlla</button></div>
+    ${ioNews()}
   </div>
   <div class="box"><h4>Chiave TMDB (film e trame in italiano)</h4>
     <input class="fld" id="tmdbKey" placeholder="Incolla qui la chiave" value="${esc(C.tmdb)}" autocomplete="off" autocapitalize="off" spellcheck="false">
@@ -1736,7 +1751,8 @@ async function checkNews(force){
   }
   D.news = D.news.filter(n => !(n.read && Date.now() - n.at > 30 * 864e5));
   D.lastCheck = Date.now(); UI.busy = false; save(); render();
-  if (force){ const n = D.news.filter(x => !x.read).length; toast(errs ? `Controllo fatto, ${errs} titoli non raggiunti` : n ? `${n} novità per te` : 'Tutto aggiornato, nessuna novità'); }
+  if (force){ const n = D.news.filter(x => !x.read).length; const vedi = () => { if (UI.tab === 'io') $('#ioNews')?.scrollIntoView({behavior:'smooth', block:'center'}); else scrollTo({top:0, behavior:'smooth'}); };
+    if (errs) toast(`Controllo fatto, ${errs} titoli non raggiunti`); else if (n) toast(`<b>${n} novità</b> per te`, 'Vedi', vedi, 6000); else toast('Tutto aggiornato, nessuna novità'); }
 }
 async function enrichAll(){
   for (const sh of Object.values(D.series)) if (!sh.tmdb || !sh.itEp){ await enrichShow(sh, sh.tmdb); await sleep(120); }
