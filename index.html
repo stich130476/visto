@@ -402,6 +402,25 @@ html[data-theme=light] .hero::after{background:linear-gradient(180deg,rgba(245,2
 html[data-theme=light] .hhead .pimg{box-shadow:0 16px 36px rgba(70,40,20,.28)}
 html[data-theme=light] .mcard{background:#fffcf7}
 html[data-theme=light] .modal{background:rgba(40,25,30,.32)}
+/* TRAGUARDO RAGGIUNTO */
+.cele{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:24px;background:radial-gradient(60% 50% at 50% 45%,rgba(255,150,80,.28),rgba(7,6,11,.82));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;transition:opacity .35s}
+.cele.on{opacity:1}
+.cele .pop{position:fixed;left:50%;top:46%;font-size:30px;line-height:1;pointer-events:none;will-change:transform,opacity}
+.cele .cf{position:fixed;left:50%;top:46%;width:8px;height:14px;border-radius:2px;pointer-events:none}
+.ccard{position:relative;width:100%;max-width:340px;text-align:center;padding:30px 24px 22px;border-radius:28px;background:linear-gradient(#17131f,#17131f) padding-box,var(--grad) border-box;border:1.5px solid transparent;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 60px rgba(255,140,80,.35);transform:scale(.6) translateY(30px);opacity:0;transition:transform .6s cubic-bezier(.2,1.5,.4,1) .15s,opacity .3s .15s}
+.cele.on .ccard{transform:none;opacity:1}
+.ccard .tic{width:96px;height:96px;margin:-78px auto 14px;border-radius:50%;display:grid;place-items:center;font-size:50px;background:var(--grad);box-shadow:0 0 0 6px #17131f,0 14px 40px rgba(255,110,80,.55);animation:tic 2.4s ease-in-out .8s infinite}
+@keyframes tic{0%,100%{transform:rotate(0) scale(1)}10%{transform:rotate(-10deg) scale(1.08)}20%{transform:rotate(8deg) scale(1.08)}30%{transform:rotate(0) scale(1)}}
+.ccard .lab{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--a2)}
+.ccard h3{font:800 30px/1.1 var(--serif);letter-spacing:-.4px;margin:6px 0 4px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ccard p{color:var(--mut);font-size:15px}
+.ccard .alt{display:flex;flex-direction:column;gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.ccard .alt span{font-size:14px;color:var(--txt)}
+.ccard .btn{width:100%;margin-top:20px}
+.ccard .lnk{display:block;margin:12px auto 0}
+html[data-theme=light] .ccard{background:linear-gradient(#fffcf7,#fffcf7) padding-box,var(--grad) border-box}
+html[data-theme=light] .ccard .tic{box-shadow:0 0 0 6px #fffcf7,0 14px 40px rgba(255,110,80,.45)}
+html[data-theme=light] .cele{background:radial-gradient(60% 50% at 50% 45%,rgba(255,170,90,.35),rgba(40,25,30,.55))}
 html[data-theme=light] :is(.rate button,.stars .off){color:rgba(70,45,30,.20)}
 html[data-theme=light] .rate button.on{color:#f0a020}
 html[data-theme=light] .stars{--stc:#e8930f;color:var(--stc)}
@@ -532,7 +551,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.19';
+const VERSIONE = '2.20';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -573,7 +592,7 @@ MQ.addEventListener?.('change', () => applyTheme());
 applyTheme();
 function load(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
 function saveCfg(){ try { localStorage.setItem(CFG, JSON.stringify(C)); } catch(e){} }
-function save(sync = true){ D.upd = Date.now(); if (C.tmdb) D.tmdbKey = C.tmdb; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){} if (sync) pushLater(); }
+function save(sync = true){ clearTimeout(UI.trT); UI.trT = setTimeout(controllaTraguardi, 1200); D.upd = Date.now(); if (C.tmdb) D.tmdbKey = C.tmdb; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){} if (sync) pushLater(); }
 
 /* ---------- API ---------- */
 async function tvm(path){
@@ -910,6 +929,8 @@ function renderIo(){
     T('⭐','Pignolo','25 voti dati',votati,25), T('🌟','Cinque stelle','10 titoli da 5 stelle',cinque,10), T('📅','Anno pieno','visioni in tutti i 12 mesi',mesi,12)];
   SINGLE.sort((a, b) => b[3] - a[3]);
   const BADGE = [...FAM.flatMap(f => f[2]), ...SINGLE];
+  UI.tro = BADGE.filter(b => b[3]).map(b => ({ic:b[0], t:b[1], s:b[2]}));
+  UI.troTop = FAM.map(f => f[2].filter(b => b[3]).pop()).filter(Boolean).map(b => ({ic:b[0], t:b[1], s:b[2]}));
   const sync = C.ghToken && C.ghUser ? (C.syncErr ? `<span class="stat-ko">Errore: ${esc(C.syncErr)}</span>` : C.lastSync ? `<span class="stat-ok">Sincronizzato ${new Date(C.lastSync).toLocaleString('it-IT', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>` : 'Non ancora sincronizzato') : 'Non attiva';
   return `<h1 class="big">Io</h1><div class="sub">Il tuo divano, in numeri</div>
   ${C.archivio ? `<div class="box" style="border-color:rgba(125,107,255,.5);margin-bottom:14px"><p class="plot" style="font-size:14px">🗂️ <b>Modalità archivio attiva.</b> Quello che spunti adesso conta nei totali ma non nelle statistiche di periodo (anno, mesi, abitudini). Quando hai finito di inserire il passato, disattivala in Impostazioni.</p></div>` : ''}
@@ -1326,6 +1347,42 @@ async function anteprima(k, id, keep){
     ${critica(x.title, x.orig, x.year, x.vote, film ? 'film' : 'serie tv', 'p' + id)}
   </div>`, keep);
 }
+// Traguardi: quando ne raggiungi uno nuovo, festa con i pop-corn
+function controllaTraguardi(){
+  if (!Object.keys(D.series).length && !Object.keys(D.movies).length) return;
+  try { renderIo(); } catch(e){ return; }
+  const ora = UI.tro || []; if (!ora.length) return;
+  if (!Array.isArray(D.trofei)){ // la prima volta: una sola festa per tutto quello che hai già conquistato
+    D.trofei = ora.map(b => b.t); save();
+    festa([...(UI.troTop || []).slice(0, 3), {ic:'🏆', t:`${ora.length} traguardi`, s:'tutti quelli conquistati finora, festeggiati insieme'}], 'I tuoi traguardi'); return;
+  }
+  const nuovi = ora.filter(b => !D.trofei.includes(b.t)); if (!nuovi.length) return;
+  D.trofei = [...D.trofei, ...nuovi.map(b => b.t)]; save();
+  festa(nuovi);
+}
+function festa(nuovi, titolo){
+  if ($('#cele')) return;
+  const b = nuovi[nuovi.length - 1], altri = nuovi.slice(0, -1).slice(-3);
+  const el = document.createElement('div'); el.id = 'cele'; el.className = 'cele';
+  el.innerHTML = `<div class="ccard"><div class="tic">${b.ic}</div><div class="lab">${titolo || (nuovi.length > 1 ? nuovi.length + ' nuovi traguardi' : 'Nuovo traguardo')}</div><h3>${esc(b.t)}</h3><p>${esc(b.s)}</p>
+    ${altri.length ? `<div class="alt">${altri.map(a => `<span>${a.ic} <b>${esc(a.t)}</b> · ${esc(a.s)}</span>`).join('')}</div>` : ''}
+    <button class="btn" data-act="celeOk">Che bello!</button><button class="lnk" data-act="celeVedi">Vedi tutti i traguardi ›</button></div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('on')));
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const W = innerWidth, H = innerHeight, COL = ['#ff5e62', '#ff9a4d', '#ffc857', '#7d6bff', '#22b8aa'];
+  const scoppio = (n, ritardo) => { for (let i = 0; i < n; i++){
+    const pop = Math.random() < .72, p = document.createElement('div');
+    p.className = pop ? 'pop' : 'cf'; if (pop) p.textContent = '🍿'; else p.style.background = COL[i % COL.length];
+    el.appendChild(p);
+    const a = Math.random() * Math.PI * 2, v = .35 + Math.random() * .55, dx = Math.cos(a) * W * v * .7, dy = Math.sin(a) * H * v * .45 - H * .18;
+    const r = (Math.random() - .5) * 720, sc = pop ? .7 + Math.random() * .8 : 1;
+    p.animate([{transform:'translate(-50%,-50%) scale(.2)', opacity:0}, {transform:`translate(calc(-50% + ${dx * .55}px),calc(-50% + ${dy * .6}px)) rotate(${r * .4}deg) scale(${sc})`, opacity:1, offset:.18},
+      {transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy + H * .55}px)) rotate(${r}deg) scale(${sc})`, opacity:0}],
+      {duration:2200 + Math.random() * 1200, delay:ritardo + Math.random() * 160, easing:'cubic-bezier(.15,.6,.4,1)', fill:'both'}).onfinish = () => p.remove();
+  } };
+  scoppio(46, 120); scoppio(26, 900);
+}
 const PERS = {};
 // TMDB → TVmaze per le serie che TMDB registra con un altro id (es. le antologie come Monster)
 let TMAP = load('visto-tmap') || {};
@@ -1547,6 +1604,8 @@ const A = {
   filmSeg(d){ UI.filmSeg = d.s; render(); },
   serSeg(d){ UI.serSeg = d.s; render(); },
   antoOpen(d){ antoModal(d.n); },
+  celeOk(){ const el = $('#cele'); if (!el) return; el.classList.remove('on'); setTimeout(() => el.remove(), 380); },
+  celeVedi(){ A.celeOk(); if ($('#sheet').classList.contains('open')) closeSheet(); UI.tab = 'io'; render(); setTimeout(() => [...document.querySelectorAll('.box h4')].find(h => h.textContent.startsWith('Traguardi'))?.scrollIntoView({behavior:'smooth', block:'start'}), 250); },
   async pvAdd(d, el){
     const o = UI.open; if (o?.type !== 'pv') return;
     el.textContent = 'Aggiungo…';
