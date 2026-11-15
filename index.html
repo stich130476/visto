@@ -1201,7 +1201,7 @@ function rateShowModal(id, fin, boc){
 
 // Piattaforme: nomi brevi, varianti unite ("with Ads", "Amazon Channel"…), i tuoi abbonamenti per primi
 const ABBO = /netflix|prime video|disney/i;
-const nomeP = n => String(n || '').replace(/ (with|con) (Ads|pubblicità)$/i, '').replace(/ Amazon Channel$/i, '').replace(/^Amazon Prime Video$/i, 'Prime Video').replace(/^Disney Plus$/i, 'Disney+').replace(/^Apple TV( Store|\+)?$/i, 'Apple TV').replace(/^Amazon Video$/i, 'Amazon').replace(/ Standard$| Basic$/i, '');
+const nomeP = n => String(n || '').replace(/ (with|con) (Ads|pubblicità)$/i, '').replace(/ Amazon Channel$/i, '').replace(/^Amazon Prime Video$/i, 'Prime Video').replace(/^Disney Plus$/i, 'Disney+').replace(/^Paramount Plus$/i, 'Paramount+').replace(/^Apple TV( Store|\+)?$/i, 'Apple TV').replace(/^Amazon Video$/i, 'Amazon').replace(/ Standard$| Basic$/i, '');
 function piatt(list){ const out = []; (list || []).forEach(p => { const n = nomeP(p.n); if (!out.some(o => o.n === n)) out.push({n, l:p.l}); }); return out.sort((a, b) => ABBO.test(b.n) - ABBO.test(a.n)); }
 function dove(prov, rent, titolo){
   const pr = piatt(prov), re = piatt(rent).filter(r => !pr.some(p => p.n === r.n)).slice(0, 5);
