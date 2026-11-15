@@ -170,6 +170,8 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .seg button{flex:1;padding:10px;border-radius:10px;font-weight:600;font-size:15px;color:var(--mut);transition:.25s}
 .seg button.on{background:var(--card2);color:var(--txt);box-shadow:0 4px 14px rgba(0,0,0,.3)}
 .seg button span{font-size:12px;color:var(--mut2);margin-left:4px}
+.seg.two{flex-wrap:wrap;gap:4px}
+.seg.two button{flex:1 1 30%;padding:9px 6px;white-space:nowrap}
 
 /* DIARY */
 .month{font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--mut2);margin:22px 0 10px}
@@ -520,7 +522,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.15.1';
+const VERSIONE = '2.16';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -550,7 +552,7 @@ const normGen = (...lists) => [...new Set(lists.flat().filter(Boolean).flatMap(g
 /* ---------- STATO ---------- */
 let D = load(KEY) || {v:1, upd:0, series:{}, movies:{}, news:[], lastCheck:0};
 let C = Object.assign({tmdb:'', ghUser:'', ghRepo:'visto-dati', ghToken:'', intro:true, archivio:true, sha:'', lastSync:0, syncErr:''}, load(CFG) || {});
-let UI = {tab:'serie', filmSeg:'todo', season:{}, searchType:null, busy:false};
+let UI = {tab:'serie', filmSeg:'todo', serSeg:'corso', season:{}, searchType:null, busy:false};
 const MQ = matchMedia('(prefers-color-scheme: light)');
 function applyTheme(){
   const t = (C.theme || 'auto') === 'auto' ? (MQ.matches ? 'light' : 'dark') : C.theme;
@@ -760,7 +762,16 @@ function renderSerie(){
   const corso = by('corso').sort((a, b) => (b.sh.lastW || 0) - (a.sh.lastW || 0));
   const totLeft = corso.reduce((a, x) => a + x.left, 0);
   h += `<div class="sub">${all.length} serie · ${totLeft} episodi da recuperare</div>` + tonightCard();
-  if (corso.length) h += `<h2 class="sec">Continua a guardare <small>${corso.length}</small></h2><div class="cw">${corso.map(x => {
+  // Le serie divise in sezioni, come i film: si vede una sezione alla volta
+  const attesa = by('attesa').sort((a, b) => (a.sh.next?.d || '9') .localeCompare(b.sh.next?.d || '9'));
+  const SEZ = [['corso', 'In corso', corso], ['attesa', 'Al passo', attesa], ['nuove', 'Da iniziare', by('nuove')], ['pausa', 'In pausa', by('pausa')], ['finite', 'Finite', by('finite')], ['bocciate', '👎 Bocciate', by('bocciate')]].filter(z => z[2].length);
+  if (!SEZ.find(z => z[0] === UI.serSeg)) UI.serSeg = SEZ[0][0];
+  h += `<div class="seg${SEZ.length > 3 ? ' two' : ''}">${SEZ.map(([k, t, l]) => `<button class="${UI.serSeg === k ? 'on' : ''}" data-act="serSeg" data-s="${k}">${t}<span>${l.length}</span></button>`).join('')}</div>`;
+  const lista = SEZ.find(z => z[0] === UI.serSeg)[2];
+  const grid = (list, badge) => `<div class="grid">${list.map(x => `
+    <button class="pc-it fadein" data-act="openShow" data-id="${x.sh.id}">${poster(showImg(x.sh), showName(x.sh), 'pst', (badge(x) || '') + (x.pct && x.pct < 100 ? `<div class="pb"><i style="width:${x.pct}%"></i></div>` : ''))}
+    <div class="cap">${esc(showName(x.sh))}</div><div class="cap2">${esc(capSerie(x))}</div></button>`).join('')}</div>`;
+  if (UI.serSeg === 'corso') h += `<div class="cw">${lista.map(x => {
     const sh = x.sh, nx = x.next;
     return `<div class="cwc fadein"><div class="bgb" style="background-image:url('${esc(showImg(sh, 'w185'))}')"></div>
       <div data-act="openShow" data-id="${sh.id}" role="button">${poster(showImg(sh), showName(sh), 'pimg')}</div>
@@ -770,15 +781,11 @@ function renderSerie(){
       <div class="row"><div class="bar"><i style="width:${x.pct}%"></i></div><span class="pc">${x.pct}%</span>
       <button class="qcheck" data-act="quick" data-id="${sh.id}" aria-label="Segna visto">${I.check}</button></div></div></div>`;
   }).join('')}</div>`;
-  const grid = (title, list, badge) => list.length ? `<h2 class="sec">${title} <small>${list.length}</small></h2><div class="grid">${list.map(x => `
-    <button class="pc-it fadein" data-act="openShow" data-id="${x.sh.id}">${poster(showImg(x.sh), showName(x.sh), 'pst', (badge(x) || '') + (x.pct && x.pct < 100 ? `<div class="pb"><i style="width:${x.pct}%"></i></div>` : ''))}
-    <div class="cap">${esc(showName(x.sh))}</div><div class="cap2">${esc(capSerie(x))}</div></button>`).join('')}</div>` : '';
-  h += grid('Al passo, in attesa', by('attesa'), x => x.sh.next?.d ? `<span class="bdg hot">${esc(fGiorno(x.sh.next.d))}</span>` : '');
-  h += grid('Da iniziare', by('nuove'), x => Date.now() - (x.sh.added || 0) < 2 * 864e5 ? '<span class="bdg hot">Appena aggiunta</span>' : x.sh.next?.d && !x.aired ? `<span class="bdg">Esce ${esc(fData(x.sh.next.d, false))}</span>` : '');
-  h += grid('In pausa', by('pausa'), () => '<span class="bdg">In pausa</span>');
-  const _boc = by('bocciate');
-  h += grid('Finite', by('finite'), x => `<span class="bdg">${x.sh.stopped && !x.sh.myRating ? '🏁 Chiusa' : x.sh.myRating ? `<span class="st">${'★'.repeat(x.sh.myRating)}</span>` : '✓ Vista'}</span>`);
-  h += grid('Bocciate', _boc, x => `<span class="bdg">👎 ${x.sh.myRating ? `<span class="st">${'★'.repeat(x.sh.myRating)}</span>` : 'Bocciata'}</span>`);
+  else if (UI.serSeg === 'attesa') h += grid(lista, x => x.sh.next?.d ? `<span class="bdg hot">${esc(fGiorno(x.sh.next.d))}</span>` : '');
+  else if (UI.serSeg === 'nuove') h += grid(lista, x => Date.now() - (x.sh.added || 0) < 2 * 864e5 ? '<span class="bdg hot">Appena aggiunta</span>' : x.sh.next?.d && !x.aired ? `<span class="bdg">Esce ${esc(fData(x.sh.next.d, false))}</span>` : '');
+  else if (UI.serSeg === 'pausa') h += grid(lista, () => '<span class="bdg">In pausa</span>');
+  else if (UI.serSeg === 'finite') h += grid(lista, x => `<span class="bdg">${x.sh.stopped && !x.sh.myRating ? '🏁 Chiusa' : x.sh.myRating ? `<span class="st">${'★'.repeat(x.sh.myRating)}</span>` : '✓ Vista'}</span>`);
+  else h += grid(lista, x => `<span class="bdg">👎 ${x.sh.myRating ? `<span class="st">${'★'.repeat(x.sh.myRating)}</span>` : 'Bocciata'}</span>`);
   return h + recRow('shows');
 }
 function capSerie(x){
@@ -1437,6 +1444,7 @@ const A = {
   enter(){ $('#intro').classList.add('out'); setTimeout(() => $('#intro').remove(), 900); },
   tab(d){ UI.tab = d.t; UI.back = null; if ($('#sheet').classList.contains('open')) closeSheet(); render(); scrollTo(0, 0); },
   filmSeg(d){ UI.filmSeg = d.s; render(); },
+  serSeg(d){ UI.serSeg = d.s; render(); },
   search(){ searchSheet(); },
   sType(d){ const q = $('#q')?.value || ''; searchSheet(d.s); $('#q').value = q; doSearch(q.trim()); },
   closeSheet(){ closeSheet(); },
