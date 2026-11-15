@@ -351,8 +351,8 @@ ol.steps li{margin-bottom:6px}
 .cast .ph2{width:72px;height:72px;margin:0 auto 7px;border-radius:50%;overflow:hidden;background:linear-gradient(145deg,#2a2140,#15111f);display:grid;place-items:center;font:700 22px var(--serif);color:rgba(255,255,255,.85);box-shadow:0 6px 16px rgba(0,0,0,.3);transition:transform .2s}
 .cast:active .ph2{transform:scale(.94)}
 .cast.reg .ph2{box-shadow:0 0 0 2px var(--bg,#0e0b14),0 0 0 4px var(--a2),0 6px 16px rgba(0,0,0,.35)}
-.cast.reg small{color:var(--a2);font-weight:700;letter-spacing:.3px}
-.cast.reg small.ep{color:var(--mut2);font-weight:400;letter-spacing:0}
+.cast.reg small{display:block;color:var(--a2);font-weight:700;letter-spacing:.3px}
+.cast.reg small .nep{display:block;color:var(--mut2);font-weight:400;letter-spacing:0}
 .cast .ph2 img{width:100%;height:100%;object-fit:cover}
 .cast b{display:block;font-size:12.5px;line-height:1.2;font-weight:700}
 .cast small{display:block;font-size:11px;color:var(--mut);line-height:1.2;margin-top:2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -1298,7 +1298,7 @@ const fotoP = (path, nome) => path ? `<img src="${IMG}w185${esc(path)}" loading=
 function castBox(key){
   const c = CAST[key];
   if (!c || !(c.l.length || c.r?.length)) return '';
-  return `<div class="box"><h4>${c.r?.length ? 'Regia e attori' : 'Attori principali'}</h4><div class="castrow">${(c.r || []).map(a => `<button class="cast reg" data-act="person" data-id="${a.id}"><div class="ph2">${fotoP(a.f, a.n)}</div><b>${esc(a.n)}</b><small>Regia</small>${a.e ? `<small class="ep">${a.e} episodi</small>` : ''}</button>`).join('')}${c.l.map(a => `<button class="cast" data-act="person" data-id="${a.id}"><div class="ph2">${fotoP(a.f, a.n)}</div><b>${esc(a.n)}</b>${a.c ? `<small>${esc(a.c)}</small>` : ''}</button>`).join('')}</div></div>`;
+  return `<div class="box"><h4>${c.r?.length ? 'Regia e attori' : 'Attori principali'}</h4><div class="castrow">${(c.r || []).map(a => `<button class="cast reg" data-act="person" data-id="${a.id}"><div class="ph2">${fotoP(a.f, a.n)}</div><b>${esc(a.n)}</b><small>Regia${a.e ? `<span class="nep">${a.e} episodi</span>` : ''}</small></button>`).join('')}${c.l.map(a => `<button class="cast" data-act="person" data-id="${a.id}"><div class="ph2">${fotoP(a.f, a.n)}</div><b>${esc(a.n)}</b>${a.c ? `<small>${esc(a.c)}</small>` : ''}</button>`).join('')}</div></div>`;
 }
 async function loadCast(key){
   const c = CAST[key];
