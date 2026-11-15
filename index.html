@@ -489,7 +489,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.11';
+const VERSIONE = '2.11.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -911,24 +911,25 @@ async function caricaBackup(force){
   if (!C.ghToken || !C.ghUser) return;
   if (!force && UI.bk && Date.now() - UI.bk.at < 10 * 60e3) return;
   try { const r = await fetch(ghBase() + 'backup?t=' + Date.now(), {headers:ghH(), cache:'no-store'});
-    const list = r.status === 404 ? [] : r.ok ? (await r.json()).filter(f => f.name.endsWith('.json')).sort((a, b) => b.name.localeCompare(a.name)) : null;
-    if (list) UI.bk = {at:Date.now(), list:list.map(f => ({name:f.name, sha:f.sha, size:f.size}))};
+    const list = r.status === 404 ? [] : r.ok ? (await r.json()).filter(f => f.type === 'file') : null;
+    if (list){ const f = list.find(x => x.name === BK); let quando = null;
+      if (f){ try { const c = await fetch(`https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/commits?path=backup/${BK}&per_page=1&t=${Date.now()}`, {headers:ghH(), cache:'no-store'}); if (c.ok) quando = (await c.json())[0]?.commit?.committer?.date || null; } catch(e){} }
+      UI.bk = {at:Date.now(), file:f ? {sha:f.sha, size:f.size, quando} : null, altri:list.filter(x => x.name !== BK).map(x => ({name:x.name, sha:x.sha}))}; }
   } catch(e){}
-  if (!UI.bk || (UI.bk.err && force)) UI.bk = {at:Date.now(), list:UI.bk?.list || [], err:true};
+  if (!UI.bk || (UI.bk.err && force)) UI.bk = {at:Date.now(), file:UI.bk?.file || null, altri:[], err:true};
   if (UI.tab === 'io' && !$('#sheet').classList.contains('open') && !$('#modal').classList.contains('open')) render();
 }
-const bkData = n => { const m = n.match(/^(\d{4}-\d{2}-\d{2})/); return m ? fData(m[1]) : n; };
+const BK = 'visto-backup.json';
+const bkQuando = f => f?.quando ? new Date(f.quando).toLocaleString('it-IT', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : '';
 function backupBox(){
   if (!C.ghToken || !C.ghUser) return `<div class="box"><h4>Backup</h4><p class="plot" style="font-size:14px;margin-bottom:10px">Attiva la sincronizzazione qui sotto per avere i backup automatici.</p><div class="acts" style="margin-top:0"><button class="btn small ghost" data-act="export">Salva sul telefono</button><button class="btn small ghost" data-act="import">Importa copia</button></div></div>`;
   if (!UI.bk) setTimeout(caricaBackup, 50);
-  const l = UI.bk?.list || [], last = l[0];
-  const fresco = last && (Date.now() - new Date(last.name.slice(0, 10) + 'T12:00')) < 9 * 864e5;
+  const f = UI.bk?.file, fresco = f?.quando && Date.now() - new Date(f.quando) < 9 * 864e5;
   return `<div class="box"><h4>Backup</h4>
-    <div class="bkst"><i class="${fresco ? '' : 'warn'}">${fresco ? '✅' : '🛟'}</i><div><b>${!UI.bk ? 'Controllo i backup…' : UI.bk.err && !l.length ? 'Non riesco a leggere i backup ora' : fresco ? 'Tutto al sicuro' : last ? 'Backup da aggiornare' : 'Nessun backup ancora'}</b><small>${last ? 'Ultimo: ' + esc(bkData(last.name)) : 'Fanne uno adesso'} · ogni domenica in automatico</small></div></div>
-    <div class="acts"><button class="btn small" data-act="bkNow">Fai un backup adesso</button><button class="btn small ghost" data-act="export">Salva sul telefono</button></div>
-    ${l.length ? `<p class="lbl">Backup salvati · tengo gli ultimi 8</p>${l.slice(0, 10).map(f => `<div class="set"><div class="l"><b>${esc(bkData(f.name))}</b><small>${f.name.includes('prima') ? 'copia fatta prima di un ripristino · ' : ''}${Math.max(1, Math.round(f.size / 1024))} KB</small></div><button class="btn small ghost" data-act="bkAsk" data-n="${esc(f.name)}">Ripristina</button></div>`).join('')}` : ''}
-    <p class="cap2" style="white-space:normal;margin-top:10px">I backup stanno nel tuo archivio privato su GitHub. "Salva sul telefono" ti fa scegliere dove metterlo, anche iCloud Drive.</p>
-    <div class="acts"><button class="btn small ghost" data-act="import">Importa una copia dal telefono</button></div></div>`;
+    <div class="bkst"><i class="${fresco ? '' : 'warn'}">${fresco ? '✅' : '🛟'}</i><div><b>${!UI.bk ? 'Controllo il backup…' : UI.bk.err && !f ? 'Non riesco a leggere il backup ora' : fresco ? 'Tutto al sicuro' : f ? 'Backup da aggiornare' : 'Nessun backup ancora'}</b><small>${f ? 'Salvato ' + esc(bkQuando(f) || '') + ' · ' + Math.max(1, Math.round(f.size / 1024)) + ' KB' : 'Fanne uno adesso'}</small></div></div>
+    <div class="acts"><button class="btn small" data-act="bkNow">Fai un backup adesso</button>${f ? '<button class="btn small ghost" data-act="bkAsk">Ripristina</button>' : ''}</div>
+    <p class="cap2" style="white-space:normal;margin-top:10px">C'è sempre un solo backup, nel tuo archivio privato su GitHub: ogni domenica notte si aggiorna da solo, sostituendo il precedente.</p>
+    <div class="acts"><button class="btn small ghost" data-act="export">Copia sul telefono</button><button class="btn small ghost" data-act="import">Importa dal telefono</button></div></div>`;
 }
 async function scriviBackup(nome){
   let sha; try { const g = await fetch(ghBase() + 'backup/' + nome + '?t=' + Date.now(), {headers:ghH(), cache:'no-store'}); if (g.ok) sha = (await g.json()).sha; } catch(e){}
@@ -937,7 +938,7 @@ async function scriviBackup(nome){
   if (!r.ok) throw new Error('GitHub ' + r.status);
 }
 async function potaBackup(){
-  const l = UI.bk?.list || []; for (const f of l.slice(8)){
+  const l = UI.bk?.altri || []; for (const f of l){
     try { await fetch(ghBase() + 'backup/' + f.name, {method:'DELETE', headers:Object.assign({'Content-Type':'application/json'}, ghH()), body:JSON.stringify({message:'Visto: tolgo il backup vecchio ' + f.name, sha:f.sha})}); } catch(e){} }
 }
 
@@ -1472,23 +1473,23 @@ const A = {
   },
   async bkNow(d, el){
     if (el) el.disabled = true; toast('Salvo il backup…');
-    try { await scriviBackup(oggi() + '.json'); await caricaBackup(true); await potaBackup(); await caricaBackup(true); toast('✅ Backup salvato'); }
+    try { await scriviBackup(BK); await caricaBackup(true); await potaBackup(); await caricaBackup(true); toast('✅ Backup salvato: ha sostituito il precedente'); }
     catch(e){ toast('Backup non riuscito: ' + esc(e.message)); if (el) el.disabled = false; }
   },
   bkAsk(d){
-    $('#mcard').innerHTML = `<h3>Ripristinare il backup?</h3><div class="s">del ${esc(bkData(d.n))}</div>
-      <p class="plot" style="font-size:14px">Serie, film, voti e commenti tornano com'erano quel giorno, su iPhone e iPad. Prima salvo una copia di come sono adesso, così puoi sempre tornare indietro.</p>
-      <div class="mrow"><button class="btn ghost" data-act="closeModal">Annulla</button><button class="btn" data-act="bkGo" data-n="${esc(d.n)}">Ripristina</button></div>`;
+    $('#mcard').innerHTML = `<h3>Ripristinare il backup?</h3><div class="s">salvato ${esc(bkQuando(UI.bk?.file))}</div>
+      <p class="plot" style="font-size:14px">Serie, film, voti e commenti tornano com'erano in quel momento, su iPhone e iPad. Subito dopo potrai ancora annullare.</p>
+      <div class="mrow"><button class="btn ghost" data-act="closeModal">Annulla</button><button class="btn" data-act="bkGo">Ripristina</button></div>`;
     $('#modal').classList.add('open');
   },
   async bkGo(d){
     $('#modal').classList.remove('open'); toast('Ripristino…', null, null, 8000);
     try {
-      const r = await fetch(ghBase() + 'backup/' + encodeURIComponent(d.n) + '?t=' + Date.now(), {headers:Object.assign({}, ghH(), {Accept:'application/vnd.github.raw'}), cache:'no-store'});
+      const r = await fetch(ghBase() + 'backup/' + BK + '?t=' + Date.now(), {headers:Object.assign({}, ghH(), {Accept:'application/vnd.github.raw'}), cache:'no-store'});
       if (!r.ok) throw new Error('GitHub ' + r.status);
       const x = await r.json(); if (!x.series || !x.movies) throw new Error('file non valido');
-      await scriviBackup(oggi() + '-prima-del-ripristino.json');
-      D = x; save(); await caricaBackup(true); render(); toast('✅ Backup del ' + esc(bkData(d.n)) + ' ripristinato', null, null, 5000);
+      const prima = D; D = x; save(); render();
+      toast('✅ Backup ripristinato', 'Annulla', () => { D = prima; save(); render(); toast('Tornato com\'era prima'); }, 10000);
     } catch(e){ toast('Ripristino non riuscito: ' + esc(e.message)); }
   },
   import(){
