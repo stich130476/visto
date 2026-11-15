@@ -157,6 +157,8 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .hl{font-size:11px;font-weight:800;letter-spacing:.3px;padding:3px 8px;border-radius:7px;background:var(--grad);color:#2a0d05;min-width:72px;text-align:center}
 .hv .mmlogo{min-width:72px;text-align:center}
 .mmrow{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:15px}
+.imdblogo{font-weight:900;font-size:12px;letter-spacing:.2px;padding:3px 8px;border-radius:7px;background:#f5c518;color:#000;min-width:72px;text-align:center}
+.hv .vsub{font-size:12px;color:var(--mut)}
 .mmlogo{font-weight:800;font-size:12px;letter-spacing:.3px;padding:3px 8px;border-radius:7px;background:#c8102e;color:#fff}
 .mmst{font-size:18px}
 .stars .half{background:linear-gradient(90deg,currentColor 50%,rgba(128,128,128,.3) 50%);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -489,7 +491,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.11.2';
+const VERSIONE = '2.12';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -630,19 +632,27 @@ function showStats(sh){
 const epT = (sh, e) => (sh.itEp && sh.itEp[e.s + '-' + e.n]) || e.t;
 const mmLink = (t, y, tipo) => 'https://www.google.com/search?q=' + encodeURIComponent(`mymovies ${t} ${y || ''} ${tipo}`.trim()) + '&btnI=1';
 let MM = load('visto-mymovies') || {};
+let IMDB = load('visto-imdb') || {};
 async function caricaMM(){
   if (!C.ghToken || !C.ghUser) return;
   try {
     const r = await fetch(`https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/contents/mymovies.json?t=${Date.now()}`, {headers:Object.assign({}, ghH(), {Accept:'application/vnd.github.raw+json'}), cache:'no-store'});
     if (!r.ok) return; MM = await r.json(); try { localStorage.setItem('visto-mymovies', JSON.stringify(MM)); } catch(e){}
   } catch(e){}
+  try {
+    const r = await fetch(`https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/contents/imdb.json?t=${Date.now()}`, {headers:Object.assign({}, ghH(), {Accept:'application/vnd.github.raw+json'}), cache:'no-store'});
+    if (r.ok){ IMDB = await r.json(); try { localStorage.setItem('visto-imdb', JSON.stringify(IMDB)); } catch(e){} }
+  } catch(e){}
 }
 const stelleMM = v => { const p = Math.round(v * 2) / 2; let h = ''; for (let i = 1; i <= 5; i++) h += i <= p ? '★' : (i - .5 === p ? '<span class="half">★</span>' : '<span class="off">★</span>'); return h; };
-const voti = (mio, key) => { const mm = MM[key];
+const voti = (mio, key) => { const mm = MM[key], im = IMDB[key];
   return `<div class="hvoti">${mio ? `<div class="hv"><span class="hl">Il mio voto</span><span class="stars">${stars(mio).replace(/^<span class="stars">|<\/span>$/g, '')}</span></div>` : ''}
-    <div class="hv"><span class="mmlogo">MYmovies</span>${mm && mm.voto ? `<span class="stars">${stelleMM(mm.voto)}</span><b>${mm.voto.toFixed(1).replace('.', ',')}</b>` : `<span class="cap2">${mm && mm.at && !mm.url ? 'non trovato' : 'voto in arrivo'}</span>`}</div></div>`; };
-const critica = (t, orig, y, voto, tipo, key) => { const mm = MM[key]; return `<div class="box"><h4>MYmovies</h4>
-  <div class="acts" style="margin-top:0"><a class="btn ghost small" href="${esc(mm && mm.url ? mm.url : mmLink(t, y, tipo))}" target="_blank" rel="noopener">🎬 Recensione su MYmovies ›</a>${!(mm && mm.url) && orig && orig !== t ? `<a class="btn ghost small" href="${esc(mmLink(orig, y, tipo))}" target="_blank" rel="noopener">Cerca col titolo originale</a>` : ''}</div></div>`; };
+    ${mm && mm.voto ? `<div class="hv"><span class="mmlogo">MYmovies</span><span class="stars">${stelleMM(mm.voto)}</span><b>${mm.voto.toFixed(1).replace('.', ',')}</b></div>`
+      : im && im.v ? `<div class="hv"><span class="imdblogo">IMDb</span><span class="stars">${stelleMM(im.v / 2)}</span><b>${im.v.toFixed(1).replace('.', ',')}</b><span class="vsub">/10</span></div>`
+      : `<div class="hv"><span class="mmlogo">MYmovies</span><span class="cap2">${mm && mm.at && !mm.url ? 'non trovato' : 'voto in arrivo'}</span></div>`}</div>`; };
+const critica = (t, orig, y, voto, tipo, key) => { const mm = MM[key], im = IMDB[key]; return `<div class="box"><h4>${mm && mm.voto ? 'MYmovies' : 'Recensioni'}</h4>
+  ${!(mm && mm.voto) && im && im.v ? `<p class="cap2" style="white-space:normal;margin:-4px 0 10px">MYmovies non ha un voto per questo titolo: sotto il titolo vedi quello di IMDb, il più grande archivio mondiale, dato da ${im.n.toLocaleString('it-IT')} spettatori.</p>` : ''}
+  <div class="acts" style="margin-top:0">${im && im.id ? `<a class="btn ghost small" href="https://m.imdb.com/title/${esc(im.id)}/" target="_blank" rel="noopener">⭐ IMDb ›</a>` : ''}<a class="btn ghost small" href="${esc(mm && mm.url ? mm.url : mmLink(t, y, tipo))}" target="_blank" rel="noopener">🎬 ${im && im.id ? 'MYmovies' : 'Recensione su MYmovies'} ›</a>${!(mm && mm.url) && orig && orig !== t ? `<a class="btn ghost small" href="${esc(mmLink(orig, y, tipo))}" target="_blank" rel="noopener">Cerca col titolo originale</a>` : ''}</div></div>`; };
 const showName = sh => sh.itName && sh.itName !== sh.name ? sh.itName : sh.name;
 const showImg = (sh, size = 'w342') => sh.myPoster ? (sh.myPoster.startsWith('http') ? sh.myPoster : IMG + size + sh.myPoster) : sh.poster ? IMG + size + sh.poster : sh.img;
 const showBack = sh => sh.back ? IMG + 'w1280' + sh.back : sh.big || sh.img;
