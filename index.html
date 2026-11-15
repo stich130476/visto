@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="it" style="background:#07060b">
 <head>
+<link rel="preconnect" href="https://image.tmdb.org" crossorigin>
+<link rel="preconnect" href="https://api.github.com">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -381,6 +383,19 @@ html[data-theme=light] .sbar{background:linear-gradient(var(--bg) 80%,transparen
 .theme3 button{padding:7px 10px;border-radius:9px;font-size:13px;font-weight:600;color:var(--mut)}
 .theme3 button.on{background:var(--bg2);color:var(--txt);box-shadow:0 2px 8px rgba(0,0,0,.15)}
 
+.more{position:absolute;z-index:3;top:calc(var(--st) + 10px);right:14px;width:40px;height:40px;border-radius:50%;background:rgba(20,17,29,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.12);display:grid;place-items:center;color:var(--txt)}
+.more svg{width:20px;height:20px}
+html[data-theme=light] .more{background:rgba(255,252,247,.78);border-color:rgba(70,45,30,.12)}
+.amenu{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.amenu button{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;background:var(--card2);border:1px solid var(--line);font-weight:600;font-size:16px;text-align:left;width:100%}
+.amenu button i{font-style:normal;width:24px;text-align:center;font-size:18px}
+.amenu button small{display:block;font-weight:500;font-size:13px;color:var(--mut);margin-top:2px}
+.amenu button.red{color:#ff7b7b}
+.gchips{flex-wrap:wrap}.gchips button{flex:1 1 28%;font-size:13px;padding:10px 6px}
+.pick .pimg{cursor:pointer}
+.bkst{display:flex;align-items:center;gap:12px;margin-bottom:6px}.bkst i{font-style:normal;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:rgba(62,200,120,.16);flex:none}.bkst i.warn{background:rgba(255,154,77,.16)}
+.bkst b{display:block;font-size:16px}.bkst small{color:var(--mut);font-size:13px}
+.dia,.ep{content-visibility:auto;contain-intrinsic-block-size:auto 96px}
 .pchg{position:absolute;right:6px;bottom:6px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:14px;background:rgba(10,9,16,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-height:52vh;overflow:auto;margin:6px 0 4px}
 .pgrid button{aspect-ratio:2/3;border-radius:10px;overflow:hidden;border:2px solid transparent;background:var(--card2)}
@@ -474,7 +489,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.10.1';
+const VERSIONE = '2.11';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -658,7 +673,7 @@ const I = {
 const PH_COL = ['#3b2d6b','#5a2340','#1d4d57','#5a3a1d','#2d3f6b','#4b1f5a'];
 function poster(src, title, cls = 'pst', extra = ''){
   const c = PH_COL[(title || '').length % PH_COL.length];
-  return `<div class="${cls}" style="background:linear-gradient(150deg,${c},#120f1a)">${src ? `<img src="${esc(src)}" loading="lazy" alt="" onerror="this.remove()">` : `<div class="ph">${esc(title)}</div>`}${extra}</div>`;
+  return `<div class="${cls}" style="background:linear-gradient(150deg,${c},#120f1a)">${src ? `<img src="${esc(src)}" loading="lazy" decoding="async" alt="" onerror="this.remove()">` : `<div class="ph">${esc(title)}</div>`}${extra}</div>`;
 }
 const stars = n => n ? `<span class="stars">${'★'.repeat(n)}<span class="off">${'★'.repeat(5 - n)}</span></span>` : '';
 
@@ -741,7 +756,7 @@ function renderFilm(){
     if (!todo.length) return h + `<div class="empty fadein"><div class="ic">🍿</div><h3>La tua lista è vuota</h3><p>Aggiungi i film che vuoi vedere prima o poi. Ti avviso io quando escono.</p><button class="btn" data-act="search">${I.search}Cerca un film</button></div>` + recRow('movies');
     const t = oggi();
     return h + `<div class="grid">${todo.map(m => {
-      const b = m.rel && m.rel > t ? `<span class="bdg hot">Esce ${esc(fData(m.rel, false))}</span>` : (m.prov?.length ? `<span class="bdg">${esc(m.prov[0].n)}</span>` : '');
+      const b = m.rel && m.rel > t ? `<span class="bdg hot">Esce ${esc(fData(m.rel, false))}</span>` : m.gone ? `<span class="bdg" style="color:#ff9a7a">Tolto da ${esc(m.gone.n.replace(/^Amazon /, ''))}</span>` : (m.prov?.length ? `<span class="bdg">${esc(m.prov[0].n)}</span>` : '');
       return `<button class="pc-it fadein" data-act="openMovie" data-id="${m.id}">${poster(movImg(m), m.title, 'pst', b)}<div class="cap">${esc(m.title)}</div><div class="cap2">${esc([m.year, m.genres?.[0]].filter(Boolean).join(' · '))}</div></button>`;
     }).join('')}</div>` + recRow('movies');
   }
@@ -886,8 +901,44 @@ function renderIo(){
     <div class="acts"><button class="btn small" data-act="saveGh">Salva e sincronizza</button></div>
   </div>
   <div class="box"><h4>Importa la tua cronologia</h4><p class="plot" style="font-size:14px;margin-bottom:10px">Carica il file "Attività di visione" scaricato da Netflix: serie e film vengono aggiunti già spuntati, con le date vere.</p><div class="acts" style="margin-top:0"><button class="btn small" data-act="netflix">📥 Importa da Netflix</button></div></div>
-  <div class="box"><h4>Backup</h4><div class="acts" style="margin-top:0"><button class="btn small ghost" data-act="export">Esporta copia</button><button class="btn small ghost" data-act="import">Importa copia</button></div></div>
+  ${backupBox()}
   <div class="ver">Visto! · versione <b>${VERSIONE}</b><br>Dati serie: TVmaze · Dati film: TMDB</div>`;
+}
+
+/* ---------- BACKUP ---------- */
+const ghBase = () => `https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/contents/`;
+async function caricaBackup(force){
+  if (!C.ghToken || !C.ghUser) return;
+  if (!force && UI.bk && Date.now() - UI.bk.at < 10 * 60e3) return;
+  try { const r = await fetch(ghBase() + 'backup?t=' + Date.now(), {headers:ghH(), cache:'no-store'});
+    const list = r.status === 404 ? [] : r.ok ? (await r.json()).filter(f => f.name.endsWith('.json')).sort((a, b) => b.name.localeCompare(a.name)) : null;
+    if (list) UI.bk = {at:Date.now(), list:list.map(f => ({name:f.name, sha:f.sha, size:f.size}))};
+  } catch(e){}
+  if (!UI.bk || (UI.bk.err && force)) UI.bk = {at:Date.now(), list:UI.bk?.list || [], err:true};
+  if (UI.tab === 'io' && !$('#sheet').classList.contains('open') && !$('#modal').classList.contains('open')) render();
+}
+const bkData = n => { const m = n.match(/^(\d{4}-\d{2}-\d{2})/); return m ? fData(m[1]) : n; };
+function backupBox(){
+  if (!C.ghToken || !C.ghUser) return `<div class="box"><h4>Backup</h4><p class="plot" style="font-size:14px;margin-bottom:10px">Attiva la sincronizzazione qui sotto per avere i backup automatici.</p><div class="acts" style="margin-top:0"><button class="btn small ghost" data-act="export">Salva sul telefono</button><button class="btn small ghost" data-act="import">Importa copia</button></div></div>`;
+  if (!UI.bk) setTimeout(caricaBackup, 50);
+  const l = UI.bk?.list || [], last = l[0];
+  const fresco = last && (Date.now() - new Date(last.name.slice(0, 10) + 'T12:00')) < 9 * 864e5;
+  return `<div class="box"><h4>Backup</h4>
+    <div class="bkst"><i class="${fresco ? '' : 'warn'}">${fresco ? '✅' : '🛟'}</i><div><b>${!UI.bk ? 'Controllo i backup…' : UI.bk.err && !l.length ? 'Non riesco a leggere i backup ora' : fresco ? 'Tutto al sicuro' : last ? 'Backup da aggiornare' : 'Nessun backup ancora'}</b><small>${last ? 'Ultimo: ' + esc(bkData(last.name)) : 'Fanne uno adesso'} · ogni domenica in automatico</small></div></div>
+    <div class="acts"><button class="btn small" data-act="bkNow">Fai un backup adesso</button><button class="btn small ghost" data-act="export">Salva sul telefono</button></div>
+    ${l.length ? `<p class="lbl">Backup salvati · tengo gli ultimi 8</p>${l.slice(0, 10).map(f => `<div class="set"><div class="l"><b>${esc(bkData(f.name))}</b><small>${f.name.includes('prima') ? 'copia fatta prima di un ripristino · ' : ''}${Math.max(1, Math.round(f.size / 1024))} KB</small></div><button class="btn small ghost" data-act="bkAsk" data-n="${esc(f.name)}">Ripristina</button></div>`).join('')}` : ''}
+    <p class="cap2" style="white-space:normal;margin-top:10px">I backup stanno nel tuo archivio privato su GitHub. "Salva sul telefono" ti fa scegliere dove metterlo, anche iCloud Drive.</p>
+    <div class="acts"><button class="btn small ghost" data-act="import">Importa una copia dal telefono</button></div></div>`;
+}
+async function scriviBackup(nome){
+  let sha; try { const g = await fetch(ghBase() + 'backup/' + nome + '?t=' + Date.now(), {headers:ghH(), cache:'no-store'}); if (g.ok) sha = (await g.json()).sha; } catch(e){}
+  const body = {message:'Visto: backup ' + nome, content:b64e(JSON.stringify(D))}; if (sha) body.sha = sha;
+  const r = await fetch(ghBase() + 'backup/' + nome, {method:'PUT', headers:Object.assign({'Content-Type':'application/json'}, ghH()), body:JSON.stringify(body)});
+  if (!r.ok) throw new Error('GitHub ' + r.status);
+}
+async function potaBackup(){
+  const l = UI.bk?.list || []; for (const f of l.slice(8)){
+    try { await fetch(ghBase() + 'backup/' + f.name, {method:'DELETE', headers:Object.assign({'Content-Type':'application/json'}, ghH()), body:JSON.stringify({message:'Visto: tolgo il backup vecchio ' + f.name, sha:f.sha})}); } catch(e){} }
 }
 
 /* ---------- SCHEDA SERIE ---------- */
@@ -908,8 +959,8 @@ function showSheet(id, keep){
   const stato = sh.stopped ? '🏁 Chiusa: visto quello che mi interessava' : {corso:'In corso', attesa:'Al passo', nuove:'Da iniziare', pausa:'In pausa', finite:'Vista tutta', bocciate:'👎 Bocciata'}[x.st];
   const years = sh.premiered ? sh.premiered.slice(0, 4) + (sh.status === 'Ended' ? '–' + (sh.ended || '').slice(0, 4) : '–') : '';
   openSheet(`
-  <div class="hero"><div class="bk ${sh.back ? '' : 'blur'}" style="background-image:url('${esc(showBack(sh))}')"></div></div>
-  <div class="hhead"><div data-act="posters" data-k="s" data-id="${id}" role="button" style="position:relative">${poster(showImg(sh), showName(sh), 'pimg')}<span class="pchg">🖼️</span></div><div style="min-width:0;padding-bottom:4px"><h2>${esc(showName(sh))}</h2>
+  <div class="hero"><div class="bk ${sh.back ? '' : 'blur'}" style="background-image:url('${esc(showBack(sh))}')"></div><button class="more" data-act="more" data-k="s" data-id="${id}" aria-label="Altre azioni"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button></div>
+  <div class="hhead"><div data-act="posters" data-k="s" data-id="${id}" role="button" style="position:relative">${poster(showImg(sh), showName(sh), 'pimg')}</div><div style="min-width:0;padding-bottom:4px"><h2>${esc(showName(sh))}</h2>
     ${sh.itName && sh.itName !== sh.name ? `<div class="it">${esc(sh.name)}</div>` : ''}
     <div class="meta">${[years, sh.net, ...(sh.genres || []).slice(0, 2)].filter(Boolean).map(g => `<span class="pill">${esc(g)}</span>`).join('')}</div>${voti(sh.myRating, 's' + sh.id)}
     <button class="pill" style="margin-top:8px;background:rgba(255,154,77,.16);color:var(--a2)" data-act="pickGen" data-k="s" data-id="${id}">🏷️ ${esc(mainGen(sh))} ›</button></div></div>
@@ -918,11 +969,11 @@ function showSheet(id, keep){
       <div class="tx"><b>${stato}</b><p>${x.w} di ${x.aired} episodi visti${x.left ? ` · ne mancano ${x.left} (circa ${ore(x.leftMin)})` : ''}</p>
       ${x.next ? `<p>Prossimo: <b style="font-size:14px;color:var(--txt)">${epCode(x.next)}</b> · ${esc(epT(sh, x.next))}</p>` : ''}
       ${sh.next?.d ? `<p>Nuovo episodio ${epCode(sh.next)}: <b style="font-size:14px;color:var(--a2)">${esc(fGiorno(sh.next.d))}</b></p>` : (sh.status === 'Ended' || sh.closed ? '<p>Serie conclusa</p>' : (x.st === 'attesa' ? `<p class="cap2" style="white-space:normal;margin-top:4px">Nessun nuovo episodio annunciato. <button class="lnk" data-act="closeShow" data-id="${id}">È finita? Segnala come conclusa ›</button></p>` : ''))}</div></div>
-      <div class="acts">${x.next ? `<button class="btn" data-act="quick" data-id="${id}">${I.check}Segna ${epCode(x.next)}</button>` : ''}
-        ${sh.dropped || sh.stopped ? '' : `<button class="btn ghost" data-act="pause" data-id="${id}">${sh.paused ? 'Riprendi' : 'Metti in pausa'}</button>`}
-        ${!sh.dropped && (x.left || sh.stopped) ? `<button class="btn ghost" data-act="stopShow" data-id="${id}">${sh.stopped ? '↩︎ Riprendila' : '🏁 Basta così'}</button>` : ''}
-        <button class="btn ghost" data-act="drop" data-id="${id}">${sh.dropped ? '↩︎ Dai un\'altra possibilità' : '👎 Bocciata'}</button></div>
-      ${x.left && !sh.dropped ? `<div class="acts" style="margin-top:10px"><button class="btn ghost" data-act="allShow" data-id="${id}">✓ Vista tutta la serie</button></div>` : ''}</div>
+      <div class="acts">${x.next && !sh.dropped ? `<button class="btn" data-act="quick" data-id="${id}">${I.check}Segna ${epCode(x.next)}</button>` : ''}
+        ${sh.paused ? `<button class="btn ghost" data-act="pause" data-id="${id}">▶︎ Riprendi</button>` : ''}
+        ${sh.stopped ? `<button class="btn ghost" data-act="stopShow" data-id="${id}">↩︎ Riprendila</button>` : ''}
+        ${sh.dropped ? `<button class="btn ghost" data-act="drop" data-id="${id}">↩︎ Dai un'altra possibilità</button>` : ''}
+        <button class="btn ghost" data-act="more" data-k="s" data-id="${id}">Altre azioni</button></div></div>
     ${sh.prov?.length ? `<div class="box"><h4>Dove vederla</h4><div class="prov">${sh.prov.map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div></div>` : ''}
     ${(sh.itPlot || sh.summary) ? `<div class="box"><h4>Trama</h4><p class="plot">${esc(sh.itPlot || sh.summary)}</p></div>` : ''}
     ${critica(showName(sh), sh.name, (sh.premiered || '').slice(0, 4), sh.rating, 'serie tv', 's' + sh.id)}
@@ -938,7 +989,6 @@ function showSheet(id, keep){
     <div class="box"><h4>Il mio giudizio</h4>${sh.myRating ? `<div style="font-size:22px;margin-bottom:6px">${stars(sh.myRating)}</div>` : ''}
       ${sh.notes ? `<p class="plot" style="font-style:italic">“${esc(sh.notes)}”</p>` : '<p class="cap2" style="font-size:14px">Ancora nessun voto né commento: com\'è questa serie? Di cosa parla, cosa ti ha colpito?</p>'}
       <div class="acts"><button class="btn ghost" data-act="rateShow" data-id="${id}">${sh.myRating || sh.notes ? 'Modifica voto e commento' : '★ Vota e commenta'}</button></div></div>
-    <button class="danger" data-act="removeShow" data-id="${id}">Rimuovi dalla mia lista</button>
   </div>`, keep);
 }
 
@@ -949,8 +999,8 @@ function movieSheet(id, keep){
   const t = oggi();
   const runtime = m.runtime ? `${Math.floor(m.runtime / 60)} h ${m.runtime % 60} min` : '';
   openSheet(`
-  <div class="hero"><div class="bk ${m.back ? '' : 'blur'}" style="background-image:url('${esc(m.back ? IMG + 'w1280' + m.back : movImg(m))}')"></div></div>
-  <div class="hhead"><div data-act="posters" data-k="m" data-id="${id}" role="button" style="position:relative">${poster(movImg(m), m.title, 'pimg')}<span class="pchg">🖼️</span></div><div style="min-width:0;padding-bottom:4px"><h2>${esc(m.title)}</h2>
+  <div class="hero"><div class="bk ${m.back ? '' : 'blur'}" style="background-image:url('${esc(m.back ? IMG + 'w1280' + m.back : movImg(m))}')"></div><button class="more" data-act="more" data-k="m" data-id="${id}" aria-label="Altre azioni"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button></div>
+  <div class="hhead"><div data-act="posters" data-k="m" data-id="${id}" role="button" style="position:relative">${poster(movImg(m), m.title, 'pimg')}</div><div style="min-width:0;padding-bottom:4px"><h2>${esc(m.title)}</h2>
     ${m.orig && m.orig !== m.title ? `<div class="it">${esc(m.orig)}</div>` : ''}
     <div class="meta">${[m.year, runtime, ...(m.genres || []).slice(0, 2)].filter(Boolean).map(g => `<span class="pill">${esc(g)}</span>`).join('')}</div>${voti(m.state === 'seen' ? m.rating : 0, 'm' + m.id)}
     <button class="pill" style="margin-top:8px;background:rgba(255,154,77,.16);color:var(--a2)" data-act="pickGen" data-k="m" data-id="${id}">🏷️ ${esc(mainGen(m))} ›</button></div></div>
@@ -959,15 +1009,13 @@ function movieSheet(id, keep){
       <p class="cap2" style="margin:4px 0 10px">${m.seenAt ? 'Visto il ' + esc(fData(m.seenAt)) : ''}</p>
       ${m.comment ? `<p class="plot" style="font-style:italic">“${esc(m.comment)}”</p>` : '<p class="cap2">Nessun commento</p>'}
       <div class="acts"><button class="btn ghost" data-act="rate" data-id="${id}">Modifica voto e commento</button></div></div>`
-    : `<div class="box">${m.rel && m.rel > t ? `<p class="plot" style="margin-bottom:12px">Esce in Italia <b style="color:var(--a2)">${esc(fGiorno(m.rel))}${fGiorno(m.rel) !== fData(m.rel) ? ' (' + esc(fData(m.rel)) + ')' : ''}</b>. Ti avviso tra le novità.</p>` : ''}
+    : `<div class="box">${m.gone ? `<p class="plot" style="margin-bottom:12px;color:#ff9a7a">Non è più su ${esc(m.gone.n)} dal ${esc(fData(m.gone.d))}${m.prov?.length ? '' : ' e per ora non è sulle tue piattaforme'}.</p>` : ''}${m.rel && m.rel > t ? `<p class="plot" style="margin-bottom:12px">Esce in Italia <b style="color:var(--a2)">${esc(fGiorno(m.rel))}${fGiorno(m.rel) !== fData(m.rel) ? ' (' + esc(fData(m.rel)) + ')' : ''}</b>. Ti avviso tra le novità.</p>` : ''}
       <div class="acts" style="margin-top:0"><button class="btn" data-act="rate" data-id="${id}">${I.check}L'ho visto</button></div></div>`}
     ${(m.prov?.length || m.rent?.length) ? `<div class="box"><h4>Dove vederlo</h4><div class="prov">${(m.prov || []).map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div>
       ${m.rent?.length ? `<p class="cap2" style="margin:10px 0 8px">A noleggio</p><div class="prov">${m.rent.slice(0, 4).map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div>` : ''}</div>` : ''}
     ${m.plot ? `<div class="box"><h4>Trama</h4><p class="plot">${esc(m.plot)}</p>${m.director ? `<p class="cap2" style="margin-top:10px">Regia di ${esc(m.director)}</p>` : ''}${m.cast ? `<p class="cap2">Con ${esc(m.cast)}</p>` : ''}</div>` : ''}
     ${critica(m.title, m.orig, m.year, m.vote, 'film', 'm' + m.id)}
-    <div class="acts" style="margin-top:14px"><button class="btn ghost" data-act="dropM" data-id="${id}">${m.dropped ? '↩︎ Dai un\'altra possibilità' : m.state === 'seen' ? '👎 Bocciato' : '👎 Non mi interessa più'}</button></div>
-    ${m.state === 'seen' ? `<button class="danger" style="color:var(--a2)" data-act="unsee" data-id="${id}">Rimetti tra i film da vedere</button>` : ''}
-    <button class="danger" data-act="removeMovie" data-id="${id}">Rimuovi dalla mia lista</button>
+    <div class="acts" style="margin-top:14px">${m.dropped ? `<button class="btn ghost" data-act="dropM" data-id="${id}">↩︎ Dai un'altra possibilità</button>` : ''}<button class="btn ghost" data-act="more" data-k="m" data-id="${id}">Altre azioni</button></div>
   </div>`, keep);
 }
 
@@ -988,32 +1036,36 @@ function rateModal(id){
 
 /* ---------- STASERA COSA GUARDO ---------- */
 function tonightCard(){ return `<button class="tonight fadein" data-act="tonight"><span class="em">🍿</span><span><b>Stasera cosa guardo?</b><small>Dimmi quanto tempo hai, scelgo io</small></span><span class="ar">›</span></button>`; }
-function tonightList(mins){
+function tonightList(mins, g){
   const t = oggi(), out = [];
   Object.values(D.series).forEach(sh => {
     if (sh.paused || sh.dropped || sh.stopped) return; const x = showStats(sh); if (!x.next) return;
     const r = x.next.r || sh.runtime || 45; if (r > mins + 8) return;
-    let sc = x.st === 'corso' ? 5 : 2; if (sh.lastW && Date.now() - sh.lastW < 14 * 864e5) sc += 3;
+    let sc = x.st === 'corso' ? 5 : 2; if (sh.lastW && Date.now() - sh.lastW < 14 * 864e5) sc += 3; if (miaPiatt(sh)) sc += 2;
     if (D.news.some(n => !n.read && n.ref === 'show' && n.rid == sh.id)) sc += 2;
     const n = Math.max(1, Math.min(Math.floor(mins / r), x.left));
-    out.push({type:'show', id:sh.id, sc:sc + Math.random() * 3, img:showImg(sh), title:showName(sh), k:x.st === 'corso' ? 'Continua la serie' : 'Inizia una serie nuova',
+    out.push({type:'show', id:sh.id, g:mainGen(sh), sc:sc + Math.random() * 3, img:showImg(sh), title:showName(sh), k:x.st === 'corso' ? 'Continua la serie' : 'Inizia una serie nuova',
       d:`${epCode(x.next)} · ${epT(sh, x.next)}${n > 1 ? ` · ci stanno ${n} episodi` : ` · ${r} min`}`});
   });
   if (mins >= 90) Object.values(D.movies).forEach(m => {
     if (m.state !== 'todo' || m.dropped || (m.rel && m.rel > t)) return;
     if (m.runtime && m.runtime > mins + 10) return;
-    let sc = 3 + (m.prov?.length ? 3 : 0) + (m.vote || 6) / 3;
+    let sc = 3 + (miaPiatt(m) ? 4 : m.prov?.length ? 1 : 0) + (m.vote || 6) / 3;
     const dur = m.runtime ? `${Math.floor(m.runtime / 60)} h ${m.runtime % 60} min` : '';
-    out.push({type:'movie', id:m.id, sc:sc + Math.random() * 3, img:movImg(m), title:m.title, k:'Un film dalla tua lista', d:[dur, m.prov?.[0] ? 'su ' + m.prov[0].n : '', m.genres?.[0]].filter(Boolean).join(' · ')});
+    out.push({type:'movie', id:m.id, g:mainGen(m), sc:sc + Math.random() * 3, img:movImg(m), title:m.title, k:'Un film dalla tua lista', d:[dur, m.prov?.[0] ? 'su ' + m.prov[0].n : '', m.genres?.[0]].filter(Boolean).join(' · ')});
   });
-  return out.sort((a, b) => b.sc - a.sc);
+  return out.filter(o => !g || o.g === g).sort((a, b) => b.sc - a.sc);
 }
-function tonightModal(mins){
-  UI.tn = UI.tn && UI.tn.mins === mins ? UI.tn : {mins, list:tonightList(mins), i:0};
+function tonightModal(mins, g = ''){
+  UI.tn = UI.tn && UI.tn.mins === mins && UI.tn.g === g ? UI.tn : {mins, g, list:tonightList(mins, g), i:0};
   const p = UI.tn.list[UI.tn.i % Math.max(1, UI.tn.list.length)];
+  const gc = {}; tonightList(mins).forEach(o => gc[o.g] = (gc[o.g] || 0) + 1);
+  const gens = Object.entries(gc).sort((a, b) => b[1] - a[1]).slice(0, 5).map(x => x[0]);
+  if (g && !gens.includes(g)) gens.push(g);
   $('#mcard').innerHTML = `<h3>Stasera cosa guardo?</h3><div class="s">Quanto tempo hai?</div>
     <div class="tchips">${[[30, '½ ora'], [60, 'Un\'ora'], [150, 'Tutta la sera']].map(([m, l]) => `<button class="${m === mins ? 'on' : ''}" data-act="tonightT" data-m="${m}">${l}</button>`).join('')}</div>
-    ${p ? `<div class="pick fadein">${poster(p.img, p.title, 'pimg')}<div><div class="k">${esc(p.k)}</div><h4>${esc(p.title)}</h4><p>${esc(p.d)}</p></div></div>
+    ${gens.length > 1 ? `<div class="s" style="margin-top:-4px">Che voglia hai?</div><div class="tchips gchips"><button class="${!g ? 'on' : ''}" data-act="tonightG" data-g="">🎲 Sorprendimi</button>${gens.map(x => `<button class="${x === g ? 'on' : ''}" data-act="tonightG" data-g="${esc(x)}">${esc(x)}</button>`).join('')}</div>` : ''}
+    ${p ? `<div class="pick fadein"><div data-act="tonightGo" role="button">${poster(p.img, p.title, 'pimg')}</div><div><div class="k">${esc(p.k)}</div><h4>${esc(p.title)}</h4><p>${esc(p.d)}</p></div></div>
     <div class="mrow">${UI.tn.list.length > 1 ? '<button class="btn ghost" data-act="tonightNext">Un\'altra idea</button>' : ''}<button class="btn" data-act="tonightGo">Andiamo!</button></div>`
     : `<p class="hint">${mins < 90 ? 'Nessun episodio così breve in lista. Prova con più tempo.' : 'Aggiungi qualche serie o film da vedere e ti faccio una proposta.'}</p>`}`;
   $('#modal').classList.add('open');
@@ -1067,13 +1119,14 @@ function yearSheet(yy){
   yy = String(yy || new Date().getFullYear());
   UI.open = {type:'year', y:yy};
   const y = String(yy || new Date().getFullYear()), M = ['G','F','M','A','M','G','L','A','S','O','N','D'];
-  const months = Array(12).fill(0); let eps = 0, min = 0; const perShow = {}; const imgs = [];
+  const months = Array(12).fill(0), minM = Array(12).fill(0), plY = {}; let eps = 0, min = 0; const perShow = {}; const imgs = [];
+  const addP = (it, v) => { const n = platOf(it); if (n) plY[n] = (plY[n] || 0) + v; };
   Object.values(D.series).forEach(sh => { const byId = Object.fromEntries(sh.eps.map(e => [e.i, e]));
     Object.entries(sh.watched).forEach(([id, ts]) => { const d = new Date(ts); if (String(d.getFullYear()) !== y) return;
-      eps++; min += byId[id]?.r || sh.runtime || 45; months[d.getMonth()]++; perShow[sh.id] = (perShow[sh.id] || 0) + 1; });
+      const r = byId[id]?.r || sh.runtime || 45; eps++; min += r; minM[d.getMonth()] += r; addP(sh, r); months[d.getMonth()]++; perShow[sh.id] = (perShow[sh.id] || 0) + 1; });
     if (perShow[sh.id]) imgs.push([showImg(sh), showName(sh), 'openShow', sh.id]); });
   const films = Object.values(D.movies).filter(m => m.state === 'seen' && (m.seenAt || '').startsWith(y));
-  films.forEach(m => { months[+m.seenAt.slice(5, 7) - 1]++; min += m.runtime || 110; imgs.push([movImg(m), m.title, 'openMovie', m.id]); });
+  films.forEach(m => { const r = m.runtime || 110; months[+m.seenAt.slice(5, 7) - 1]++; minM[+m.seenAt.slice(5, 7) - 1] += r; addP(m, r); min += r; imgs.push([movImg(m), m.title, 'openMovie', m.id]); });
   const best = films.filter(m => m.rating && !m.dropped).sort((a, b) => b.rating - a.rating || (b.seenAt || '').localeCompare(a.seenAt || ''))[0];
   const sRank = Object.entries(perShow).map(([id, n]) => [D.series[id], n]).filter(([sh]) => sh && !sh.dropped)
     .sort((a, b) => (b[0].myRating || 0) - (a[0].myRating || 0) || b[1] - a[1]);
@@ -1082,7 +1135,8 @@ function yearSheet(yy){
   const fRank = films.filter(m => !m.dropped).sort((a, b) => (b.rating || 0) - (a.rating || 0) || (b.seenAt || '').localeCompare(a.seenAt || ''));
   const anni = anniDisponibili();
   const finite = Object.values(D.series).filter(sh => { const x = showStats(sh); return (x.st === 'finite' || x.st === 'attesa') && Object.values(sh.watched).some(v => String(new Date(v).getFullYear()) === y); }).length;
-  const mx = Math.max(1, ...months), mi = months.indexOf(Math.max(...months));
+  const mx = Math.max(1, ...minM), mi = minM.indexOf(Math.max(...minM));
+  const plL = Object.entries(plY).sort((a, b) => b[1] - a[1]).slice(0, 5), plM = plL[0]?.[1] || 1;
   const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
   const empty = !eps && !films.length;
   openSheet(`<div class="yhero">${anni.length > 1 ? `<div class="ynav">${anni.map(a => `<button class="${a === y ? 'on' : ''}" data-act="yearGo" data-y="${a}">${a}</button>`).join('')}</div>` : ''}<div class="yy">${y}</div><p>${empty ? 'Il tuo anno comincia qui: spunta episodi e film e questa pagina si riempie.' : `Un anno di storie: <b>${ore(min)}</b> davanti allo schermo`}</p></div>
@@ -1094,8 +1148,10 @@ function yearSheet(yy){
     ${fRank.length > 1 || sRank.length > 1 ? `<div class="box"><h4>Il podio del ${y}</h4>
       ${fRank.length > 1 ? `<p class="lbl" style="margin-top:0">Film</p>${fRank.slice(0, 3).map((m, i) => `<div class="set" data-act="openMovie" data-id="${m.id}" role="button"><div class="l"><b>${['🥇','🥈','🥉'][i]} ${esc(m.title)}</b><small>${m.rating ? '★'.repeat(m.rating) : 'senza voto'}</small></div><span class="lnk">›</span></div>`).join('')}` : ''}
       ${sRank.length > 1 ? `<p class="lbl">Serie</p>${sRank.slice(0, 3).map(([sh, n], i) => `<div class="set" data-act="openShow" data-id="${sh.id}" role="button"><div class="l"><b>${['🥇','🥈','🥉'][i]} ${esc(showName(sh))}</b><small>${sh.myRating ? '★'.repeat(sh.myRating) + ' · ' : ''}${n} episodi</small></div><span class="lnk">›</span></div>`).join('')}` : ''}</div>` : ''}
-    <div class="box"><h4>Mese per mese</h4><div class="mbars">${months.map((v, i) => `<div><i style="height:${v / mx * 100}%;opacity:${v ? 1 : .25}"></i><span>${M[i]}</span></div>`).join('')}</div>
-      <p class="cap2" style="margin-top:10px;font-size:14px">Il mese più intenso: <b style="color:var(--txt)">${MESI[mi]}</b>, con ${months[mi]} visioni</p></div>
+    <div class="box"><h4>Il tuo tempo, mese per mese</h4><div class="mbars">${minM.map((v, i) => `<div><i style="height:${v / mx * 100}%;opacity:${v ? 1 : .25}"></i><span>${M[i]}</span></div>`).join('')}</div>
+      <p class="cap2" style="margin-top:10px;font-size:14px;white-space:normal">Il mese più intenso: <b style="color:var(--txt)">${MESI[mi]}</b>, con ${ore(minM[mi])} e ${months[mi]} visioni</p>
+      ${plL.length ? `<p class="lbl">Per piattaforma</p>${plL.map(([n, v]) => `<div class="gbar" data-act="plat" data-p="${esc(n)}" role="button" style="cursor:pointer"><span>${esc(n)}</span><div class="bar"><i style="width:${v / plM * 100}%"></i></div><em style="width:52px">${ore(v)}</em></div>`).join('')}` : ''}
+      <p class="cap2" style="margin-top:8px;white-space:normal">Contano solo le visioni con una data: quelle "in passato" restano fuori</p></div>
     ${imgs.length ? `<div class="box"><h4>Tutto quello che hai visto</h4><div class="ycoll">${imgs.slice(0, 30).map(([src, t, act, id]) => `<div data-act="${act}" data-id="${id}" role="button">${poster(src, t)}</div>`).join('')}</div></div>` : ''}`}
   </div>`);
 }
@@ -1110,6 +1166,8 @@ function rateShowModal(id, fin, boc){
   $('#modal').classList.add('open');
 }
 
+const MIE = /netflix|disney|prime video/i;
+const miaPiatt = it => (it.prov || []).some(p => MIE.test(p.n)) || MIE.test(it.net || '');
 const platOf = it => it.prov?.[0]?.n || it.net || '';
 function platSheet(pn){
   UI.open = {type:'genre', g:null, p:pn};
@@ -1305,10 +1363,30 @@ const A = {
   whenD(d, el){ el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); $('#rDate').classList.toggle('hide', d.w === 'p'); $('#rWarn')?.classList.toggle('hide', d.w !== 'p'); },
   toggleArch(){ C.archivio = !C.archivio; saveCfg(); render(); toast(C.archivio ? 'Modalità archivio attiva: le spunte non contano nelle statistiche del periodo' : 'Modalità archivio disattivata: da ora conta tutto con la data di oggi', null, null, 5000); },
   tonight(){ UI.tn = null; tonightModal(UI.tab === 'film' ? 150 : 60); },
-  tonightT(d){ UI.tn = null; tonightModal(+d.m); },
-  tonightNext(){ UI.tn.i++; tonightModal(UI.tn.mins); },
+  tonightT(d){ const g = UI.tn?.g || ''; UI.tn = null; tonightModal(+d.m, g); },
+  tonightG(d){ const m = UI.tn?.mins || 60; UI.tn = null; tonightModal(m, d.g); },
+  tonightNext(){ UI.tn.i++; tonightModal(UI.tn.mins, UI.tn.g); },
   tonightGo(){ const p = UI.tn.list[UI.tn.i % UI.tn.list.length]; $('#modal').classList.remove('open'); p.type === 'show' ? showSheet(p.id) : movieSheet(p.id); },
   recOpen(d){ recModal(d.k, d.id); },
+  more(d){
+    const s = d.k === 's', it = s ? D.series[d.id] : D.movies[d.id]; if (!it) return;
+    const b = (a, ic, t, sub = '', red = false) => `<button class="${red ? 'red' : ''}" data-act="menuDo" data-a="${a}" data-k="${d.k}" data-id="${d.id}"><i>${ic}</i><span>${t}${sub ? `<small>${sub}</small>` : ''}</span></button>`;
+    let h = '';
+    if (s){ const x = showStats(it);
+      if (x.left && !it.dropped) h += b('allShow', '✓', 'Vista tutta la serie', 'segna come visti tutti gli episodi usciti');
+      if (!it.dropped && !it.stopped) h += b('pause', it.paused ? '▶︎' : '⏸', it.paused ? 'Riprendi' : 'Metti in pausa', it.paused ? '' : 'la ritrovi in "In pausa"');
+      if (!it.dropped && (x.left || it.stopped)) h += b('stopShow', it.stopped ? '↩︎' : '🏁', it.stopped ? 'Riprendila' : 'Basta così', it.stopped ? '' : 'chiusa con quello che hai visto, niente più avvisi');
+      h += b('drop', it.dropped ? '↩︎' : '👎', it.dropped ? 'Dai un\'altra possibilità' : 'Bocciata', it.dropped ? '' : 'non ti è piaciuta');
+    } else {
+      if (it.state === 'seen') h += b('unsee', '🔁', 'Rimetti tra i film da vedere');
+      h += b('dropM', it.dropped ? '↩︎' : '👎', it.dropped ? 'Dai un\'altra possibilità' : it.state === 'seen' ? 'Bocciato' : 'Non mi interessa più');
+    }
+    h += b('posters', '🖼️', 'Cambia locandina') + b('pickGen', '🏷️', 'Cambia genere', 'ora: ' + esc(mainGen(it)));
+    h += b(s ? 'removeShow' : 'removeMovie', '🗑', 'Rimuovi dalla mia lista', '', true);
+    $('#mcard').innerHTML = `<h3>${esc(s ? showName(it) : it.title)}</h3><div class="s">Cosa vuoi fare?</div><div class="amenu">${h}</div><div class="mrow"><button class="btn ghost" data-act="closeModal">Chiudi</button></div>`;
+    $('#modal').classList.add('open');
+  },
+  menuDo(d){ $('#modal').classList.remove('open'); const f = A[d.a]; if (f) setTimeout(() => f({id:d.id, k:d.k}), 120); },
   year(){ yearSheet(); },
   yearGo(d){ yearSheet(d.y); $('#sheet').scrollTop = 0; },
   genre(d){ genreSheet(d.g); },
@@ -1387,9 +1465,31 @@ const A = {
     toast('Sincronizzo…'); await pull(true); render();
     toast(C.syncErr ? 'Errore: ' + esc(C.syncErr) : '✓ Sincronizzazione attiva');
   },
-  export(){
-    const blob = new Blob([JSON.stringify(D)], {type:'application/json'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `visto-backup-${oggi()}.json`; a.click();
+  async export(){
+    const nome = `visto-backup-${oggi()}.json`, f = new File([JSON.stringify(D)], nome, {type:'application/json'});
+    if (navigator.canShare && navigator.canShare({files:[f]})){ try { await navigator.share({files:[f], title:'Backup di Visto!'}); return; } catch(e){ if (e.name === 'AbortError') return; } }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = nome; a.click();
+  },
+  async bkNow(d, el){
+    if (el) el.disabled = true; toast('Salvo il backup…');
+    try { await scriviBackup(oggi() + '.json'); await caricaBackup(true); await potaBackup(); await caricaBackup(true); toast('✅ Backup salvato'); }
+    catch(e){ toast('Backup non riuscito: ' + esc(e.message)); if (el) el.disabled = false; }
+  },
+  bkAsk(d){
+    $('#mcard').innerHTML = `<h3>Ripristinare il backup?</h3><div class="s">del ${esc(bkData(d.n))}</div>
+      <p class="plot" style="font-size:14px">Serie, film, voti e commenti tornano com'erano quel giorno, su iPhone e iPad. Prima salvo una copia di come sono adesso, così puoi sempre tornare indietro.</p>
+      <div class="mrow"><button class="btn ghost" data-act="closeModal">Annulla</button><button class="btn" data-act="bkGo" data-n="${esc(d.n)}">Ripristina</button></div>`;
+    $('#modal').classList.add('open');
+  },
+  async bkGo(d){
+    $('#modal').classList.remove('open'); toast('Ripristino…', null, null, 8000);
+    try {
+      const r = await fetch(ghBase() + 'backup/' + encodeURIComponent(d.n) + '?t=' + Date.now(), {headers:Object.assign({}, ghH(), {Accept:'application/vnd.github.raw'}), cache:'no-store'});
+      if (!r.ok) throw new Error('GitHub ' + r.status);
+      const x = await r.json(); if (!x.series || !x.movies) throw new Error('file non valido');
+      await scriviBackup(oggi() + '-prima-del-ripristino.json');
+      D = x; save(); await caricaBackup(true); render(); toast('✅ Backup del ' + esc(bkData(d.n)) + ' ripristinato', null, null, 5000);
+    } catch(e){ toast('Ripristino non riuscito: ' + esc(e.message)); }
   },
   import(){
     const i = document.createElement('input'); i.type = 'file'; i.accept = '.json,application/json';
@@ -1442,6 +1542,9 @@ async function checkNews(force){
     try {
       const nu = await fetchMovie(old.id);
       const oldProv = new Set((old.prov || []).map(p => p.n)), added = (nu.prov || []).filter(p => !oldProv.has(p.n));
+      const tolta = (old.prov || []).find(p => MIE.test(p.n) && !(nu.prov || []).some(q => q.n === p.n));
+      if (tolta && !(nu.prov || []).some(q => MIE.test(q.n))){ old.gone = {n:tolta.n, d:t}; addNews({id:`gone-${old.id}-${t}`, ref:'movie', rid:old.id, kind:'new', img:movImg(old, 'w185'), t:old.title, d:t, k:'Non più disponibile', d2:`Non è più su ${tolta.n}`}); }
+      else if ((nu.prov || []).some(q => MIE.test(q.n))) delete old.gone;
       D.movies[old.id] = Object.assign(old, {rel:nu.rel, digital:nu.digital, prov:nu.prov, rent:nu.rent, plot:nu.plot || old.plot, poster:nu.poster || old.poster, back:nu.back || old.back});
       const img = movImg(old, 'w185');
       if (old.rel && old.rel > since && old.rel <= t) addNews({id:`rel-${old.id}`, ref:'movie', rid:old.id, kind:'new', img, t:old.title, d:old.rel, k:'Uscito al cinema', d2:`In sala da ${fGiorno(old.rel)}`});
