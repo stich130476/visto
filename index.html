@@ -529,7 +529,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.17';
+const VERSIONE = '2.17.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1045,7 +1045,7 @@ function showSheet(id, keep){
         return `<div class="ep ${fut ? 'fut' : ''}"><div class="n">E${String(e.n).padStart(2, '0')}</div><div class="nm" ${on ? `data-act="epWhen" data-id="${id}" data-e="${e.i}" role="button"` : ''}><b>${esc(epT(sh, e))}</b><small>${e.d ? (fut ? 'Esce ' + esc(fGiorno(e.d)) : esc(fData(e.d))) : 'Data da annunciare'}${e.r ? ' · ' + e.r + ' min' : ''}${on ? (sh.watched[e.i] > 1e11 ? ' · visto il ' + esc(fData(new Date(sh.watched[e.i]).toLocaleDateString('sv'), false)) : ' · <span style="color:var(--a2)">visto in passato ›</span>') : ''}</small></div>
         ${fut ? '' : `<button class="ck ${on ? 'on' : ''}" data-act="ep" data-id="${id}" data-e="${e.i}" aria-label="Visto">${I.check}</button>`}</div>`; }).join('')}
     </div>
-    ${(sh.itPlot || sh.summary) ? `<div class="box"><h4>Trama</h4><p class="plot clamp" data-act="moreText" role="button">${esc(sh.itPlot || sh.summary)}</p></div>` : ''}
+    ${(sh.itPlot || sh.summary) ? `<div class="box"><h4>Trama</h4><p class="plot clamp" data-act="moreText" role="button">${esc(antoTrama(sh, sh.itPlot || sh.summary))}</p></div>` : ''}
     ${sh.tmdb ? castSlot('s' + sh.id) : ''}
     ${critica(showName(sh), sh.name, (sh.premiered || '').slice(0, 4), sh.rating, 'serie tv', 's' + sh.id)}
     ${(() => { const a = antoDi(sh), l = a ? antoSerie(a).filter(z => z !== sh) : []; return l.length ? `<div class="box"><h4>Della stessa antologia</h4><div class="recrow" style="margin:0">${l.map(z => { const s2 = showStats(z); return `<button class="pc-it" data-act="antoGo" data-id="${z.id}">${poster(showImg(z), showName(z), 'pst', s2.st === 'finite' ? '<span class="bdg hot">✓ Vista</span>' : '')}<div class="cap">${esc(showName(z).replace(/^(DAHMER - )?(Mostr[oi]|Monsters?):\s*/i, '').replace(/^La storia di /i, '').replace(/^./, c => c.toUpperCase()))}</div><div class="cap2">${esc((z.premiered || '').slice(0, 4))}</div></button>`; }).join('')}</div></div>` : ''; })()}
@@ -1272,6 +1272,10 @@ const CAST = load(CASTK) || {};
 // Antologie: storie separate su TVmaze, un'unica serie su TMDB
 const ANTO = [{n:'Monster', tmdb:342072, re:/^(Dahmer|Monsters?)\b.*(Story|Storia)/i, rete:'Netflix'}];
 const antoDi = sh => ANTO.find(a => a.re.test(sh.name || ''));
+const antoBreve = sh => showName(sh).replace(/^(DAHMER - )?(Mostr[oi]|Monsters?):\s*/i, '').replace(/^La storia di /i, '').replace(/^./, c => c.toUpperCase());
+// la trama generica dell'antologia (da TMDB) si aggiorna da sola con tutte le storie che hai
+const antoTrama = (sh, txt) => { const a = antoDi(sh); if (!a || !/antologic/i.test(txt || '')) return txt;
+  const n = antoSerie(a).map(antoBreve); return 'Una serie antologica sui crimini e gli assassini che più hanno colpito l\'opinione pubblica: ' + (n.length > 1 ? n.slice(0, -1).join(', ') + ' e ' + n.at(-1) : n[0]) + '.'; };
 const antoSerie = a => Object.values(D.series).filter(sh => a.re.test(sh.name || '')).sort((x, y) => (x.premiered || '').localeCompare(y.premiered || ''));
 function antoModal(n){
   const a = ANTO.find(z => z.n === n); if (!a) return;
