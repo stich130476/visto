@@ -1270,7 +1270,7 @@ function genreSheet(g){
 const CASTK = 'visto-cast';
 const CAST = load(CASTK) || {};
 // Antologie: storie separate su TVmaze, un'unica serie su TMDB
-const ANTO = [{n:'Monster', re:/^(Dahmer|Monsters?)\b.*(Story|Storia)/i, rete:'Netflix'}];
+const ANTO = [{n:'Monster', tmdb:342072, re:/^(Dahmer|Monsters?)\b.*(Story|Storia)/i, rete:'Netflix'}];
 const antoDi = sh => ANTO.find(a => a.re.test(sh.name || ''));
 const antoSerie = a => Object.values(D.series).filter(sh => a.re.test(sh.name || '')).sort((x, y) => (x.premiered || '').localeCompare(y.premiered || ''));
 function antoModal(n){
@@ -1349,7 +1349,7 @@ async function personSheet(pid, seg){
   // antologie: una sola locandina per tutta la serie (es. Monster)
   for (let i = 0; i < lista.length; i++){
     const x = lista[i]; if (x.kind !== 'tv') continue;
-    const a = x.il ? antoDi(x.il.it) : ANTO.find(z => z.n.toLowerCase() === (x.t || '').toLowerCase()); if (!a) continue;
+    const a = x.il ? antoDi(x.il.it) : ANTO.find(z => z.tmdb === x.id || z.n.toLowerCase() === (x.t || '').toLowerCase()); if (!a) continue;
     const g = lista.find(y => y.anto === a.n);
     if (g){ if (!x.il && x.img) g.img = x.img; if (x.y && x.y < g.y){ g.y = x.y; g.d = x.d; } lista.splice(i--, 1); continue; }
     const l = antoSerie(a), v = l.filter(sh => showStats(sh).w).length;
