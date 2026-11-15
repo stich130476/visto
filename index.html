@@ -522,7 +522,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.16';
+const VERSIONE = '2.16.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1262,6 +1262,8 @@ function genreSheet(g){
 const CASTK = 'visto-cast';
 const CAST = load(CASTK) || {};
 const PERS = {};
+// TMDB → TVmaze per le serie che TMDB registra con un altro id (es. le antologie come Monster)
+let TMAP = load('visto-tmap') || {};
 const iniz = n => String(n || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
 const fotoP = (path, nome) => path ? `<img src="${IMG}w185${esc(path)}" loading="lazy" decoding="async" alt="" onerror="this.remove()">` : esc(iniz(nome));
 function castBox(key){
@@ -1290,7 +1292,7 @@ const castSlot = key => { setTimeout(() => loadCast(key), 0); return `<div id="c
 
 function cercaInLista(kind, id){
   if (kind === 'movie'){ const m = D.movies[id]; return m ? {k:'m', it:m} : null; }
-  const sh = Object.values(D.series).find(x => x.tmdb === id); return sh ? {k:'s', it:sh} : null;
+  const sh = Object.values(D.series).find(x => x.tmdb === id) || (TMAP[id] && D.series[TMAP[id]]); return sh ? {k:'s', it:sh} : null;
 }
 async function personSheet(pid, seg){
   UI.open = {type:'person', id:pid};
@@ -1461,7 +1463,11 @@ const A = {
         if (!found){ el.textContent = 'Non trovata'; return; }
         tvId = found.id;
       }
-      if (D.series[tvId]){ el.textContent = '✓ In lista'; el.classList.add('done'); return; }
+      if (D.series[tvId]){
+        if (tmdbId){ TMAP[tmdbId] = tvId; try { localStorage.setItem('visto-tmap', JSON.stringify(TMAP)); } catch(e){} }
+        if (d.rec){ $('#modal').classList.remove('open'); if (UI.open?.type === 'person') UI.back = {person:UI.open.id, prev:UI.back}; return showSheet(tvId); }
+        el.textContent = '✓ In lista'; el.classList.add('done'); return;
+      }
       const sh = await fetchShow(tvId);
       await enrichShow(sh, tmdbId);
       D.series[tvId] = Object.assign(sh, {watched:{}, paused:false, notes:'', added:Date.now()});
@@ -1566,8 +1572,15 @@ const A = {
     personSheet(+d.id, 'tutti');
   },
   pSeg(d){ personSheet(UI.open.id, d.s); },
-  pOpen(d){
-    const il = cercaInLista(d.k, +d.id);
+  async pOpen(d, el){
+    let il = cercaInLista(d.k, +d.id);
+    if (!il && d.k === 'tv' && TMAP[+d.id] === undefined){
+      // la serie potrebbe essere già in lista con un altro id TMDB: la cerco su TVmaze
+      if (el) el.style.opacity = '.5';
+      try { const f = await tvmDaTmdb(+d.id); TMAP[+d.id] = f?.id || 0; localStorage.setItem('visto-tmap', JSON.stringify(TMAP)); } catch(e){}
+      if (el) el.style.opacity = '';
+      il = cercaInLista(d.k, +d.id);
+    }
     if (!il) return pvModal(d.k, +d.id);
     UI.back = {person:UI.open.id, prev:UI.back};
     if (il.k === 'm') movieSheet(il.it.id); else showSheet(il.it.id);
