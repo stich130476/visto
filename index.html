@@ -72,7 +72,7 @@ img{display:block}
 .spin svg{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
 h1.big{font:800 36px/1.1 var(--serif);letter-spacing:-.8px;margin:14px 0 4px}
 .sub{color:var(--mut);font-size:14px;margin-bottom:16px}
-h2.sec{font-size:20px;font-weight:700;margin:26px 0 12px;display:flex;align-items:baseline;gap:8px}
+h2.sec{font-family:var(--serif);font-size:23px;font-weight:700;letter-spacing:-.2px;margin:26px 0 12px;display:flex;align-items:baseline;gap:8px}
 h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 
 /* NEWS */
@@ -134,7 +134,7 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .pst{aspect-ratio:2/3;border-radius:14px;overflow:hidden;position:relative;background:linear-gradient(145deg,#2a2140,#15111f);box-shadow:0 8px 22px rgba(0,0,0,.4);transition:transform .2s}
 .pst img{width:100%;height:100%;object-fit:cover}
 .pst .ph{position:absolute;inset:0;display:flex;align-items:flex-end;padding:10px;font:700 14px/1.15 var(--serif);color:rgba(255,255,255,.9)}
-.pst .bdg{position:absolute;top:7px;left:7px;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(10,9,16,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.pst .bdg{position:absolute;top:7px;left:7px;max-width:calc(100% - 14px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(10,9,16,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .pst .bdg.hot{background:var(--grad);color:#2a0d05}
 .pst .bdg:not(.hot){color:#fff}
 .pst .bdg .st{color:#ffc857;letter-spacing:1px}
@@ -156,11 +156,9 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .hv .stars{font-size:16px}
 .hl{font-size:11px;font-weight:800;letter-spacing:.3px;padding:3px 8px;border-radius:7px;background:var(--grad);color:#2a0d05;min-width:72px;text-align:center}
 .hv .mmlogo{min-width:72px;text-align:center}
-.mmrow{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:15px}
 .imdblogo{font-weight:900;font-size:12px;letter-spacing:.2px;padding:3px 8px;border-radius:7px;background:#f5c518;color:#000;min-width:72px;text-align:center}
 .hv .vsub{font-size:12px;color:var(--mut)}
 .mmlogo{font-weight:800;font-size:12px;letter-spacing:.3px;padding:3px 8px;border-radius:7px;background:#c8102e;color:#fff}
-.mmst{font-size:18px}
 .stars .half{background:linear-gradient(90deg,var(--stc) 50%,rgba(128,128,128,.3) 50%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
 .btn.small{padding:9px 14px;font-size:14px;border-radius:12px}
@@ -208,13 +206,11 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .hhead .pimg{width:120px;height:180px;border-radius:16px;overflow:hidden;flex:none;box-shadow:0 16px 40px rgba(0,0,0,.6)}
 .hhead h2{font:800 28px/1.1 var(--serif);letter-spacing:-.5px}
 .hhead .it{color:var(--mut);font-size:14px;margin-top:3px}
-.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .pill{padding:4px 10px;border-radius:99px;background:var(--card2);font-size:12px;font-weight:600;color:#ddd8e8}
 .pad{padding:0 18px}
 .box{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-top:14px}
 .box h4{font-size:13px;letter-spacing:.7px;text-transform:uppercase;color:var(--mut2);margin-bottom:10px}
 .plot{color:#ddd8e8;font-size:15px;line-height:1.55}
-.prov{display:flex;gap:10px;flex-wrap:wrap}
 .mline{margin-top:9px;font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);line-height:1.6}
 .mline span{white-space:nowrap}
 .mline i{font-style:normal;margin:0 7px;color:var(--a2);opacity:.8}
@@ -230,8 +226,6 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .plot.clamp{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
 .box h4{font-family:var(--serif);font-size:19px;letter-spacing:0;text-transform:none;color:var(--txt);font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:10px}
 .box h4::before{content:"";width:4px;height:17px;border-radius:2px;background:var(--grad);flex:none}
-.prov span{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:12px;background:var(--card2);font-size:13px;font-weight:600}
-.prov img{width:28px;height:28px;border-radius:8px}
 .prog{display:flex;align-items:center;gap:16px}
 .ring{width:72px;height:72px;flex:none;position:relative}
 .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
@@ -266,7 +260,6 @@ textarea.notes{min-height:110px;line-height:1.5}
 .notes.ce:focus{border-color:rgba(255,154,77,.6)}
 .notes.ce:empty::before{content:attr(data-ph);color:var(--mut2)}
 .fld:focus,textarea.notes:focus{border-color:rgba(255,154,77,.6)}
-.danger{color:#ff7b7b;font-weight:600;font-size:15px;display:block;margin:26px auto 0}
 
 /* SEARCH */
 .sbar{position:sticky;top:0;z-index:3;padding:calc(var(--st) + 10px) 18px 12px;background:linear-gradient(var(--bg) 80%,transparent);display:flex;gap:10px;align-items:center}
@@ -431,7 +424,6 @@ html[data-theme=light] .more{background:rgba(255,252,247,.78);border-color:rgba(
 .bkst{display:flex;align-items:center;gap:12px;margin-bottom:6px}.bkst i{font-style:normal;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:rgba(62,200,120,.16);flex:none}.bkst i.warn{background:rgba(255,154,77,.16)}
 .bkst b{display:block;font-size:16px}.bkst small{color:var(--mut);font-size:13px}
 .dia,.ep{content-visibility:auto;contain-intrinsic-block-size:auto 96px}
-.pchg{position:absolute;right:6px;bottom:6px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:14px;background:rgba(10,9,16,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-height:52vh;overflow:auto;margin:6px 0 4px}
 .pgrid button{aspect-ratio:2/3;border-radius:10px;overflow:hidden;border:2px solid transparent;background:var(--card2)}
 .pgrid button.on{border-color:#ff9a4d}
@@ -471,10 +463,6 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 .wsplit div{display:flex;flex-direction:column;align-items:center;padding:8px 4px;background:var(--card2);min-width:70px}
 .wsplit div:last-child{background:linear-gradient(135deg,rgba(255,94,98,.25),rgba(255,200,87,.25))}
 .wsplit b{font-size:17px}.wsplit span{font-size:11px;color:var(--mut)}
-.wdays{display:flex;align-items:flex-end;gap:6px;height:90px}
-.wdays div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
-.wdays i{width:100%;border-radius:6px 6px 3px 3px;background:var(--grad);min-height:3px}
-.wdays span{font-size:11px;color:var(--mut2)}
 .bigline{font:800 24px/1.15 var(--serif);margin:2px 0 4px}
 
 /* TOAST */
@@ -524,7 +512,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.14';
+const VERSIONE = '2.15';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -799,7 +787,7 @@ function renderFilm(){
     if (!todo.length) return h + `<div class="empty fadein"><div class="ic">🍿</div><h3>La tua lista è vuota</h3><p>Aggiungi i film che vuoi vedere prima o poi. Ti avviso io quando escono.</p><button class="btn" data-act="search">${I.search}Cerca un film</button></div>` + recRow('movies');
     const t = oggi();
     return h + `<div class="grid">${todo.map(m => {
-      const b = m.rel && m.rel > t ? `<span class="bdg hot">Esce ${esc(fData(m.rel, false))}</span>` : m.gone ? `<span class="bdg" style="color:#ff9a7a">Tolto da ${esc(m.gone.n.replace(/^Amazon /, ''))}</span>` : (m.prov?.length ? `<span class="bdg">${esc(m.prov[0].n)}</span>` : '');
+      const b = m.rel && m.rel > t ? `<span class="bdg hot">Esce ${esc(fData(m.rel, false))}</span>` : m.gone ? `<span class="bdg" style="color:#ff9a7a">Tolto da ${esc(nomeP(m.gone.n))}</span>` : (m.prov?.length ? `<span class="bdg">${esc(platOf(m))}</span>` : '');
       return `<button class="pc-it fadein" data-act="openMovie" data-id="${m.id}">${poster(movImg(m), m.title, 'pst', b)}<div class="cap">${esc(m.title)}</div><div class="cap2">${esc([m.year, m.genres?.[0]].filter(Boolean).join(' · '))}</div></button>`;
     }).join('')}</div>` + recRow('movies');
   }
@@ -845,8 +833,8 @@ function renderIo(){
   const dur = min => { const h = Math.round(min / 60), g = Math.floor(h / 24); return g ? `${g} ${g === 1 ? 'giorno' : 'giorni'} e ${h % 24} ore` : `${h} ore`; };
   // piattaforme
   const pl = {};
-  ss.forEach(sh => { const n = sh.prov?.[0]?.n || sh.net; if (!n) return; const byId = Object.fromEntries(sh.eps.map(e => [e.i, e])); Object.keys(sh.watched).forEach(id => pl[n] = (pl[n] || 0) + (byId[id]?.r || sh.runtime || 45)); });
-  seen.forEach(m => { const n = m.prov?.[0]?.n; if (n) pl[n] = (pl[n] || 0) + (m.runtime || 110); });
+  ss.forEach(sh => { const n = platOf(sh); if (!n) return; const byId = Object.fromEntries(sh.eps.map(e => [e.i, e])); Object.keys(sh.watched).forEach(id => pl[n] = (pl[n] || 0) + (byId[id]?.r || sh.runtime || 45)); });
+  seen.forEach(m => { const n = platOf(m); if (n) pl[n] = (pl[n] || 0) + (m.runtime || 110); });
   const plTop = Object.entries(pl).sort((a, b) => b[1] - a[1]).slice(0, 6), plMx = plTop[0]?.[1] || 1;
   // abitudini e maratone (solo visioni con data vera)
   const perDay = {}, wd = Array(7).fill(0);
@@ -906,7 +894,7 @@ function renderIo(){
   ${top[0][1] ? `<div class="box"><h4>La classifica dei tuoi generi</h4>${top.map(([g, n], i) => `<div class="gbar" data-act="genre" data-g="${esc(g)}" role="button" style="cursor:pointer"><em style="width:18px;text-align:left;color:${i < 3 ? 'var(--a2)' : 'var(--mut2)'};font-weight:800">${i + 1}</em><span>${esc(g)}</span><div class="bar"><i style="width:${n / mx * 100}%;${n ? '' : 'opacity:0'}"></i></div><em>${n}</em><span style="width:24px;text-align:right">${move(g)}</span></div>`).join('')}
     <p class="cap2" style="margin-top:8px;white-space:normal">Tocca un genere per vedere i titoli · le frecce mostrano come cambia la classifica rispetto alla settimana scorsa</p></div>` : ''}
   ${recMin ? `<div class="box"><h4>Da recuperare</h4><div class="bigline">${dur(recMin)}</div><p class="cap2" style="white-space:normal;font-size:14px">il tempo per finire le serie in corso e vedere tutti i film in lista</p></div>` : ''}
-  ${plTop.length ? `<div class="box"><h4>Le tue piattaforme</h4>${plTop.map(([n, v]) => `<div class="gbar" data-act="plat" data-p="${esc(n)}" role="button" style="cursor:pointer"><span>${esc(n)}</span><div class="bar"><i style="width:${v / plMx * 100}%"></i></div><em style="width:44px">${ore(v)}</em></div>`).join('')}<p class="cap2" style="margin-top:8px;white-space:normal">Tocca una piattaforma per vedere i titoli</p></div>` : ''}
+  ${plTop.length ? `<div class="box"><h4>Le tue piattaforme</h4>${plTop.map(([n, v]) => `<div class="gbar" data-act="plat" data-p="${esc(n)}" role="button" style="cursor:pointer"><span>${esc(n)}</span><div class="bar"><i style="width:${v / plMx * 100}%"></i></div><em style="width:66px;white-space:nowrap;text-align:right">${ore(v)}</em></div>`).join('')}<p class="cap2" style="margin-top:8px;white-space:normal">Tocca una piattaforma per vedere i titoli</p></div>` : ''}
   <div class="box"><h4>Abitudini</h4>${dated >= 5 ? (() => {
     const tot = wd.reduce((a, b) => a + b, 0), pct = v => Math.round(v / tot * 100), ord = wd.map((v, i) => [i, v]).sort((a, b) => b[1] - a[1]);
     const we = pct(wd[5] + wd[6]), fer = 100 - we;
@@ -1054,7 +1042,7 @@ function movieSheet(id, keep){
       <p class="cap2" style="margin:4px 0 10px">${m.seenAt ? 'Visto il ' + esc(fData(m.seenAt)) : ''}</p>
       ${m.comment ? `<p class="plot" style="font-style:italic">“${esc(m.comment)}”</p>` : '<p class="cap2">Nessun commento</p>'}
       <div class="acts"><button class="btn ghost" data-act="rate" data-id="${id}">Modifica voto e commento</button></div></div>`
-    : `<div class="box">${m.gone ? `<p class="plot" style="margin-bottom:12px;color:#ff9a7a">Non è più su ${esc(m.gone.n)} dal ${esc(fData(m.gone.d))}${m.prov?.length ? '' : ' e per ora non è su nessuna piattaforma in abbonamento'}.</p>` : ''}${m.rel && m.rel > t ? `<p class="plot" style="margin-bottom:12px">Esce in Italia <b style="color:var(--a2)">${esc(fGiorno(m.rel))}${fGiorno(m.rel) !== fData(m.rel) ? ' (' + esc(fData(m.rel)) + ')' : ''}</b>. Ti avviso tra le novità.</p>` : ''}
+    : `<div class="box">${m.gone ? `<p class="plot" style="margin-bottom:12px;color:#ff9a7a">Non è più su ${esc(nomeP(m.gone.n))} dal ${esc(fData(m.gone.d))}${m.prov?.length ? '' : ' e per ora non è su nessuna piattaforma in abbonamento'}.</p>` : ''}${m.rel && m.rel > t ? `<p class="plot" style="margin-bottom:12px">Esce in Italia <b style="color:var(--a2)">${esc(fGiorno(m.rel))}${fGiorno(m.rel) !== fData(m.rel) ? ' (' + esc(fData(m.rel)) + ')' : ''}</b>. Ti avviso tra le novità.</p>` : ''}
       <div class="acts" style="margin-top:0"><button class="btn" data-act="rate" data-id="${id}">${I.check}L'ho visto</button></div></div>`}
     ${dove(m.prov, m.rent, 'Dove vederlo')}
     ${m.plot ? `<div class="box"><h4>Trama</h4><p class="plot clamp" data-act="moreText" role="button">${esc(m.plot)}</p>${m.director ? `<p class="cap2" style="margin-top:10px">Regia di ${esc(m.director)}</p>` : ''}</div>` : ''}
@@ -1097,7 +1085,7 @@ function tonightList(mins, g){
     if (m.runtime && m.runtime > mins + 10) return;
     let sc = 3 + (miaPiatt(m) ? 4 : m.prov?.length ? 1 : 0) + (m.vote || 6) / 3;
     const dur = m.runtime ? `${Math.floor(m.runtime / 60)} h ${m.runtime % 60} min` : '';
-    out.push({type:'movie', id:m.id, g:mainGen(m), sc:sc + Math.random() * 3, img:movImg(m), title:m.title, k:'Un film dalla tua lista', d:[dur, m.prov?.[0] ? 'su ' + m.prov[0].n : '', m.genres?.[0]].filter(Boolean).join(' · ')});
+    out.push({type:'movie', id:m.id, g:mainGen(m), sc:sc + Math.random() * 3, img:movImg(m), title:m.title, k:'Un film dalla tua lista', d:[dur, m.prov?.[0] ? 'su ' + platOf(m) : '', m.genres?.[0]].filter(Boolean).join(' · ')});
   });
   return out.filter(o => !g || o.g === g).sort((a, b) => b.sc - a.sc);
 }
@@ -1211,7 +1199,6 @@ function rateShowModal(id, fin, boc){
   $('#modal').classList.add('open');
 }
 
-const MIE = /./;
 // Piattaforme: nomi brevi, varianti unite ("with Ads", "Amazon Channel"…), i tuoi abbonamenti per primi
 const ABBO = /netflix|prime video|disney/i;
 const nomeP = n => String(n || '').replace(/ (with|con) (Ads|pubblicità)$/i, '').replace(/ Amazon Channel$/i, '').replace(/^Amazon Prime Video$/i, 'Prime Video').replace(/^Disney Plus$/i, 'Disney+').replace(/^Apple TV( Store|\+)?$/i, 'Apple TV').replace(/^Amazon Video$/i, 'Amazon').replace(/ Standard$| Basic$/i, '');
@@ -1223,7 +1210,7 @@ function dove(prov, rent, titolo){
     ${re.length ? `<div class="rent"><span>A noleggio</span>${re.map(p => `<img src="${IMG}w92${esc(p.l)}" alt="${esc(p.n)}" title="${esc(p.n)}" loading="lazy">`).join('')}</div>` : ''}</div>`;
 }
 const miaPiatt = it => !!((it.prov || []).length || it.net);
-const platOf = it => it.prov?.[0]?.n || it.net || '';
+const platOf = it => piatt(it.prov)[0]?.n || nomeP(it.net) || '';
 function platSheet(pn){
   UI.open = {type:'genre', g:null, p:pn};
   const ssV = Object.values(D.series).filter(sh => platOf(sh) === pn && Object.keys(sh.watched).length);
@@ -1737,13 +1724,13 @@ async function checkNews(force){
       const nu = await fetchMovie(old.id);
       const oldProv = new Set((old.prov || []).map(p => p.n)), added = (nu.prov || []).filter(p => !oldProv.has(p.n));
       const tolta = (old.prov || []).find(p => !(nu.prov || []).some(q => q.n === p.n));
-      if (tolta && !(nu.prov || []).length){ old.gone = {n:tolta.n, d:t}; addNews({id:`gone-${old.id}-${t}`, ref:'movie', rid:old.id, kind:'new', img:movImg(old, 'w185'), t:old.title, d:t, k:'Non più disponibile', d2:`Non è più su ${tolta.n}`}); }
+      if (tolta && !(nu.prov || []).length){ old.gone = {n:tolta.n, d:t}; addNews({id:`gone-${old.id}-${t}`, ref:'movie', rid:old.id, kind:'new', img:movImg(old, 'w185'), t:old.title, d:t, k:'Non più disponibile', d2:`Non è più su ${nomeP(tolta.n)}`}); }
       else if ((nu.prov || []).length) delete old.gone;
       D.movies[old.id] = Object.assign(old, {rel:nu.rel, digital:nu.digital, prov:nu.prov, rent:nu.rent, plot:nu.plot || old.plot, poster:nu.poster || old.poster, back:nu.back || old.back});
       const img = movImg(old, 'w185');
       if (old.rel && old.rel > since && old.rel <= t) addNews({id:`rel-${old.id}`, ref:'movie', rid:old.id, kind:'new', img, t:old.title, d:old.rel, k:'Uscito al cinema', d2:`In sala da ${fGiorno(old.rel)}`});
       if (old.rel && old.rel > t && old.rel <= week) addNews({id:`relsoon-${old.id}`, ref:'movie', rid:old.id, kind:'soon', img, t:old.title, d:old.rel, k:'In arrivo al cinema', d2:`Esce ${fGiorno(old.rel)}`});
-      if (added.length && old.prov) addNews({id:`prov-${old.id}-${added[0].n}`, ref:'movie', rid:old.id, kind:'new', img, t:old.title, d:t, k:'Ora in streaming', d2:`Disponibile su ${added.map(p => p.n).join(', ')}`});
+      if (added.length && old.prov) addNews({id:`prov-${old.id}-${added[0].n}`, ref:'movie', rid:old.id, kind:'new', img, t:old.title, d:t, k:'Ora in streaming', d2:`Disponibile su ${[...new Set(added.map(p => nomeP(p.n)))].join(', ')}`});
       await sleep(150);
     } catch(e){ errs++; }
   }
