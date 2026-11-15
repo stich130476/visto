@@ -350,6 +350,9 @@ ol.steps li{margin-bottom:6px}
 .cast{flex:none;width:80px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
 .cast .ph2{width:72px;height:72px;margin:0 auto 7px;border-radius:50%;overflow:hidden;background:linear-gradient(145deg,#2a2140,#15111f);display:grid;place-items:center;font:700 22px var(--serif);color:rgba(255,255,255,.85);box-shadow:0 6px 16px rgba(0,0,0,.3);transition:transform .2s}
 .cast:active .ph2{transform:scale(.94)}
+.cast.reg .ph2{box-shadow:0 0 0 2px var(--bg,#0e0b14),0 0 0 4px var(--a2),0 6px 16px rgba(0,0,0,.35)}
+.cast.reg small{display:block;color:var(--a2);font-weight:700;letter-spacing:.3px}
+.cast.reg small .nep{display:block;color:var(--mut2);font-weight:400;letter-spacing:0}
 .cast .ph2 img{width:100%;height:100%;object-fit:cover}
 .cast b{display:block;font-size:12.5px;line-height:1.2;font-weight:700}
 .cast small{display:block;font-size:11px;color:var(--mut);line-height:1.2;margin-top:2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -529,7 +532,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.17.1';
+const VERSIONE = '2.18';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1075,7 +1078,7 @@ function movieSheet(id, keep){
     : `<div class="box">${m.gone ? `<p class="plot" style="margin-bottom:12px;color:#ff9a7a">Non è più su ${esc(nomeP(m.gone.n))} dal ${esc(fData(m.gone.d))}${m.prov?.length ? '' : ' e per ora non è su nessuna piattaforma in abbonamento'}.</p>` : ''}${m.rel && m.rel > t ? `<p class="plot" style="margin-bottom:12px">Esce in Italia <b style="color:var(--a2)">${esc(fGiorno(m.rel))}${fGiorno(m.rel) !== fData(m.rel) ? ' (' + esc(fData(m.rel)) + ')' : ''}</b>. Ti avviso tra le novità.</p>` : ''}
       <div class="acts" style="margin-top:0"><button class="btn" data-act="rate" data-id="${id}">${I.check}L'ho visto</button></div></div>`}
     ${dove(m.prov, m.rent, 'Dove vederlo')}
-    ${m.plot ? `<div class="box"><h4>Trama</h4><p class="plot clamp" data-act="moreText" role="button">${esc(m.plot)}</p>${m.director ? `<p class="cap2" style="margin-top:10px">Regia di ${esc(m.director)}</p>` : ''}</div>` : ''}
+    ${m.plot ? `<div class="box"><h4>Trama</h4><p class="plot clamp" data-act="moreText" role="button">${esc(m.plot)}</p></div>` : ''}
     ${typeof m.id === 'number' ? castSlot('m' + m.id) : ''}
     ${critica(m.title, m.orig, m.year, m.vote, 'film', 'm' + m.id)}
     <div class="acts" style="margin-top:14px">${m.dropped ? `<button class="btn ghost" data-act="dropM" data-id="${id}">↩︎ Dai un'altra possibilità</button>` : ''}<button class="btn ghost" data-act="more" data-k="m" data-id="${id}">Altre azioni</button></div>
@@ -1294,12 +1297,12 @@ const iniz = n => String(n || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join(
 const fotoP = (path, nome) => path ? `<img src="${IMG}w185${esc(path)}" loading="lazy" decoding="async" alt="" onerror="this.remove()">` : esc(iniz(nome));
 function castBox(key){
   const c = CAST[key];
-  if (!c || !c.l.length) return '';
-  return `<div class="box"><h4>Attori principali</h4><div class="castrow">${c.l.map(a => `<button class="cast" data-act="person" data-id="${a.id}"><div class="ph2">${fotoP(a.f, a.n)}</div><b>${esc(a.n)}</b>${a.c ? `<small>${esc(a.c)}</small>` : ''}</button>`).join('')}</div></div>`;
+  if (!c || !(c.l.length || c.r?.length)) return '';
+  return `<div class="box"><h4>${c.r?.length ? 'Regia e attori' : 'Attori principali'}</h4><div class="castrow">${(c.r || []).map(a => `<button class="cast reg" data-act="person" data-id="${a.id}"><div class="ph2">${fotoP(a.f, a.n)}</div><b>${esc(a.n)}</b><small>Regia${a.e ? `<span class="nep">${a.e} episodi</span>` : ''}</small></button>`).join('')}${c.l.map(a => `<button class="cast" data-act="person" data-id="${a.id}"><div class="ph2">${fotoP(a.f, a.n)}</div><b>${esc(a.n)}</b>${a.c ? `<small>${esc(a.c)}</small>` : ''}</button>`).join('')}</div></div>`;
 }
 async function loadCast(key){
   const c = CAST[key];
-  if (c && Date.now() - c.at < 30 * 864e5) return;
+  if (c && c.r && Date.now() - c.at < 30 * 864e5) return;
   if (!C.tmdb) return;
   let path;
   if (key[0] === 'm') path = `/movie/${key.slice(1)}/credits`;
@@ -1308,7 +1311,12 @@ async function loadCast(key){
     const r = await tmdb(path);
     const l = (r.cast || []).filter(a => a.known_for_department !== 'Directing' || a.profile_path).slice(0, 12)
       .map(a => ({id:a.id, n:a.name, f:a.profile_path || '', c:(a.character || a.roles?.[0]?.character || '').replace(/\s*\(voice\)|\s*\(voce\)/i, ' (voce)').trim()}));
-    CAST[key] = {at:Date.now(), l};
+    // registi: per i film chi ha diretto; per le serie chi ha diretto più episodi (almeno 3)
+    const crew = (r.crew || []).filter(a => key[0] === 'm' ? a.job === 'Director' : (a.jobs || []).some(j => j.job === 'Director'))
+      .map(a => ({id:a.id, n:a.name, f:a.profile_path || '', ep:key[0] === 'm' ? 0 : (a.jobs || []).filter(j => j.job === 'Director').reduce((t, j) => t + (j.episode_count || 0), 0)}))
+      .filter(a => key[0] === 'm' || a.ep >= 3).sort((a, b) => b.ep - a.ep).slice(0, key[0] === 'm' ? 3 : 2)
+      .map(a => ({id:a.id, n:a.n, f:a.f, c:'Regia', e:a.ep}));
+    CAST[key] = {at:Date.now(), l, r:crew};
     try { localStorage.setItem(CASTK, JSON.stringify(CAST)); } catch(e){}
     const el = $('#castSlot');
     if (el && el.dataset.k === key) el.innerHTML = castBox(key);
@@ -1332,14 +1340,23 @@ async function personSheet(pid, seg){
   }
   const visti = new Set();
   const lista = [];
-  for (const c of p.combined_credits?.cast || []){
+  const regie = (p.combined_credits?.crew || []).filter(c => c.job === 'Director').map(c => Object.assign({}, c, {character:'Regia', order:0, _reg:true}));
+  const regista = p.known_for_department === 'Directing';
+  for (const c of regista ? [...regie, ...(p.combined_credits?.cast || [])] : [...(p.combined_credits?.cast || []), ...regie]){
     const kind = c.media_type; if (kind !== 'movie' && kind !== 'tv') continue;
-    const key = kind + c.id; if (visti.has(key)) continue;
+    const key = kind + c.id;
+    if (visti.has(key)){ // attore e regista dello stesso titolo
+      const g = lista.find(y => y.kind === kind && y.id === c.id);
+      if (g && c.character && !(g.ch || '').includes(c.character) && (c._reg || g.ch === 'Regia')) g.ch = c._reg ? (g.ch ? g.ch + ' · regia' : 'Regia') : 'Regia · ' + c.character;
+      continue;
+    }
     const ch = c.character || '';
     if (/^(self|himself|herself|se stess|sé stess|narrator)/i.test(ch) || /\b(self|himself|herself)\b/i.test(ch)) continue;
     if (kind === 'tv' && (c.genre_ids || []).some(g => [10767, 10763, 10764].includes(g))) continue;
     const il = cercaInLista(kind, c.id);
     if (!il && !c.poster_path) continue;
+    if (!il && !(c.release_date || c.first_air_date)) continue; // senza data: di solito making-of o progetti mai usciti
+    if (!il && regista && !c._reg && !c.character) continue; // per i registi: niente comparsate senza ruolo
     if (!il && kind === 'tv' && (c.episode_count || 0) < 3) continue;
     visti.add(key);
     const d = c.release_date || c.first_air_date || '';
@@ -1384,7 +1401,7 @@ async function personSheet(pid, seg){
     return `<button class="pc-it fadein ${x.stato || x.why ? '' : 'dim'}" data-act="pOpen" data-k="${x.kind}" data-id="${x.id}">${poster(x.img, x.t, 'pst', bdg)}<div class="cap">${esc(x.t)}</div>${sub2 ? `<div class="cap2">${esc(sub2)}</div>` : ''}</button>`;
   };
   openSheet(`<div class="phero"><div class="ph2">${fotoP(p.profile_path, p.name)}</div><div><h1>${esc(p.name)}</h1>
-      <p>${lista.length} titoli · <b style="color:var(--a2)">${nV} vist${nV === 1 ? 'o' : 'i'}</b>${nL ? ` · ${nL} da vedere` : ''}</p></div></div>
+      <p>${regista ? 'Regista · ' : ''}${lista.length} titoli · <b style="color:var(--a2)">${nV} vist${nV === 1 ? 'o' : 'i'}</b>${nL ? ` · ${nL} da vedere` : ''}</p></div></div>
     <div class="pad"><div class="pseg">${[['tutti', 'Tutti'], ...(sug.length ? [['sug', '✨ Suggeriti']] : []), ['visti', 'Visti da me'], ['lista', 'In lista']].map(([k, l]) => `<button class="${UI.pseg === k ? 'on' : ''}" data-act="pSeg" data-s="${k}">${l}</button>`).join('')}</div>
     ${UI.pseg === 'sug' ? `<p class="cap2" style="white-space:normal;margin:16px 2px 0">I suoi titoli migliori che non hai ancora visto, scelti anche in base ai generi che guardi di più.</p><div class="grid" style="margin-top:14px">${sug.map(card).join('')}</div>` : ''}
     ${anni.map(g => `<h2 class="sec">${esc(g.y)} <small>${g.l.length}</small></h2><div class="grid">${g.l.map(card).join('')}</div>`).join('') || (UI.pseg === 'sug' ? '' : '<p class="hint">Nessun titolo qui.</p>')}</div>`, !!seg);
