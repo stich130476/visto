@@ -489,7 +489,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.11.1';
+const VERSIONE = '2.11.2';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1010,7 +1010,7 @@ function movieSheet(id, keep){
       <p class="cap2" style="margin:4px 0 10px">${m.seenAt ? 'Visto il ' + esc(fData(m.seenAt)) : ''}</p>
       ${m.comment ? `<p class="plot" style="font-style:italic">“${esc(m.comment)}”</p>` : '<p class="cap2">Nessun commento</p>'}
       <div class="acts"><button class="btn ghost" data-act="rate" data-id="${id}">Modifica voto e commento</button></div></div>`
-    : `<div class="box">${m.gone ? `<p class="plot" style="margin-bottom:12px;color:#ff9a7a">Non è più su ${esc(m.gone.n)} dal ${esc(fData(m.gone.d))}${m.prov?.length ? '' : ' e per ora non è sulle tue piattaforme'}.</p>` : ''}${m.rel && m.rel > t ? `<p class="plot" style="margin-bottom:12px">Esce in Italia <b style="color:var(--a2)">${esc(fGiorno(m.rel))}${fGiorno(m.rel) !== fData(m.rel) ? ' (' + esc(fData(m.rel)) + ')' : ''}</b>. Ti avviso tra le novità.</p>` : ''}
+    : `<div class="box">${m.gone ? `<p class="plot" style="margin-bottom:12px;color:#ff9a7a">Non è più su ${esc(m.gone.n)} dal ${esc(fData(m.gone.d))}${m.prov?.length ? '' : ' e per ora non è su nessuna piattaforma in abbonamento'}.</p>` : ''}${m.rel && m.rel > t ? `<p class="plot" style="margin-bottom:12px">Esce in Italia <b style="color:var(--a2)">${esc(fGiorno(m.rel))}${fGiorno(m.rel) !== fData(m.rel) ? ' (' + esc(fData(m.rel)) + ')' : ''}</b>. Ti avviso tra le novità.</p>` : ''}
       <div class="acts" style="margin-top:0"><button class="btn" data-act="rate" data-id="${id}">${I.check}L'ho visto</button></div></div>`}
     ${(m.prov?.length || m.rent?.length) ? `<div class="box"><h4>Dove vederlo</h4><div class="prov">${(m.prov || []).map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div>
       ${m.rent?.length ? `<p class="cap2" style="margin:10px 0 8px">A noleggio</p><div class="prov">${m.rent.slice(0, 4).map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div>` : ''}</div>` : ''}
@@ -1167,8 +1167,8 @@ function rateShowModal(id, fin, boc){
   $('#modal').classList.add('open');
 }
 
-const MIE = /netflix|disney|prime video/i;
-const miaPiatt = it => (it.prov || []).some(p => MIE.test(p.n)) || MIE.test(it.net || '');
+const MIE = /./;
+const miaPiatt = it => !!((it.prov || []).length || it.net);
 const platOf = it => it.prov?.[0]?.n || it.net || '';
 function platSheet(pn){
   UI.open = {type:'genre', g:null, p:pn};
@@ -1543,9 +1543,9 @@ async function checkNews(force){
     try {
       const nu = await fetchMovie(old.id);
       const oldProv = new Set((old.prov || []).map(p => p.n)), added = (nu.prov || []).filter(p => !oldProv.has(p.n));
-      const tolta = (old.prov || []).find(p => MIE.test(p.n) && !(nu.prov || []).some(q => q.n === p.n));
-      if (tolta && !(nu.prov || []).some(q => MIE.test(q.n))){ old.gone = {n:tolta.n, d:t}; addNews({id:`gone-${old.id}-${t}`, ref:'movie', rid:old.id, kind:'new', img:movImg(old, 'w185'), t:old.title, d:t, k:'Non più disponibile', d2:`Non è più su ${tolta.n}`}); }
-      else if ((nu.prov || []).some(q => MIE.test(q.n))) delete old.gone;
+      const tolta = (old.prov || []).find(p => !(nu.prov || []).some(q => q.n === p.n));
+      if (tolta && !(nu.prov || []).length){ old.gone = {n:tolta.n, d:t}; addNews({id:`gone-${old.id}-${t}`, ref:'movie', rid:old.id, kind:'new', img:movImg(old, 'w185'), t:old.title, d:t, k:'Non più disponibile', d2:`Non è più su ${tolta.n}`}); }
+      else if ((nu.prov || []).length) delete old.gone;
       D.movies[old.id] = Object.assign(old, {rel:nu.rel, digital:nu.digital, prov:nu.prov, rent:nu.rent, plot:nu.plot || old.plot, poster:nu.poster || old.poster, back:nu.back || old.back});
       const img = movImg(old, 'w185');
       if (old.rel && old.rel > since && old.rel <= t) addNews({id:`rel-${old.id}`, ref:'movie', rid:old.id, kind:'new', img, t:old.title, d:old.rel, k:'Uscito al cinema', d2:`In sala da ${fGiorno(old.rel)}`});
