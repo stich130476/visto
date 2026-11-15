@@ -14,6 +14,26 @@
 
 ---
 
+<table align="center">
+  <tr>
+    <td align="center"><img src="screenshot/01-intro.jpg" width="240" alt="Intro"><br><sub><b>L'intro</b> con le tue locandine</sub></td>
+    <td align="center"><img src="screenshot/02-serie.jpg" width="240" alt="Serie"><br><sub><b>Serie</b>: novità e prossimo episodio</sub></td>
+    <td align="center"><img src="screenshot/03-film.jpg" width="240" alt="Film"><br><sub><b>Film</b>: da vedere e dove trovarli</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshot/04-scheda-film.jpg" width="240" alt="Scheda film"><br><sub><b>La scheda</b>: voto, ricordo, piattaforme</sub></td>
+    <td align="center"><img src="screenshot/05-regia-attori.jpg" width="240" alt="Regia e attori"><br><sub><b>Trama, regia e attori</b></sub></td>
+    <td align="center"><img src="screenshot/06-regista.jpg" width="240" alt="Regista"><br><sub><b>Registi e attori</b>: tutta la filmografia</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshot/07-statistiche.jpg" width="240" alt="Statistiche"><br><sub><b>Io</b>: il tuo divano, in numeri</sub></td>
+    <td align="center"><img src="screenshot/08-abitudini.jpg" width="240" alt="Abitudini"><br><sub><b>Piattaforme e abitudini</b></sub></td>
+    <td align="center"><img src="screenshot/09-traguardi.jpg" width="240" alt="Traguardi"><br><sub><b>Traguardi</b> da sbloccare</sub></td>
+  </tr>
+</table>
+
+---
+
 ## Cos'è
 
 **Visto!** è un'app per ricordarti sempre dove sei arrivato con le serie TV e quali film hai visto o vuoi vedere.
@@ -28,6 +48,8 @@ Si apre dal browser e si installa sulla schermata Home di iPhone e iPad come una
 - ✨ **Consigliati per te**: proposte basate sui tuoi gusti.
 - 🏆 **Traguardi** e **Il mio anno in Visto!**: le tue statistiche e i tuoi generi preferiti.
 - 📥 **Importa da Netflix**: porti dentro la tua cronologia in pochi passaggi.
+- 🎭 **Registi e attori**: tocchi un nome e vedi tutta la sua filmografia, con quello che hai già visto.
+- 📊 **Statistiche**: generi preferiti, piattaforme più usate, giorni della settimana davanti allo schermo.
 - 🌙 **Modalità notte e giorno**, con locandine scelte in automatico.
 
 ## Come installarla sull'iPhone o sull'iPad
