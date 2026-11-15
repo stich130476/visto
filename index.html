@@ -522,7 +522,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.16.1';
+const VERSIONE = '2.16.2';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1323,6 +1323,14 @@ async function personSheet(pid, seg){
       else { const x = showStats(il.it); stato = x.w ? 'visto' : 'lista'; }
     }
     lista.push({kind, id:c.id, t:c.title || c.name, d, y:d.slice(0, 4), ch, img:il ? (il.k === 'm' ? movImg(il.it) : showImg(il.it)) : (c.poster_path ? IMG + 'w342' + c.poster_path : ''), il, stato, plot:c.overview || '', pop:c.popularity || 0, q:c.vote_average || 0, n:c.vote_count || 0, gen:genDaTmdb(c.genre_ids), ord:c.order ?? c.episode_count ?? 99, ep:c.episode_count || 0});
+  }
+  // doppioni: TMDB a volte ha la stessa serie due volte (es. "DAHMER" e l'antologia "Monster"): tengo solo quella in lista
+  const tue = lista.filter(x => x.kind === 'tv' && x.il);
+  for (let i = lista.length - 1; i >= 0; i--){
+    const x = lista[i]; if (x.kind !== 'tv') continue;
+    const dop = x.il ? tue.some(y => y !== x && y.il.it === x.il.it && y.il.it.tmdb === y.id)
+      : x.ch && tue.some(y => y.ch === x.ch && y.y === x.y);
+    if (dop) lista.splice(i, 1);
   }
   lista.sort((a, b) => (b.d || '9999').localeCompare(a.d || '9999'));
   p._lista = lista;
