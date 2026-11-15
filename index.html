@@ -327,6 +327,24 @@ ol.steps li{margin-bottom:6px}
 .recrow{display:flex;gap:12px;overflow-x:auto;margin:0 -18px;padding:0 18px 6px;scrollbar-width:none}
 .recrow::-webkit-scrollbar{display:none}
 .recrow .pc-it{width:112px;flex:none}
+.castrow{display:flex;gap:14px;overflow-x:auto;margin:0 -16px;padding:2px 16px 4px;scrollbar-width:none}
+.castrow::-webkit-scrollbar{display:none}
+.cast{flex:none;width:80px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+.cast .ph2{width:72px;height:72px;margin:0 auto 7px;border-radius:50%;overflow:hidden;background:linear-gradient(145deg,#2a2140,#15111f);display:grid;place-items:center;font:700 22px var(--serif);color:rgba(255,255,255,.85);box-shadow:0 6px 16px rgba(0,0,0,.3);transition:transform .2s}
+.cast:active .ph2{transform:scale(.94)}
+.cast .ph2 img{width:100%;height:100%;object-fit:cover}
+.cast b{display:block;font-size:12.5px;line-height:1.2;font-weight:700}
+.cast small{display:block;font-size:11px;color:var(--mut);line-height:1.2;margin-top:2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.phero{display:flex;gap:16px;align-items:center;padding:calc(var(--st) + 66px) 18px 6px}
+.phero .ph2{width:104px;height:104px;border-radius:50%;overflow:hidden;flex:none;background:linear-gradient(145deg,#2a2140,#15111f);display:grid;place-items:center;font:700 34px var(--serif);box-shadow:0 10px 28px rgba(0,0,0,.4)}
+.phero .ph2 img{width:100%;height:100%;object-fit:cover}
+.phero h1{font:700 28px/1.1 var(--serif)}
+.phero p{color:var(--mut);font-size:14px;margin-top:6px}
+.pc-it.dim .pst{opacity:.42;filter:saturate(.5)}
+.pc-it.dim .cap{color:var(--mut)}
+.pseg{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.pseg button{padding:7px 13px;border-radius:99px;font-size:13px;font-weight:700;background:var(--card);border:1px solid var(--line);color:var(--mut)}
+.pseg button.on{background:var(--grad);color:#2a0d05;border-color:transparent}
 .recwhy{font-size:11px;color:var(--mut2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .yearbtn{display:flex;align-items:center;gap:14px;width:100%;padding:18px;border-radius:22px;margin-top:14px;text-align:left;position:relative;overflow:hidden;
   background:radial-gradient(120% 140% at 0% 0%,rgba(125,107,255,.45),transparent 60%),radial-gradient(120% 140% at 100% 100%,rgba(255,94,98,.4),transparent 60%),var(--bg2);border:1px solid rgba(255,255,255,.12)}
@@ -491,7 +509,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.12.2';
+const VERSIONE = '2.13';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -954,7 +972,7 @@ async function potaBackup(){
 
 /* ---------- SCHEDA SERIE ---------- */
 function openSheet(html, keep){ const sy = $('#sheet').scrollTop; $('#sheetIn').innerHTML = html; $('#sheet').scrollTop = keep ? sy : 0; $('#sheet').classList.add('open'); $('#closeBtn').classList.remove('hide'); document.body.style.overflow = 'hidden'; }
-function closeSheet(){ if (UI.back && UI.open?.type !== 'genre' && UI.open?.type !== 'year'){ const b = UI.back; UI.back = null; if (b && typeof b === 'object' && 'year' in b){ yearSheet(b.year); return; } if (b && b.q !== undefined){ searchSheet(b.t); $('#q').value = b.q; doSearch(b.q.trim()); } else if (b && b.p) platSheet(b.p); else if (typeof b === 'string') genreSheet(b); else { $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); } return; } UI.back = null; $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); }
+function closeSheet(){ if (UI.back && UI.open?.type !== 'genre' && UI.open?.type !== 'year'){ const b = UI.back; UI.back = null; if (b && typeof b === 'object' && (b.person || b.movie || b.show)){ UI.back = b.prev || null; if (b.person) personSheet(b.person, UI.pseg); else if (b.movie) movieSheet(b.movie); else showSheet(b.show); return; } if (b && typeof b === 'object' && 'year' in b){ yearSheet(b.year); return; } if (b && b.q !== undefined){ searchSheet(b.t); $('#q').value = b.q; doSearch(b.q.trim()); } else if (b && b.p) platSheet(b.p); else if (typeof b === 'string') genreSheet(b); else { $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); } return; } UI.back = null; $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); }
 
 function showSheet(id, keep){
   const sh = D.series[id]; if (!sh) return;
@@ -987,6 +1005,7 @@ function showSheet(id, keep){
         <button class="btn ghost" data-act="more" data-k="s" data-id="${id}">Altre azioni</button></div></div>
     ${sh.prov?.length ? `<div class="box"><h4>Dove vederla</h4><div class="prov">${sh.prov.map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div></div>` : ''}
     ${(sh.itPlot || sh.summary) ? `<div class="box"><h4>Trama</h4><p class="plot">${esc(sh.itPlot || sh.summary)}</p></div>` : ''}
+    ${sh.tmdb ? castSlot('s' + sh.id) : ''}
     ${critica(showName(sh), sh.name, (sh.premiered || '').slice(0, 4), sh.rating, 'serie tv', 's' + sh.id)}
     <div class="box"><h4>Episodi</h4>
       <div class="schips">${seasons.map(s => { const se = sh.eps.filter(e => e.s === s && e.d && e.d <= t), w = se.filter(e => sh.watched[e.i]).length;
@@ -1024,7 +1043,8 @@ function movieSheet(id, keep){
       <div class="acts" style="margin-top:0"><button class="btn" data-act="rate" data-id="${id}">${I.check}L'ho visto</button></div></div>`}
     ${(m.prov?.length || m.rent?.length) ? `<div class="box"><h4>Dove vederlo</h4><div class="prov">${(m.prov || []).map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div>
       ${m.rent?.length ? `<p class="cap2" style="margin:10px 0 8px">A noleggio</p><div class="prov">${m.rent.slice(0, 4).map(p => `<span><img src="${IMG}w92${esc(p.l)}" alt="">${esc(p.n)}</span>`).join('')}</div>` : ''}</div>` : ''}
-    ${m.plot ? `<div class="box"><h4>Trama</h4><p class="plot">${esc(m.plot)}</p>${m.director ? `<p class="cap2" style="margin-top:10px">Regia di ${esc(m.director)}</p>` : ''}${m.cast ? `<p class="cap2">Con ${esc(m.cast)}</p>` : ''}</div>` : ''}
+    ${m.plot ? `<div class="box"><h4>Trama</h4><p class="plot">${esc(m.plot)}</p>${m.director ? `<p class="cap2" style="margin-top:10px">Regia di ${esc(m.director)}</p>` : ''}</div>` : ''}
+    ${typeof m.id === 'number' ? castSlot('m' + m.id) : ''}
     ${critica(m.title, m.orig, m.year, m.vote, 'film', 'm' + m.id)}
     <div class="acts" style="margin-top:14px">${m.dropped ? `<button class="btn ghost" data-act="dropM" data-id="${id}">↩︎ Dai un'altra possibilità</button>` : ''}<button class="btn ghost" data-act="more" data-k="m" data-id="${id}">Altre azioni</button></div>
   </div>`, keep);
@@ -1205,20 +1225,118 @@ function genreSheet(g){
     ${!ss.length && !ms.length ? '<p class="hint">Ancora nessun titolo in questo genere.</p>' : ''}</div>`);
 }
 
+/* ---------- ATTORI ---------- */
+const CASTK = 'visto-cast';
+const CAST = load(CASTK) || {};
+const PERS = {};
+const iniz = n => String(n || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+const fotoP = (path, nome) => path ? `<img src="${IMG}w185${esc(path)}" loading="lazy" decoding="async" alt="" onerror="this.remove()">` : esc(iniz(nome));
+function castBox(key){
+  const c = CAST[key];
+  if (!c || !c.l.length) return '';
+  return `<div class="box"><h4>Attori principali</h4><div class="castrow">${c.l.map(a => `<button class="cast" data-act="person" data-id="${a.id}"><div class="ph2">${fotoP(a.f, a.n)}</div><b>${esc(a.n)}</b>${a.c ? `<small>${esc(a.c)}</small>` : ''}</button>`).join('')}</div></div>`;
+}
+async function loadCast(key){
+  const c = CAST[key];
+  if (c && Date.now() - c.at < 30 * 864e5) return;
+  if (!C.tmdb) return;
+  let path;
+  if (key[0] === 'm') path = `/movie/${key.slice(1)}/credits`;
+  else { const sh = D.series[key.slice(1)]; if (!sh?.tmdb) return; path = `/tv/${sh.tmdb}/aggregate_credits`; }
+  try {
+    const r = await tmdb(path);
+    const l = (r.cast || []).filter(a => a.known_for_department !== 'Directing' || a.profile_path).slice(0, 12)
+      .map(a => ({id:a.id, n:a.name, f:a.profile_path || '', c:(a.character || a.roles?.[0]?.character || '').replace(/\s*\(voice\)|\s*\(voce\)/i, ' (voce)').trim()}));
+    CAST[key] = {at:Date.now(), l};
+    try { localStorage.setItem(CASTK, JSON.stringify(CAST)); } catch(e){}
+    const el = $('#castSlot');
+    if (el && el.dataset.k === key) el.innerHTML = castBox(key);
+  } catch(e){}
+}
+const castSlot = key => { setTimeout(() => loadCast(key), 0); return `<div id="castSlot" data-k="${key}">${castBox(key)}</div>`; };
+
+function cercaInLista(kind, id){
+  if (kind === 'movie'){ const m = D.movies[id]; return m ? {k:'m', it:m} : null; }
+  const sh = Object.values(D.series).find(x => x.tmdb === id); return sh ? {k:'s', it:sh} : null;
+}
+async function personSheet(pid, seg){
+  UI.open = {type:'person', id:pid};
+  UI.pseg = seg || UI.pseg || 'tutti';
+  let p = PERS[pid];
+  if (!p){
+    openSheet(`<div class="phero"><div class="ph2"></div><div><h1>…</h1><p>Carico la filmografia…</p></div></div>`);
+    try { p = PERS[pid] = await tmdb(`/person/${pid}`, {append_to_response:'combined_credits'}); }
+    catch(e){ openSheet(`<div class="pad"><div class="hint" style="padding-top:120px">Non riesco a caricare l'attore adesso (${esc(e.message)}).</div></div>`); return; }
+    if (UI.open?.type !== 'person' || UI.open.id !== pid) return;
+  }
+  const visti = new Set();
+  const lista = [];
+  for (const c of p.combined_credits?.cast || []){
+    const kind = c.media_type; if (kind !== 'movie' && kind !== 'tv') continue;
+    const key = kind + c.id; if (visti.has(key)) continue;
+    const ch = c.character || '';
+    if (/^(self|himself|herself|se stess|sé stess|narrator)/i.test(ch) || /\b(self|himself|herself)\b/i.test(ch)) continue;
+    if (kind === 'tv' && (c.genre_ids || []).some(g => [10767, 10763, 10764].includes(g))) continue;
+    const il = cercaInLista(kind, c.id);
+    if (!il && !c.poster_path) continue;
+    if (!il && kind === 'tv' && (c.episode_count || 0) < 3) continue;
+    visti.add(key);
+    const d = c.release_date || c.first_air_date || '';
+    let stato = '';
+    if (il){
+      if (il.k === 'm') stato = il.it.state === 'seen' ? 'visto' : 'lista';
+      else { const x = showStats(il.it); stato = x.w ? 'visto' : 'lista'; }
+    }
+    lista.push({kind, id:c.id, t:c.title || c.name, d, y:d.slice(0, 4), ch, img:il ? (il.k === 'm' ? movImg(il.it) : showImg(il.it)) : (c.poster_path ? IMG + 'w342' + c.poster_path : ''), il, stato, plot:c.overview || '', pop:c.popularity || 0});
+  }
+  lista.sort((a, b) => (b.d || '9999').localeCompare(a.d || '9999'));
+  p._lista = lista;
+  const nV = lista.filter(x => x.stato === 'visto').length, nL = lista.filter(x => x.stato === 'lista').length;
+  const filt = UI.pseg === 'visti' ? lista.filter(x => x.stato === 'visto') : UI.pseg === 'lista' ? lista.filter(x => x.stato) : lista;
+  const anni = [];
+  for (const x of filt){ const y = x.y || 'Senza data'; let g = anni.find(a => a.y === y); if (!g) anni.push(g = {y, l:[]}); g.l.push(x); }
+  const card = x => {
+    const sub = x.il && x.il.k === 's' ? (() => { const s2 = showStats(x.il.it); return s2.pct ? s2.pct + '% visto' : 'in lista'; })() : '';
+    const bdg = x.stato === 'visto' ? `<span class="bdg hot">✓ ${x.kind === 'tv' ? (sub === '100% visto' ? 'Vista' : sub) : 'Visto'}</span>` : x.stato === 'lista' ? '<span class="bdg">Da vedere</span>' : '';
+    return `<button class="pc-it fadein ${x.stato ? '' : 'dim'}" data-act="pOpen" data-k="${x.kind}" data-id="${x.id}">${poster(x.img, x.t, 'pst', bdg)}<div class="cap">${esc(x.t)}</div>${x.ch ? `<div class="cap2">${esc(x.ch)}</div>` : ''}</button>`;
+  };
+  openSheet(`<div class="phero"><div class="ph2">${fotoP(p.profile_path, p.name)}</div><div><h1>${esc(p.name)}</h1>
+      <p>${lista.length} titoli · <b style="color:var(--a2)">${nV} vist${nV === 1 ? 'o' : 'i'}</b>${nL ? ` · ${nL} da vedere` : ''}</p></div></div>
+    <div class="pad"><div class="pseg">${[['tutti', 'Tutti'], ['visti', 'Visti da me'], ['lista', 'In lista']].map(([k, l]) => `<button class="${UI.pseg === k ? 'on' : ''}" data-act="pSeg" data-s="${k}">${l}</button>`).join('')}</div>
+    ${anni.map(g => `<h2 class="sec">${esc(g.y)} <small>${g.l.length}</small></h2><div class="grid">${g.l.map(card).join('')}</div>`).join('') || '<p class="hint">Nessun titolo qui.</p>'}</div>`, !!seg);
+}
+function pvModal(kind, id){
+  const x = PERS[UI.open?.id]?._lista?.find(y => y.kind === kind && y.id == id); if (!x) return;
+  $('#mcard').innerHTML = `<div class="pick" style="align-items:flex-start">${poster(x.img, x.t, 'pimg')}<div><div class="k">${kind === 'movie' ? 'Film' : 'Serie TV'}${x.ch ? ' · ' + esc(x.ch) : ''}</div><h4>${esc(x.t)}</h4><p>${esc(x.y || '')}</p></div></div>
+    ${x.plot ? `<p class="plot" style="margin-top:14px;max-height:180px;overflow:auto">${esc(x.plot)}</p>` : ''}
+    <div class="mrow">${kind === 'movie' ? `<div class="mrow" style="margin:0;flex:1"><button class="btn ghost" data-act="addMovie" data-id="${x.id}" data-s="seen" data-rec="1">Già visto</button><button class="btn" data-act="addMovie" data-id="${x.id}" data-s="todo" data-rec="1">Da vedere</button></div>`
+      : `<button class="btn ghost" data-act="closeModal">Non ora</button><button class="btn" data-act="addShow" data-src="tmdb" data-id="${x.id}" data-rec="1">Aggiungi</button>`}</div>`;
+  $('#modal').classList.add('open');
+}
+
 /* ---------- RICERCA ---------- */
 function searchSheet(type){
   UI.searchType = type || (UI.tab === 'film' ? 'film' : 'serie');
   UI.open = {type:'search'};
   openSheet(`<div class="sbar"><div class="in">${I.search}<input id="q" placeholder="${UI.searchType === 'film' ? 'Cerca un film…' : 'Cerca una serie…'}" enterkeyhint="search" autocomplete="off"></div><button class="cl" data-act="closeSheet">Fine</button></div>
-    <div class="pad"><div class="seg"><button class="${UI.searchType === 'serie' ? 'on' : ''}" data-act="sType" data-s="serie">Serie TV</button><button class="${UI.searchType === 'film' ? 'on' : ''}" data-act="sType" data-s="film">Film</button></div><div id="results"><div class="hint">Scrivi il titolo, anche in italiano.</div></div></div>`);
+    <div class="pad"><div class="seg"><button class="${UI.searchType === 'serie' ? 'on' : ''}" data-act="sType" data-s="serie">Serie TV</button><button class="${UI.searchType === 'film' ? 'on' : ''}" data-act="sType" data-s="film">Film</button></div><div id="results"><div class="hint">Scrivi il titolo (anche in italiano) o il nome di un attore.</div></div></div>`);
   $('#closeBtn').classList.add('hide');
   setTimeout(() => $('#q')?.focus(), 350);
   $('#q').addEventListener('input', e => { clearTimeout(UI.st); UI.st = setTimeout(() => doSearch(e.target.value.trim()), 380); });
 }
 async function doSearch(q){
   const box = $('#results'); if (!box) return;
-  if (q.length < 2){ box.innerHTML = '<div class="hint">Scrivi il titolo, anche in italiano.</div>'; return; }
+  if (q.length < 2){ box.innerHTML = '<div class="hint">Scrivi il titolo (anche in italiano) o il nome di un attore.</div>'; return; }
   box.innerHTML = '<div class="hint">Cerco…</div>';
+  const pq = C.tmdb ? tmdb('/search/person', {query:q}).catch(() => null) : null;
+  const persone = async () => {
+    const r = pq && await pq; if (!r || $('#q')?.value.trim() !== q) return;
+    const nq = norm2(q);
+    const l = (r.results || []).filter(x => x.profile_path && (x.known_for_department === 'Acting' || x.known_for_department === 'Directing') && norm2(x.name).includes(nq)).slice(0, 6);
+    if (!l.length || !$('#results')) return;
+    const h0 = $('#results .hint'); if (h0 && /trovat/.test(h0.textContent)) h0.remove();
+    $('#results').insertAdjacentHTML('afterbegin', `<div class="box" style="margin-top:4px"><h4>Persone</h4><div class="castrow">${l.map(a => `<button class="cast" data-act="person" data-id="${a.id}" data-from="search"><div class="ph2">${fotoP(a.profile_path, a.name)}</div><b>${esc(a.name)}</b><small>${esc((a.known_for || []).map(k => k.title || k.name).slice(0, 2).join(', '))}</small></button>`).join('')}</div></div>`);
+  };
   try {
     if (UI.searchType === 'serie'){
       let list = [];
@@ -1243,7 +1361,9 @@ async function doSearch(q){
         ${st ? `<button class="add done">${st === 'seen' ? '✓ Visto ›' : '✓ In lista ›'}</button>` : `<div class="addcol"><button class="add" data-act="addMovie" data-id="${m.id}" data-s="todo">Da vedere</button><button class="add alt" data-act="addMovie" data-id="${m.id}" data-s="seen">Già visto</button></div>`}</div>`; }).join('');
     }
   } catch(e){ box.innerHTML = `<div class="hint">Non riesco a cercare adesso (${esc(e.message)}). Controlla la connessione.</div>`; }
+  finally { persone(); }
 }
+const norm2 = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 
 /* ---------- AZIONI ---------- */
 function markEp(sh, epId, on, past){ if (on){ sh.watched[epId] = (past || C.archivio) ? 1 : Date.now(); sh.lastW = Date.now(); } else delete sh.watched[epId]; }
@@ -1261,7 +1381,7 @@ function toast(msg, label, fn, ms = 4000){
   if (label) $('#tBtn').onclick = () => { t.classList.remove('on'); fn(); };
   clearTimeout(UI.tt); UI.tt = setTimeout(() => t.classList.remove('on'), ms);
 }
-function refreshView(){ if (UI.open?.type === 'show') showSheet(UI.open.id, true); else if (UI.open?.type === 'movie') movieSheet(UI.open.id, true); else render(); }
+function refreshView(){ if (UI.open?.type === 'person') personSheet(UI.open.id, UI.pseg); else if (UI.open?.type === 'show') showSheet(UI.open.id, true); else if (UI.open?.type === 'movie') movieSheet(UI.open.id, true); else render(); }
 
 const A = {
   enter(){ $('#intro').classList.add('out'); setTimeout(() => $('#intro').remove(), 900); },
@@ -1289,7 +1409,7 @@ const A = {
       D.series[tvId] = Object.assign(sh, {watched:{}, paused:false, notes:'', added:Date.now()});
       if (!D.lastCheck) D.lastCheck = Date.now();
       save(); el.textContent = '✓ In lista'; el.classList.add('done'); burst(el);
-      if (d.rec){ setTimeout(() => { $('#modal').classList.remove('open'); render(); }, 500); }
+      if (d.rec){ setTimeout(() => { $('#modal').classList.remove('open'); render(); if (UI.open?.type === 'person') refreshView(); }, 500); }
       toast(`<b>${esc(showName(sh))}</b> aggiunta`, 'Apri', () => showSheet(tvId));
     } catch(e){ el.textContent = 'Riprova'; toast('Errore: ' + esc(e.message)); }
   },
@@ -1300,7 +1420,7 @@ const A = {
       D.movies[m.id] = Object.assign(m, {state:d.s, added:Date.now(), rating:0, comment:'', seenAt:d.s === 'seen' && !C.archivio ? oggi() : ''});
       if (!D.lastCheck) D.lastCheck = Date.now();
       save(); col.innerHTML = `<button class="add done">${d.s === 'seen' ? '✓ Visto' : '✓ In lista'}</button>`; burst(col);
-      if (d.s === 'seen') setTimeout(() => rateModal(m.id), d.rec ? 400 : 0); else { toast(`<b>${esc(m.title)}</b> tra i film da vedere`); if (d.rec) setTimeout(() => { $('#modal').classList.remove('open'); render(); }, 500); }
+      if (d.s === 'seen') setTimeout(() => rateModal(m.id), d.rec ? 400 : 0); else { toast(`<b>${esc(m.title)}</b> tra i film da vedere`); if (d.rec) setTimeout(() => { $('#modal').classList.remove('open'); render(); if (UI.open?.type === 'person') refreshView(); }, 500); }
     } catch(e){ col.innerHTML = '<button class="add">Riprova</button>'; toast('Errore: ' + esc(e.message)); }
   },
   manual(d){
@@ -1379,6 +1499,20 @@ const A = {
   tonightNext(){ UI.tn.i++; tonightModal(UI.tn.mins, UI.tn.g); },
   tonightGo(){ const p = UI.tn.list[UI.tn.i % UI.tn.list.length]; $('#modal').classList.remove('open'); p.type === 'show' ? showSheet(p.id) : movieSheet(p.id); },
   recOpen(d){ recModal(d.k, d.id); },
+  person(d){
+    const o = UI.open;
+    if (d.from === 'search') UI.back = {q:$('#q')?.value || '', t:UI.searchType};
+    else if (o?.type === 'movie') UI.back = {movie:o.id, prev:UI.back};
+    else if (o?.type === 'show') UI.back = {show:o.id, prev:UI.back};
+    personSheet(+d.id, 'tutti');
+  },
+  pSeg(d){ personSheet(UI.open.id, d.s); },
+  pOpen(d){
+    const il = cercaInLista(d.k, +d.id);
+    if (!il) return pvModal(d.k, +d.id);
+    UI.back = {person:UI.open.id, prev:UI.back};
+    if (il.k === 'm') movieSheet(il.it.id); else showSheet(il.it.id);
+  },
   more(d){
     const s = d.k === 's', it = s ? D.series[d.id] : D.movies[d.id]; if (!it) return;
     const b = (a, ic, t, sub = '', red = false) => `<button class="${red ? 'red' : ''}" data-act="menuDo" data-a="${a}" data-k="${d.k}" data-id="${d.id}"><i>${ic}</i><span>${t}${sub ? `<small>${sub}</small>` : ''}</span></button>`;
