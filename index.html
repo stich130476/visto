@@ -491,7 +491,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.12';
+const VERSIONE = '2.12.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -630,7 +630,7 @@ function showStats(sh){
   return {aired:aired.length, w, next, left:left.length, leftMin, st, pct:aired.length ? Math.round(w / aired.length * 100) : 0};
 }
 const epT = (sh, e) => (sh.itEp && sh.itEp[e.s + '-' + e.n]) || e.t;
-const mmLink = (t, y, tipo) => 'https://www.google.com/search?q=' + encodeURIComponent(`mymovies ${t} ${y || ''} ${tipo}`.trim()) + '&btnI=1';
+const mmLink = (t, y, tipo) => 'https://www.google.com/search?q=' + encodeURIComponent(`site:mymovies.it ${t} ${y || ''}`.trim());
 let MM = load('visto-mymovies') || {};
 let IMDB = load('visto-imdb') || {};
 async function caricaMM(){
