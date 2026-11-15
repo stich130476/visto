@@ -532,7 +532,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.18';
+const VERSIONE = '2.19';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1007,7 +1007,7 @@ async function potaBackup(){
 
 /* ---------- SCHEDA SERIE ---------- */
 function openSheet(html, keep){ const sy = $('#sheet').scrollTop; $('#sheetIn').innerHTML = html; $('#sheet').scrollTop = keep ? sy : 0; $('#sheet').classList.add('open'); $('#closeBtn').classList.remove('hide'); document.body.style.overflow = 'hidden'; }
-function closeSheet(){ if (UI.back && UI.open?.type !== 'genre' && UI.open?.type !== 'year'){ const b = UI.back; UI.back = null; if (b && typeof b === 'object' && (b.person || b.movie || b.show)){ UI.back = b.prev || null; if (b.person) personSheet(b.person, UI.pseg); else if (b.movie) movieSheet(b.movie); else showSheet(b.show); return; } if (b && typeof b === 'object' && 'year' in b){ yearSheet(b.year); return; } if (b && b.q !== undefined){ searchSheet(b.t); $('#q').value = b.q; doSearch(b.q.trim()); } else if (b && b.p) platSheet(b.p); else if (typeof b === 'string') genreSheet(b); else { $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); } return; } UI.back = null; $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); }
+function closeSheet(){ if (UI.back && UI.open?.type !== 'genre' && UI.open?.type !== 'year'){ const b = UI.back; UI.back = null; if (b && typeof b === 'object' && (b.person || b.movie || b.show || b.pv)){ UI.back = b.prev || null; if (b.pv) anteprima(b.pv.k, b.pv.id); else if (b.person) personSheet(b.person, UI.pseg); else if (b.movie) movieSheet(b.movie); else showSheet(b.show); return; } if (b && typeof b === 'object' && 'year' in b){ yearSheet(b.year); return; } if (b && b.q !== undefined){ searchSheet(b.t); $('#q').value = b.q; doSearch(b.q.trim()); } else if (b && b.p) platSheet(b.p); else if (typeof b === 'string') genreSheet(b); else { $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); } return; } UI.back = null; $('#sheet').classList.remove('open'); $('#closeBtn').classList.add('hide'); document.body.style.overflow = ''; UI.open = null; render(); }
 
 function showSheet(id, keep){
   const sh = D.series[id]; if (!sh) return;
@@ -1290,6 +1290,42 @@ function antoModal(n){
     <div class="mrow"><button class="btn ghost" data-act="closeModal">Chiudi</button></div>`;
   $('#modal').classList.add('open');
 }
+// Scheda di un titolo non ancora in lista: tutto da guardare con calma, poi si decide
+const PV = {};
+async function anteprima(k, id, keep){
+  UI.open = {type:'pv', k, id};
+  let x = PV[k + id];
+  if (!x){
+    openSheet(`<div class="hero"><div class="bk blur"></div></div><div class="pad"><p class="hint" style="padding-top:20px">Carico la scheda…</p></div>`);
+    try {
+      if (k === 'movie') x = await fetchMovie(id);
+      else { const t = await tmdb(`/tv/${id}`, {append_to_response:'watch/providers'});
+        x = {id:t.id, title:t.name, orig:t.original_name, year:(t.first_air_date || '').slice(0, 4), poster:t.poster_path || '', back:t.backdrop_path || '', plot:t.overview || '',
+          genres:normGen((t.genres || []).map(g => g.name)), net:(t.networks || [])[0]?.name || '', stag:t.number_of_seasons || 0, fine:t.status === 'Ended' || t.status === 'Canceled',
+          vote:t.vote_average || null, prov:provList(t['watch/providers']), rent:[]}; }
+      PV[k + id] = x;
+    } catch(e){ openSheet(`<div class="pad"><p class="hint" style="padding-top:120px">Non riesco a caricare la scheda adesso (${esc(e.message)}).</p></div>`); return; }
+    if (UI.open?.type !== 'pv' || UI.open.id !== id) return;
+  }
+  const film = k === 'movie', img = x.poster ? IMG + 'w342' + x.poster : '';
+  const dur = film ? (x.runtime ? `${Math.floor(x.runtime / 60)} h ${x.runtime % 60} min` : '') : x.stag ? `${x.stag} stagion${x.stag === 1 ? 'e' : 'i'}` : '';
+  const anni = film ? x.year : x.year ? x.year + (x.fine ? '' : '–') : '';
+  openSheet(`
+  <div class="hero"><div class="bk ${x.back ? '' : 'blur'}" style="background-image:url('${esc(x.back ? IMG + 'w1280' + x.back : img)}')"></div></div>
+  <div class="hhead"><div>${poster(img, x.title, 'pimg')}</div><div style="min-width:0;padding-bottom:4px"><h2>${esc(x.title)}</h2>
+    ${x.orig && x.orig !== x.title ? `<div class="it">${esc(x.orig)}</div>` : ''}
+    <div class="mline">${[anni, dur, film ? '' : x.net, (x.genres || [])[0]].filter(Boolean).map(v => `<span>${esc(v)}</span>`).join('<i>·</i>')}</div>
+    ${x.vote ? `<div class="hvoti"><div class="hv"><span class="hl" style="background:var(--card2);color:var(--txt)">Spettatori</span><span class="stars">${stelleMM(x.vote / 2)}</span><b>${x.vote.toFixed(1).replace('.', ',')}</b><span class="vsub">/10</span></div></div>` : ''}</div></div>
+  <div class="pad">
+    <div class="box"><h4>Ti interessa?</h4>${film && x.rel && x.rel > oggi() ? `<p class="cap2" style="margin:-4px 0 4px">Esce ${esc(fData(x.rel))}</p>` : ''}
+      <div class="acts" style="margin-top:6px">${film ? `<button class="btn" data-act="pvAdd" data-s="todo">Da vedere</button><button class="btn ghost" data-act="pvAdd" data-s="seen">${I.check}Già visto</button>`
+        : `<button class="btn" data-act="pvAdd">Aggiungi alle mie serie</button>`}</div></div>
+    ${dove(x.prov, x.rent || [], film ? 'Dove vederlo' : 'Dove vederla')}
+    ${x.plot ? `<div class="box"><h4>Trama</h4><p class="plot clamp" data-act="moreText" role="button">${esc(x.plot)}</p></div>` : ''}
+    ${castSlot((film ? 'm' : 't') + id)}
+    ${critica(x.title, x.orig, x.year, x.vote, film ? 'film' : 'serie tv', 'p' + id)}
+  </div>`, keep);
+}
 const PERS = {};
 // TMDB → TVmaze per le serie che TMDB registra con un altro id (es. le antologie come Monster)
 let TMAP = load('visto-tmap') || {};
@@ -1306,6 +1342,7 @@ async function loadCast(key){
   if (!C.tmdb) return;
   let path;
   if (key[0] === 'm') path = `/movie/${key.slice(1)}/credits`;
+  else if (key[0] === 't') path = `/tv/${key.slice(1)}/aggregate_credits`;
   else { const sh = D.series[key.slice(1)]; if (!sh?.tmdb) return; path = `/tv/${sh.tmdb}/aggregate_credits`; }
   try {
     const r = await tmdb(path);
@@ -1502,7 +1539,7 @@ function toast(msg, label, fn, ms = 4000){
   if (label) $('#tBtn').onclick = () => { t.classList.remove('on'); fn(); };
   clearTimeout(UI.tt); UI.tt = setTimeout(() => t.classList.remove('on'), ms);
 }
-function refreshView(){ if (UI.open?.type === 'person') personSheet(UI.open.id, UI.pseg); else if (UI.open?.type === 'show') showSheet(UI.open.id, true); else if (UI.open?.type === 'movie') movieSheet(UI.open.id, true); else render(); }
+function refreshView(){ if (UI.open?.type === 'person') personSheet(UI.open.id, UI.pseg); else if (UI.open?.type === 'show') showSheet(UI.open.id, true); else if (UI.open?.type === 'movie') movieSheet(UI.open.id, true); else if (UI.open?.type === 'pv') anteprima(UI.open.k, UI.open.id, true); else render(); }
 
 const A = {
   enter(){ $('#intro').classList.add('out'); setTimeout(() => $('#intro').remove(), 900); },
@@ -1510,6 +1547,29 @@ const A = {
   filmSeg(d){ UI.filmSeg = d.s; render(); },
   serSeg(d){ UI.serSeg = d.s; render(); },
   antoOpen(d){ antoModal(d.n); },
+  async pvAdd(d, el){
+    const o = UI.open; if (o?.type !== 'pv') return;
+    el.textContent = 'Aggiungo…';
+    try {
+      if (o.k === 'movie'){
+        const m = PV['movie' + o.id] || await fetchMovie(o.id);
+        D.movies[m.id] = Object.assign(m, {state:d.s, added:Date.now(), rating:0, comment:'', seenAt:d.s === 'seen' && !C.archivio ? oggi() : ''});
+        if (!D.lastCheck) D.lastCheck = Date.now();
+        save(); burst(el); movieSheet(m.id);
+        if (d.s === 'seen') setTimeout(() => rateModal(m.id), 400); else toast(`<b>${esc(m.title)}</b> tra i film da vedere`);
+      } else {
+        const f = await tvmDaTmdb(o.id); if (!f){ el.textContent = 'Non trovata'; return; }
+        TMAP[o.id] = f.id; try { localStorage.setItem('visto-tmap', JSON.stringify(TMAP)); } catch(e){}
+        if (!D.series[f.id]){
+          const sh = await fetchShow(f.id); await enrichShow(sh, o.id);
+          D.series[f.id] = Object.assign(sh, {watched:{}, paused:false, notes:'', added:Date.now()});
+          if (!D.lastCheck) D.lastCheck = Date.now();
+          save(); toast(`<b>${esc(showName(sh))}</b> aggiunta`);
+        }
+        burst(el); showSheet(f.id);
+      }
+    } catch(e){ el.textContent = 'Riprova'; toast('Errore: ' + esc(e.message)); }
+  },
   antoGo(d){ $('#modal').classList.remove('open'); if (UI.open?.type === 'person') UI.back = {person:UI.open.id, prev:UI.back}; else if (UI.open?.type === 'show') UI.back = {show:UI.open.id, prev:UI.back}; showSheet(+d.id); },
   search(){ searchSheet(); },
   sType(d){ const q = $('#q')?.value || ''; searchSheet(d.s); $('#q').value = q; doSearch(q.trim()); },
@@ -1626,13 +1686,14 @@ const A = {
   tonightG(d){ const m = UI.tn?.mins || 60; UI.tn = null; tonightModal(m, d.g); },
   tonightNext(){ UI.tn.i++; tonightModal(UI.tn.mins, UI.tn.g); },
   tonightGo(){ const p = UI.tn.list[UI.tn.i % UI.tn.list.length]; $('#modal').classList.remove('open'); p.type === 'show' ? showSheet(p.id) : movieSheet(p.id); },
-  recOpen(d){ recModal(d.k, d.id); },
+  recOpen(d){ UI.back = null; anteprima(d.k === 'movies' ? 'movie' : 'tv', +d.id); },
   moreText(d, el){ el.classList.toggle('clamp'); },
   person(d){
     const o = UI.open;
     if (d.from === 'search') UI.back = {q:$('#q')?.value || '', t:UI.searchType};
     else if (o?.type === 'movie') UI.back = {movie:o.id, prev:UI.back};
     else if (o?.type === 'show') UI.back = {show:o.id, prev:UI.back};
+    else if (o?.type === 'pv') UI.back = {pv:{k:o.k, id:o.id}, prev:UI.back};
     personSheet(+d.id, 'tutti');
   },
   pSeg(d){ personSheet(UI.open.id, d.s); },
@@ -1645,7 +1706,7 @@ const A = {
       if (el) el.style.opacity = '';
       il = cercaInLista(d.k, +d.id);
     }
-    if (!il) return pvModal(d.k, +d.id);
+    if (!il){ UI.back = {person:UI.open.id, prev:UI.back}; return anteprima(d.k === 'movie' ? 'movie' : 'tv', +d.id); }
     UI.back = {person:UI.open.id, prev:UI.back};
     if (il.k === 'm') movieSheet(il.it.id); else showSheet(il.it.id);
   },
