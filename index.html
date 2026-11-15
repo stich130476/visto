@@ -489,6 +489,11 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 .tier.next .bar{display:block;flex:none;width:100%;height:4px;margin-top:5px}
 .tier.next .tp{color:var(--a2);font-weight:700}
 .tier.lock{opacity:.45}.tier.lock>i{filter:grayscale(1)}
+.tier,.badge{color:inherit;font:inherit;cursor:pointer;text-align:center}.badge{text-align:left}.tier:active,.badge:active{transform:scale(.95)}
+.trdh{display:flex;gap:14px;align-items:center}.trdh>i{font-style:normal;font-size:30px;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:var(--grad);flex:none;box-shadow:0 10px 26px rgba(255,120,80,.4)}.trdh>i.off{background:var(--card2);box-shadow:none;filter:grayscale(1)}
+.trdh .k{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--a2)}.trdh h4{font:800 23px/1.15 var(--serif);margin:2px 0}.trdh p{color:var(--mut);font-size:14px}
+.trdt{margin-top:14px;font-size:15px;line-height:1.5;color:var(--txt)}.trdt b{color:var(--a2)}
+.antl.tr{max-height:46vh;overflow-y:auto}
 .tlink{flex:none;width:10px;height:3px;background:var(--line);border-radius:2px}
 .tlink.on{background:var(--grad)}
 .wrank{display:flex;flex-direction:column;gap:7px}
@@ -551,7 +556,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.20';
+const VERSIONE = '2.21';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -956,9 +961,9 @@ function renderIo(){
     : `<p class="plot" style="font-size:14px">Qui compariranno il tuo giorno della settimana preferito e i record di maratona, man mano che segni cosa guardi${C.archivio ? ' (con la modalità archivio spenta)' : ''}.</p>`}</div>
   <div class="box"><h4>Traguardi · ${BADGE.filter(b => b[3]).length} di ${BADGE.length}</h4>
     ${FAM.map(([fi, fn, items]) => { const done = items.filter(b => b[3]).length, nx = items.findIndex(b => !b[3]);
-      return `<div class="tfam"><div class="tfh"><span>${fi} ${fn}</span><em>livello ${done} di ${items.length}</em></div><div class="tpath">${items.map(([ic, t, sub, ok, cur, goal], i) => `${i ? `<div class="tlink ${ok ? 'on' : ''}"></div>` : ''}<div class="tier ${ok ? 'done' : i === nx ? 'next' : 'lock'}"><i>${ic}</i><b>${t}</b><small>${sub}</small>${i === nx && goal > 1 ? `<span class="bar"><i style="width:${Math.min(100, cur / goal * 100)}%"></i></span><small class="tp">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</small>` : ''}</div>`).join('')}</div></div>`; }).join('')}
+      return `<div class="tfam"><div class="tfh"><span>${fi} ${fn}</span><em>livello ${done} di ${items.length}</em></div><div class="tpath">${items.map(([ic, t, sub, ok, cur, goal], i) => `${i ? `<div class="tlink ${ok ? 'on' : ''}"></div>` : ''}<button class="tier ${ok ? 'done' : i === nx ? 'next' : 'lock'}" data-act="troDet" data-f="${esc(fn)}" data-t="${esc(t)}" data-ic="${ic}" data-s="${esc(sub)}" data-g="${goal}" data-ok="${ok ? 1 : ''}"><i>${ic}</i><b>${t}</b><small>${sub}</small>${i === nx && goal > 1 ? `<span class="bar"><i style="width:${Math.min(100, cur / goal * 100)}%"></i></span><small class="tp">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</small>` : ''}</button>`).join('')}</div></div>`; }).join('')}
     <div class="tfh" style="margin-top:14px"><span>🎯 Sfide</span><em>${SINGLE.filter(b => b[3]).length} di ${SINGLE.length}</em></div>
-    <div class="badges">${SINGLE.map(([ic, t, sub, ok, cur, goal]) => `<div class="badge ${ok ? '' : 'off'}"><i>${ic}</i><span>${t}<small>${sub}${!ok && goal > 1 ? ` · <b style="color:var(--a2)">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</b>` : ''}</small></span></div>`).join('')}</div></div>
+    <div class="badges">${SINGLE.map(([ic, t, sub, ok, cur, goal]) => `<button class="badge ${ok ? '' : 'off'}" data-act="troDet" data-f="${esc(t)}" data-t="${esc(t)}" data-ic="${ic}" data-s="${esc(sub)}" data-g="${goal}" data-ok="${ok ? 1 : ''}"><i>${ic}</i><span>${t}<small>${sub}${!ok && goal > 1 ? ` · <b style="color:var(--a2)">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</b>` : ''}</small></span></button>`).join('')}</div></div>
   <h2 class="sec">Impostazioni</h2>
   <div class="box">
     <div class="set"><div class="l"><b>Aspetto</b><small>Giorno, notte o automatico come l'iPhone</small></div><div class="theme3">${[['auto','Auto'],['light','☀︎ Giorno'],['dark','☾ Notte']].map(([v, l]) => `<button class="${(C.theme || 'auto') === v ? 'on' : ''}" data-act="theme" data-v="${v}">${l}</button>`).join('')}</div></div>
@@ -1383,6 +1388,83 @@ function festa(nuovi, titolo){
   } };
   scoppio(46, 120); scoppio(26, 900);
 }
+// Traguardi: toccandone uno si vede a cosa si riferisce (la maratona, la serie, il film del traguardo...)
+function troModal(d){
+  const ss = Object.values(D.series), seen = Object.values(D.movies).filter(m => m.state === 'seen'), g = +d.g || 0, ok = !!d.ok;
+  const giorno = ts => fData(new Date(ts).toLocaleDateString('sv')), ora = ts => new Date(ts).toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+  const epsL = []; ss.forEach(sh => { const byId = Object.fromEntries(sh.eps.map(e => [e.i, e])); Object.entries(sh.watched).forEach(([id, ts]) => epsL.push({sh, e:byId[id], ts})); });
+  const datati = epsL.filter(x => x.ts > 1e11).sort((a, b) => a.ts - b.ts), passati = epsL.length - datati.length;
+  const rS = (sh, sub, dx = '') => `<button data-act="troGo" data-k="s" data-id="${sh.id}">${poster(showImg(sh, 'w185'), showName(sh), 'pimg')}<div style="min-width:0"><b>${esc(showName(sh))}</b><small>${sub}</small></div>${dx ? `<span class="ok">${dx}</span>` : ''}</button>`;
+  const rM = (m, sub, dx = '') => `<button data-act="troGo" data-k="m" data-id="${m.id}">${poster(movImg(m, 'w185'), m.title, 'pimg')}<div style="min-width:0"><b>${esc(m.title)}</b><small>${sub}</small></div>${dx ? `<span class="ok">${dx}</span>` : ''}</button>`;
+  const lista = r => r.length ? `<div class="antl tr">${r.join('')}</div>` : '';
+  const eTx = x => x.e ? `${epCode(x.e)} · ${esc(epT(x.sh, x.e))}` : '';
+  let tx = '', rows = [];
+  const ennesimo = (n, arr, datati, nome) => { // chi ti ha fatto raggiungere il traguardo
+    if (n <= arr.length - datati.length) return `Lo hai raggiunto con i titoli che hai segnato come visti in passato, senza data.`;
+    const x = datati[n - (arr.length - datati.length) - 1]; return x ? nome(x) : ''; };
+  switch (d.f){
+    case 'Episodi visti': {
+      tx = ok ? ennesimo(g, epsL, datati, x => `Il tuo <b>${g.toLocaleString('it-IT')}° episodio</b> è stato <b>${esc(showName(x.sh))}</b> ${x.e ? epCode(x.e) : ''}, il ${giorno(x.ts)}.`) : `Ne hai visti <b>${epsL.length.toLocaleString('it-IT')}</b>: ne mancano ${(g - epsL.length).toLocaleString('it-IT')}.`;
+      const x = ok && g > passati ? datati[g - passati - 1] : null; if (x) rows.push(rS(x.sh, `${eTx(x)}<br>${giorno(x.ts)}`));
+      tx += ' Le serie in cui ne hai visti di più:';
+      ss.map(sh => [sh, Object.keys(sh.watched).length]).sort((a, b) => b[1] - a[1]).slice(0, 5).forEach(([sh, n]) => rows.push(rS(sh, `${n} episodi`))); break; }
+    case 'Serie complete': {
+      const fin = ss.filter(sh => ['finite','attesa'].includes(showStats(sh).st) && Object.keys(sh.watched).length).sort((a, b) => (b.lastW || 0) - (a.lastW || 0));
+      tx = ok ? `Hai finito <b>${fin.length} serie</b> (o le hai pareggiate). Eccole, dalle più recenti:` : `Ne hai finite <b>${fin.length}</b>: ne mancano ${g - fin.length}.`;
+      fin.forEach(sh => rows.push(rS(sh, showStats(sh).st === 'attesa' ? 'al passo' : 'vista tutta', sh.myRating ? '★'.repeat(sh.myRating) : ''))); break; }
+    case 'Film visti': {
+      const dat = seen.filter(m => m.seenAt).sort((a, b) => a.seenAt.localeCompare(b.seenAt));
+      tx = ok ? ennesimo(g, seen, dat, m => `Il tuo <b>${g}° film</b> è stato <b>${esc(m.title)}</b>, visto il ${fData(m.seenAt)}.`) : `Ne hai visti <b>${seen.length}</b>: ne mancano ${g - seen.length}.`;
+      const m = ok && g > seen.length - dat.length ? dat[g - (seen.length - dat.length) - 1] : null; if (m) rows.push(rM(m, `visto il ${fData(m.seenAt)}`, m.rating ? '★'.repeat(m.rating) : ''));
+      if (!m){ tx += ' Gli ultimi che hai visto:'; dat.slice(-5).reverse().forEach(m => rows.push(rM(m, `visto il ${fData(m.seenAt)}`))); } break; }
+    case 'Una serie del cuore': {
+      const [sh, n] = ss.map(sh => [sh, Object.keys(sh.watched).length]).sort((a, b) => b[1] - a[1])[0] || [];
+      if (sh){ tx = `La tua serie del cuore è <b>${esc(showName(sh))}</b>, con <b>${n} episodi</b> visti.`; rows.push(rS(sh, `${n} episodi visti`, sh.myRating ? '★'.repeat(sh.myRating) : '')); } break; }
+    case 'Maratone': {
+      const per = {}; datati.forEach(x => { const k = new Date(x.ts).toLocaleDateString('sv'); (per[k] = per[k] || []).push(x); });
+      const [k, l] = Object.entries(per).sort((a, b) => b[1].length - a[1].length)[0] || [];
+      if (k){ tx = `La tua maratona record: <b>${l.length} episodi</b> ${new Date(k + 'T12:00').toLocaleDateString('it-IT', {weekday:'long'})} ${fData(k)}.`;
+        const bySh = {}; l.forEach(x => (bySh[x.sh.id] = bySh[x.sh.id] || []).push(x));
+        Object.values(bySh).sort((a, b) => b.length - a.length).forEach(v => { v.sort((a, b) => a.ts - b.ts); rows.push(rS(v[0].sh, `${v.length} episod${v.length === 1 ? 'io' : 'i'} · ${v.map(x => x.e ? epCode(x.e) : '').filter(Boolean).slice(0, 3).join(', ')}${v.length > 3 ? '…' : ''}${ora(v[0].ts) !== ora(v[v.length - 1].ts) ? `<br>dalle ${ora(v[0].ts)} alle ${ora(v[v.length - 1].ts)}` : ''}`, `${v.length}`)); }); }
+      else tx = 'Ancora nessuna maratona con le date: segna gli episodi man mano che li guardi.'; break; }
+    case 'Costanza': {
+      const gg = [...new Set([...datati.map(x => new Date(x.ts).toLocaleDateString('sv')), ...seen.filter(m => m.seenAt).map(m => m.seenAt)])].sort();
+      let best = [0, 0], st = 0; for (let i = 1; i <= gg.length; i++){ if (i === gg.length || new Date(gg[i]) - new Date(gg[i - 1]) !== 864e5){ if (i - st > best[1] - best[0]) best = [st, i]; st = i; } }
+      const n = best[1] - best[0];
+      tx = n ? `La tua serie più lunga: <b>${n} giorn${n === 1 ? 'o' : 'i'} di fila</b>, dal ${fData(gg[best[0]])} al ${fData(gg[best[1] - 1])}.${ok ? '' : ` Per questo traguardo ne servono ${g}.`}` : 'Ancora nessuna visione con la data.';
+      if (n){ const dentro = new Set(gg.slice(best[0], best[1])), seri = {}; datati.forEach(x => { if (dentro.has(new Date(x.ts).toLocaleDateString('sv'))) seri[x.sh.id] = (seri[x.sh.id] || 0) + 1; });
+        Object.entries(seri).sort((a, b) => b[1] - a[1]).slice(0, 6).forEach(([id, c]) => rows.push(rS(D.series[id], `${c} episod${c === 1 ? 'io' : 'i'} in quei giorni`))); } break; }
+    case 'Commenti': {
+      const l = [...ss.filter(sh => sh.notes).map(sh => ['s', sh]), ...seen.filter(m => m.comment).map(m => ['m', m])];
+      tx = `Hai scritto <b>${l.length} commenti</b>${ok ? '' : `: ne mancano ${g - l.length}`}.`;
+      l.slice(0, 30).forEach(([k, x]) => rows.push(k === 's' ? rS(x, `“${esc(x.notes.slice(0, 70))}${x.notes.length > 70 ? '…' : ''}”`) : rM(x, `“${esc(x.comment.slice(0, 70))}${x.comment.length > 70 ? '…' : ''}”`))); break; }
+    case 'Varietà': {
+      const gen = {}; ss.forEach(sh => { if (Object.keys(sh.watched).length) gen[mainGen(sh)] = (gen[mainGen(sh)] || 0) + 1; }); seen.forEach(m => gen[mainGen(m)] = (gen[mainGen(m)] || 0) + 1);
+      const l = Object.entries(gen).filter(([k]) => k !== 'Altro').sort((a, b) => b[1] - a[1]);
+      tx = `Hai guardato <b>${l.length} generi</b>: ${l.map(([k, n]) => `${esc(k)} (${n})`).join(', ')}.`; break; }
+    case 'Nottambulo': {
+      const l = datati.filter(x => new Date(x.ts).getHours() < 5).reverse();
+      tx = l.length ? `Hai visto <b>${l.length} episod${l.length === 1 ? 'io' : 'i'}</b> dopo mezzanotte. I più recenti:` : 'Nessun episodio dopo mezzanotte, per ora.';
+      l.slice(0, 8).forEach(x => rows.push(rS(x.sh, `${eTx(x)}<br>${giorno(x.ts)} alle ${ora(x.ts)}`))); break; }
+    case 'Puntuale': {
+      const l = datati.filter(x => x.e?.d && new Date(x.ts).toLocaleDateString('sv') === x.e.d).reverse();
+      tx = l.length ? `Hai visto <b>${l.length} episod${l.length === 1 ? 'io' : 'i'}</b> il giorno stesso dell'uscita. I più recenti:` : 'Nessun episodio visto il giorno dell\'uscita, per ora.';
+      l.slice(0, 8).forEach(x => rows.push(rS(x.sh, `${eTx(x)}<br>uscito e visto il ${giorno(x.ts)}`))); break; }
+    case 'Pignolo': {
+      const s1 = ss.filter(sh => sh.myRating).length, m1 = seen.filter(m => m.rating).length;
+      tx = `Hai dato <b>${s1 + m1} voti</b>: ${m1} a film e ${s1} a serie.${ok ? '' : ` Ne servono ${g}.`}`; break; }
+    case 'Cinque stelle': {
+      const l = [...ss.filter(sh => sh.myRating === 5).map(sh => rS(sh, 'serie', '★★★★★')), ...seen.filter(m => m.rating === 5).map(m => rM(m, m.year || 'film', '★★★★★'))];
+      tx = `I tuoi <b>${l.length} titoli da cinque stelle</b>${ok ? '' : ` (ne servono ${g})`}:`; rows = l; break; }
+    case 'Anno pieno': {
+      const y = String(new Date().getFullYear()), mm = new Set([...datati.map(x => new Date(x.ts).toLocaleDateString('sv')), ...seen.filter(m => m.seenAt).map(m => m.seenAt)].filter(k => k.startsWith(y)).map(k => +k.slice(5, 7)));
+      const M = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+      tx = `Nel ${y} hai visto qualcosa in <b>${mm.size} mesi su 12</b>: ${M.map((n, i) => mm.has(i + 1) ? `<b>${n}</b>` : `<span style="color:var(--mut2)">${n}</span>`).join(' · ')}.`; break; }
+  }
+  $('#mcard').innerHTML = `<div class="trdh"><i class="${ok ? '' : 'off'}">${d.ic}</i><div><div class="k">${ok ? 'Traguardo raggiunto' : 'Da raggiungere'}</div><h4>${esc(d.t)}</h4><p>${esc(d.s)}</p></div></div>
+    ${tx ? `<p class="trdt">${tx}</p>` : ''}${lista(rows)}<div class="mrow"><button class="btn ghost" data-act="closeModal">Chiudi</button></div>`;
+  $('#modal').classList.add('open');
+}
 const PERS = {};
 // TMDB → TVmaze per le serie che TMDB registra con un altro id (es. le antologie come Monster)
 let TMAP = load('visto-tmap') || {};
@@ -1604,6 +1686,8 @@ const A = {
   filmSeg(d){ UI.filmSeg = d.s; render(); },
   serSeg(d){ UI.serSeg = d.s; render(); },
   antoOpen(d){ antoModal(d.n); },
+  troDet(d){ troModal(d); },
+  troGo(d){ $('#modal').classList.remove('open'); if (d.k === 's') showSheet(+d.id); else movieSheet(isNaN(+d.id) ? d.id : +d.id); },
   celeOk(){ const el = $('#cele'); if (!el) return; el.classList.remove('on'); setTimeout(() => el.remove(), 380); },
   celeVedi(){ A.celeOk(); if ($('#sheet').classList.contains('open')) closeSheet(); UI.tab = 'io'; render(); setTimeout(() => [...document.querySelectorAll('.box h4')].find(h => h.textContent.startsWith('Traguardi'))?.scrollIntoView({behavior:'smooth', block:'start'}), 250); },
   async pvAdd(d, el){
