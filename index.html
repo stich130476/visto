@@ -520,6 +520,26 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 .burst{position:fixed;z-index:95;pointer-events:none;width:8px;height:8px;border-radius:2px}
 .ver .firma{font:italic 600 15px/1.4 var(--serif);color:var(--txt);margin-bottom:8px;letter-spacing:.2px}
 .ver .firma b{font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ---------- SCHERMI LARGHI (PC, iPad orizzontale): solo da 1024px in su, il telefono non cambia ---------- */
+@media (min-width:1024px){
+  .app{max-width:1240px;padding-left:28px;padding-right:28px}
+  .tiles{grid-template-columns:repeat(6,1fr)}
+  .iog,.setg{columns:2;column-gap:16px}
+  .iog>.box,.setg>.box{display:inline-block;width:100%;break-inside:avoid;margin:0 0 16px}
+  .iog{margin-top:14px}
+  .tfams{display:grid;grid-template-columns:1fr 1fr;gap:4px 32px;align-items:start}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px 16px}
+  .recrow .pc-it{width:140px}
+  .sheet .inner{max-width:1000px}
+}
+@media (min-width:1024px) and (hover:hover){
+  .nrow,.recrow,.castrow,.schips{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
+  .pc-it,.cwc,.ncard,.tile{transition:transform .25s cubic-bezier(.2,.9,.2,1)}
+  .pc-it:hover .pst{transform:translateY(-4px);box-shadow:0 14px 30px rgba(0,0,0,.45)}
+  .cwc:hover,.tile:hover{transform:translateY(-2px)}
+  button,[role=button],[data-act]{cursor:pointer}
+}
 </style>
 </head>
 <body>
@@ -558,7 +578,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.21.1';
+const VERSIONE = '2.22';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -950,6 +970,7 @@ function renderIo(){
     <div class="tile fadein" style="--c:#4da3ff"><b>${epYear + filmYear}</b><span>visioni nel ${y}</span></div>
   </div>
   <button class="yearbtn fadein" data-act="year"><span style="font-size:34px">✨</span><span><b>Il mio ${y} in Visto!</b><small>Il riepilogo del tuo anno davanti allo schermo</small></span><span class="ar">›</span></button>
+  <div class="iog">
   ${top[0][1] ? `<div class="box"><h4>La classifica dei tuoi generi</h4>${top.map(([g, n], i) => `<div class="gbar" data-act="genre" data-g="${esc(g)}" role="button" style="cursor:pointer"><em style="width:18px;text-align:left;color:${i < 3 ? 'var(--a2)' : 'var(--mut2)'};font-weight:800">${i + 1}</em><span>${esc(g)}</span><div class="bar"><i style="width:${n / mx * 100}%;${n ? '' : 'opacity:0'}"></i></div><em>${n}</em><span style="width:24px;text-align:right">${move(g)}</span></div>`).join('')}
     <p class="cap2" style="margin-top:8px;white-space:normal">Tocca un genere per vedere i titoli · le frecce mostrano come cambia la classifica rispetto alla settimana scorsa</p></div>` : ''}
   ${recMin ? `<div class="box"><h4>Da recuperare</h4><div class="bigline">${dur(recMin)}</div><p class="cap2" style="white-space:normal;font-size:14px">il tempo per finire le serie in corso e vedere tutti i film in lista</p></div>` : ''}
@@ -961,14 +982,17 @@ function renderIo(){
       <div class="wsplit"><div style="flex:${fer || 1}"><b>${fer}%</b><span>lun–ven</span></div><div style="flex:${we || 1}"><b>${we}%</b><span>weekend</span></div></div>
       <p class="plot" style="font-size:14px;margin-top:12px">Il tuo giorno preferito è il <b>${GIORNI[wbest]}</b> (${pct(wd[wbest])}% delle visioni)${ord[6][1] < ord[0][1] ? `, quello in cui guardi meno è il <b>${GIORNI[ord[6][0]]}</b> (${pct(ord[6][1])}%)` : ''}.${mar && mar[1].n > 1 ? ` Record di maratona: <b>${mar[1].n} episodi</b> in un giorno (${esc(fData(mar[0]))}), soprattutto di <i>${esc(marShow)}</i>.` : ''}</p>`; })()
     : `<p class="plot" style="font-size:14px">Qui compariranno il tuo giorno della settimana preferito e i record di maratona, man mano che segni cosa guardi${C.archivio ? ' (con la modalità archivio spenta)' : ''}.</p>`}</div>
+  </div>
   <div class="box"><h4>Traguardi · ${BADGE.filter(b => b[3]).length} di ${BADGE.length}</h4>
-    ${FAM.map(([fi, fn, items]) => { const done = items.filter(b => b[3]).length, nx = items.findIndex(b => !b[3]);
+    <div class="tfams">${FAM.map(([fi, fn, items]) => { const done = items.filter(b => b[3]).length, nx = items.findIndex(b => !b[3]);
       return `<div class="tfam"><div class="tfh"><span>${fi} ${fn}</span><em>livello ${done} di ${items.length}</em></div><div class="tpath">${items.map(([ic, t, sub, ok, cur, goal], i) => `${i ? `<div class="tlink ${ok ? 'on' : ''}"></div>` : ''}<button class="tier ${ok ? 'done' : i === nx ? 'next' : 'lock'}" data-act="troDet" data-f="${esc(fn)}" data-t="${esc(t)}" data-ic="${ic}" data-s="${esc(sub)}" data-g="${goal}" data-ok="${ok ? 1 : ''}"><i>${ic}</i><b>${t}</b><small>${sub}</small>${i === nx && goal > 1 ? `<span class="bar"><i style="width:${Math.min(100, cur / goal * 100)}%"></i></span><small class="tp">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</small>` : ''}</button>`).join('')}</div></div>`; }).join('')}
+    </div>
     <div class="tfh" style="margin-top:14px"><span>🎯 Sfide</span><em>${SINGLE.filter(b => b[3]).length} di ${SINGLE.length}</em></div>
     <div class="badges">${SINGLE.map(([ic, t, sub, ok, cur, goal]) => `<button class="badge ${ok ? '' : 'off'}" data-act="troDet" data-f="${esc(t)}" data-t="${esc(t)}" data-ic="${ic}" data-s="${esc(sub)}" data-g="${goal}" data-ok="${ok ? 1 : ''}"><i>${ic}</i><span>${t}<small>${sub}${!ok && goal > 1 ? ` · <b style="color:var(--a2)">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</b>` : ''}</small></span></button>`).join('')}</div></div>
   <h2 class="sec">Impostazioni</h2>
+  <div class="setg">
   <div class="box">
-    <div class="set"><div class="l"><b>Aspetto</b><small>Giorno, notte o automatico come l'iPhone</small></div><div class="theme3">${[['auto','Auto'],['light','☀︎ Giorno'],['dark','☾ Notte']].map(([v, l]) => `<button class="${(C.theme || 'auto') === v ? 'on' : ''}" data-act="theme" data-v="${v}">${l}</button>`).join('')}</div></div>
+    <div class="set"><div class="l"><b>Aspetto</b><small>Giorno, notte o automatico come il dispositivo</small></div><div class="theme3">${[['auto','Auto'],['light','☀︎ Giorno'],['dark','☾ Notte']].map(([v, l]) => `<button class="${(C.theme || 'auto') === v ? 'on' : ''}" data-act="theme" data-v="${v}">${l}</button>`).join('')}</div></div>
     <div class="set"><div class="l"><b>Notifiche</b><small>${esc(statoNotifiche().t)}</small></div><button class="btn small ${statoNotifiche().ok ? 'ghost' : ''}" data-act="push">${statoNotifiche().ok ? 'Riattiva' : '🔔 Attiva'}</button></div>
     <div class="set"><div class="l"><b>Intro all'avvio</b><small>Il collage di locandine quando apri l'app</small></div><button class="sw ${C.intro ? 'on' : ''}" data-act="toggleIntro" aria-label="Intro"></button></div>
     <div class="set"><div class="l"><b>Modalità archivio</b><small>Attivala mentre inserisci serie e film visti in passato: non falseranno le statistiche di oggi</small></div><button class="sw ${C.archivio ? 'on' : ''}" data-act="toggleArch" aria-label="Archivio"></button></div>
@@ -984,7 +1008,7 @@ function renderIo(){
       <li>Come uso indica "personale", app "Visto", URL: il tuo indirizzo GitHub Pages.</li>
       <li>Copia la <b>Chiave API</b> (32 caratteri) e incollala qui sopra.</li></ol></details>
   </div>
-  <div class="box"><h4>Sincronizzazione iPhone ↔ iPad</h4>
+  <div class="box"><h4>Sincronizzazione tra dispositivi</h4>
     <p class="plot" style="font-size:14px;margin-bottom:10px">Stato: ${sync}</p>
     <div class="lbl">Utente GitHub</div><input class="fld" id="ghUser" value="${esc(C.ghUser)}" placeholder="es. stich130476" autocapitalize="off" spellcheck="false">
     <div class="lbl">Repository privato dei dati</div><input class="fld" id="ghRepo" value="${esc(C.ghRepo)}" autocapitalize="off" spellcheck="false">
@@ -993,6 +1017,7 @@ function renderIo(){
   </div>
   <div class="box"><h4>Importa la tua cronologia</h4><p class="plot" style="font-size:14px;margin-bottom:10px">Carica il file "Attività di visione" scaricato da Netflix: serie e film vengono aggiunti già spuntati, con le date vere.</p><div class="acts" style="margin-top:0"><button class="btn small" data-act="netflix">📥 Importa da Netflix</button></div></div>
   ${backupBox()}
+  </div>
   <div class="ver"><div class="firma">Creata con 🖤💙 da <b>Stefano Fasolato</b></div>Visto! · versione <b>${VERSIONE}</b><br>Dati serie: TVmaze · Dati film: TMDB</div>`;
 }
 
@@ -2374,6 +2399,15 @@ async function checkUpdate(){
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
 
+
+/* Sul computer la rotellina del mouse fa scorrere in orizzontale le righe di locandine */
+document.addEventListener('wheel', e => {
+  const r = e.target.closest && e.target.closest('.nrow,.recrow,.castrow,.schips');
+  if (!r || Math.abs(e.deltaX) > Math.abs(e.deltaY) || r.scrollWidth <= r.clientWidth) return;
+  const max = r.scrollWidth - r.clientWidth;
+  if ((e.deltaY < 0 && r.scrollLeft <= 0) || (e.deltaY > 0 && r.scrollLeft >= max - 1)) return;
+  e.preventDefault(); r.scrollLeft += e.deltaY;
+}, {passive:false});
 /* ---------- AVVIO ---------- */
 (async function init(){
   render();
