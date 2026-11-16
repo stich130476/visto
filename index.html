@@ -556,12 +556,26 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 .mrh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.mrh span{font-weight:700;font-size:14px;white-space:nowrap}.mrh em{font-style:normal;font-size:11.5px;color:var(--a2);font-weight:700;text-align:right}
 .mrs{display:grid;grid-template-columns:repeat(12,1fr);gap:1px;margin-top:6px}.ms{display:flex;flex-direction:column;align-items:center;min-width:0}.ms small{font-size:9px;color:var(--mut);text-transform:capitalize}.ms.cur small{color:var(--a2);font-weight:800}
 .med{display:block;overflow:visible;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35))}.med.vuota{color:var(--mut);filter:none}
-.alst{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}.alst div{background:var(--card);border-radius:14px;padding:10px 4px;text-align:center}.alst b{display:block;font:800 24px/1 var(--serif);background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}.alst small{font-size:10.5px;color:var(--mut)}
-.algr{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 4px}
-.alm{display:flex;flex-direction:column;align-items:center;gap:1px;background:none;color:inherit;font:inherit;cursor:pointer;padding:6px 0;border-radius:12px}.alm[disabled]{cursor:default}
-.alm b{font-size:12px;text-transform:capitalize;margin-top:2px}.alm small{font-size:10.5px;color:var(--mut);min-height:13px}.alm.cur{background:rgba(255,154,77,.10);outline:1.5px solid rgba(255,154,77,.5)}
-.alm:active:not([disabled]){transform:scale(.95)}
-.ccard .tic svg{width:64px;height:80px;margin-top:-6px}
+.ccard .tic:has(svg){background:none;box-shadow:none;width:auto;height:auto;margin:-112px auto 4px;animation:none}.ccard .tic svg{width:96px;height:125px;animation:tic 2.4s ease-in-out .8s infinite;transform-origin:50% 10%}
+.albm{padding-top:calc(var(--st) + 78px)}
+.alh{text-align:center;margin-bottom:18px}.alh .k{font-size:11px;font-weight:800;letter-spacing:2.2px;text-transform:uppercase;color:var(--a2)}
+.alh h2{font:800 40px/1.05 var(--serif);letter-spacing:-.5px;margin:6px 0 8px;background:linear-gradient(180deg,#fff3c4,#e2b14b 60%,#a8740f);-webkit-background-clip:text;background-clip:text;color:transparent}
+html[data-theme=light] .alh h2{background:linear-gradient(180deg,#d29a2a,#9a6408);-webkit-background-clip:text;background-clip:text}
+.alh p{color:var(--mut);font-size:14px;max-width:300px;margin:0 auto;line-height:1.45}
+.alst{display:flex;justify-content:center;gap:26px;margin:4px 0 6px}.alst div{display:flex;flex-direction:column;align-items:center;gap:3px}
+.alst .pip{width:18px;height:18px;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.4)}.alst b{font:800 28px/1 var(--serif)}.alst small{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut)}
+.alrec{text-align:center;font:italic 14px/1.4 var(--serif);color:var(--mut);margin:6px 0 4px}.alrec b{color:var(--a2);font-style:normal}
+.aly{margin-top:22px}.aly h3{display:flex;align-items:center;gap:12px;font:800 22px/1 var(--serif);margin:0 0 6px;color:var(--txt)}
+.aly h3:before,.aly h3:after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(217,164,65,.6),transparent)}
+.algr{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 4px}
+.alm{display:flex;flex-direction:column;align-items:center;gap:0;background:none;border:0;color:var(--mut);font:inherit;cursor:pointer;padding:8px 0 10px;border-radius:16px}.alm[disabled]{cursor:default}
+.alm b{font:italic 600 15px/1.2 var(--serif);text-transform:capitalize;color:var(--txt);margin-top:2px}.alm[disabled] b{color:var(--mut2)}
+.alm small{font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;min-height:12px;margin-top:2px;color:var(--mut)}
+.alm.m3 small{color:#e2b14b}.alm.m2 small{color:#c9d1dc}.alm.m1 small{color:#d08a4c}
+html[data-theme=light] .alm.m3 small{color:#a8740f}html[data-theme=light] .alm.m2 small{color:#6c7684}html[data-theme=light] .alm.m1 small{color:#9a5a26}
+.alm.cur{background:linear-gradient(180deg,rgba(217,164,65,.10),transparent);box-shadow:inset 0 0 0 1px rgba(217,164,65,.45)}.alm.cur small{color:var(--a2)}
+.alm:active:not([disabled]){transform:scale(.96)}
+.med{filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
 </style>
 </head>
 <body>
@@ -600,7 +614,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.25';
+const VERSIONE = '2.25.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1543,19 +1557,31 @@ function troModal(d){
 // ===== SFIDE: dieci fisse in più + tre nuove ogni mese =====
 const EMB = ['❄️','💘','🌱','🌸','🌼','☀️','🏖️','🌻','🍂','🎃','🍁','🎄'];
 const MET = {3:['oro','#fff3b0','#f5c542','#a8740f'], 2:['argento','#ffffff','#c9d1dc','#7d8794'], 1:['bronzo','#ffd9b0','#d08a4c','#7a4a22']};
-function medaglia(n, m, sz = 64, vuota){ // n = sfide completate (1 bronzo, 2 argento, 3 oro)
-  const id = 'md' + Math.random().toString(36).slice(2, 8);
-  if (!n) return `<svg width="${sz}" height="${sz * 1.25}" viewBox="0 0 80 100" class="med vuota"><circle cx="40" cy="58" r="30" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="${vuota ? '3 5' : '0'}" opacity=".35"/><text x="40" y="66" text-anchor="middle" font-size="22" opacity="${vuota ? .25 : .45}">${vuota ? '?' : EMB[m]}</text></svg>`;
+const ROM = y => { let r = '', n = y; [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']].forEach(([v, l]) => { while (n >= v){ r += l; n -= v; } }); return r; };
+const ALLORO = (() => { let d = ''; for (const lato of [-1, 1]) for (let k = 0; k < 9; k++){ const a = (110 + k * 17) * Math.PI / 180, x = 50 + lato * Math.cos(a) * -26, y = 84 + Math.sin(a) * 26, rot = lato * (k * 17 + 20);
+  d += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="4.6" ry="1.9" transform="rotate(${(lato > 0 ? 180 - rot : rot).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})"/>`; } return d; })();
+function medaglia(n, m, sz = 64, vuota, y){ // n = sfide completate: 1 bronzo, 2 argento, 3 oro
+  const id = 'md' + Math.random().toString(36).slice(2, 8), mese = MESI[m].slice(0, 3).toUpperCase(), piccola = sz < 44, anno = y ? ROM(y) : '';
+  const testo = (c, op) => piccola ? '' : `<text x="50" y="${anno ? 86 : 89}" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="12.5" font-weight="700" letter-spacing="1.6" fill="${c}" opacity="${op}">${mese}</text>${anno ? `<text x="50" y="97" text-anchor="middle" font-family="Georgia,serif" font-size="6" letter-spacing="1.2" fill="${c}" opacity="${op * .85}">${anno}</text>` : ''}`;
+  if (!n) return `<svg width="${sz}" height="${sz * 1.3}" viewBox="0 0 100 130" class="med vuota">
+    <circle cx="50" cy="84" r="34" fill="${vuota ? 'none' : 'currentColor'}" fill-opacity=".07" stroke="currentColor" stroke-opacity="${vuota ? .22 : .28}" stroke-width="1.2" ${vuota ? 'stroke-dasharray="2 4"' : ''}/>
+    ${vuota ? '' : `<circle cx="50" cy="84" r="29" fill="none" stroke="currentColor" stroke-opacity=".14"/><g fill="currentColor" opacity=".16">${ALLORO}</g>`}
+    ${testo('currentColor', vuota ? .3 : .42)}</svg>`;
   const [, c1, c2, c3] = MET[n];
-  return `<svg width="${sz}" height="${sz * 1.25}" viewBox="0 0 80 100" class="med">
-    <defs><radialGradient id="${id}" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="${c1}"/><stop offset=".55" stop-color="${c2}"/><stop offset="1" stop-color="${c3}"/></radialGradient>
-    <linearGradient id="${id}r" x1="0" x2="1"><stop offset="0" stop-color="#ff5e62"/><stop offset="1" stop-color="#ffb347"/></linearGradient></defs>
-    <path d="M22 0h14l10 34H32z" fill="url(#${id}r)"/><path d="M58 0H44L34 34h14z" fill="url(#${id}r)" opacity=".85"/>
-    <circle cx="40" cy="62" r="31" fill="url(#${id})" stroke="${c3}" stroke-width="1.5"/>
-    <circle cx="40" cy="62" r="25" fill="none" stroke="${c1}" stroke-width="1.2" opacity=".8"/>
-    <circle cx="40" cy="62" r="25" fill="none" stroke="${c3}" stroke-width="2.5" stroke-dasharray="1 3.3" opacity=".55"/>
-    <text x="40" y="71" text-anchor="middle" font-size="24">${EMB[m]}</text>
-    <ellipse cx="30" cy="47" rx="10" ry="5" fill="#fff" opacity=".35" transform="rotate(-30 30 47)"/></svg>`;
+  return `<svg width="${sz}" height="${sz * 1.3}" viewBox="0 0 100 130" class="med">
+    <defs><radialGradient id="${id}" cx="38%" cy="32%" r="78%"><stop offset="0" stop-color="${c1}"/><stop offset=".5" stop-color="${c2}"/><stop offset="1" stop-color="${c3}"/></radialGradient>
+    <linearGradient id="${id}v" x1="0" x2="1"><stop offset="0" stop-color="#4a0712"/><stop offset=".5" stop-color="#9e1428"/><stop offset="1" stop-color="#4a0712"/></linearGradient>
+    <linearGradient id="${id}b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c3}"/></linearGradient></defs>
+    <path d="M30 0h17l9 52H39z" fill="url(#${id}v)"/><path d="M70 0H53l-9 52h17z" fill="url(#${id}v)"/>
+    <path d="M37.5 0h2l8.6 52h-2zM62.5 0h-2l-8.6 52h2z" fill="#d9a441" opacity=".85"/>
+    <rect x="36" y="48" width="28" height="8" rx="2" fill="url(#${id}b)"/>
+    <circle cx="50" cy="84" r="34" fill="url(#${id})"/>
+    <circle cx="50" cy="84" r="34" fill="none" stroke="${c3}" stroke-width="1.6"/>
+    <circle cx="50" cy="84" r="30.5" fill="none" stroke="${c1}" stroke-width=".8" opacity=".9"/>
+    <circle cx="50" cy="84" r="29.4" fill="none" stroke="${c3}" stroke-width=".7" opacity=".7"/>
+    <g fill="${c3}" opacity=".75">${ALLORO}</g>
+    ${piccola ? `<circle cx="50" cy="84" r="5" fill="${c3}" opacity=".6"/>` : testo(c3, .95) + `<g transform="translate(-.6 -.6)">${testo(c1, .55)}</g>`}
+    <path d="M24 70a30 30 0 0 1 36-20" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".28"/></svg>`;
 }
 // medagliere: per ogni anno i 12 mesi (oro 3/3, argento 2/3, bronzo 1/3)
 function medagliere(SF){
@@ -1573,11 +1599,12 @@ function medagliere(SF){
 function albumSheet(keep){
   UI.open = {type:'album'};
   const SF = sfide(), M = medagliere(SF);
-  openSheet(`<div class="pad" style="padding-top:calc(var(--st) + 64px)">
-    <h2 class="sec" style="margin-top:0">🏅 Medagliere</h2>
-    <p class="hint" style="margin:-6px 0 14px">Ogni mese tre sfide: una completata vale il <b>bronzo</b>, due l'<b>argento</b>, tutte e tre l'<b>oro</b>.</p>
-    <div class="alst"><div><b>${M.ori}</b><small>ori</small></div><div><b>${M.arg}</b><small>argenti</small></div><div><b>${M.bro}</b><small>bronzi</small></div><div><b>${M.best}</b><small>ori di fila</small></div></div>
-    ${M.anni.map(a => `<div class="box"><h4>${a.y}</h4><div class="algr">${a.mesi.map(x => `<button class="alm ${x.cur ? 'cur' : ''}" ${x.b ? `data-act="troDet" data-f="${x.cur ? 'bach:cur' : 'bach:' + x.k}" data-t="Sfide di ${MESI[x.m]} ${a.y}" data-ic="${EMB[x.m]}" data-s="${x.n ? 'medaglia di ' + MET[x.n][0] : x.cur ? 'in corso' : 'nessuna medaglia'}" data-g="3" data-ok="${x.n === 3 ? 1 : ''}"` : 'disabled'}>${medaglia(x.n, x.m, 58, x.fut || !x.b)}<b>${MESI[x.m]}</b><small>${x.cur ? `in corso · ${x.n}/3` : x.n ? MET[x.n][0] : x.b ? '—' : ''}</small></button>`).join('')}</div></div>`).join('')}
+  const pip = n => `<span class="pip" style="background:radial-gradient(circle at 35% 30%,${MET[n][1]},${MET[n][2]} 55%,${MET[n][3]})"></span>`;
+  openSheet(`<div class="pad albm">
+    <div class="alh"><div class="k">Visto! · Sfide del mese</div><h2>Medagliere</h2><p>Tre sfide ogni mese. Una vale il bronzo, due l'argento, tutte e tre l'oro.</p></div>
+    <div class="alst">${[[3, M.ori, 'ori'], [2, M.arg, 'argenti'], [1, M.bro, 'bronzi']].map(([n, v, l]) => `<div>${pip(n)}<b>${v}</b><small>${l}</small></div>`).join('')}</div>
+    ${M.best ? `<p class="alrec">Record: <b>${M.best} mes${M.best === 1 ? 'e' : 'i'} d'oro di fila</b></p>` : `<p class="alrec">Il primo oro ti aspetta: completa tutte le sfide di ${SF.mese.nome}.</p>`}
+    ${M.anni.map(a => `<div class="aly"><h3><span>${a.y}</span></h3><div class="algr">${a.mesi.map(x => `<button class="alm ${x.cur ? 'cur' : ''} ${x.n ? 'm' + x.n : ''}" ${x.b ? `data-act="troDet" data-f="${x.cur ? 'bach:cur' : 'bach:' + x.k}" data-t="Sfide di ${MESI[x.m]} ${a.y}" data-ic="${EMB[x.m]}" data-s="${x.n ? 'medaglia di ' + MET[x.n][0] : x.cur ? 'in corso' : 'nessuna medaglia'}" data-g="3" data-ok="${x.n === 3 ? 1 : ''}"` : 'disabled'}>${medaglia(x.n, x.m, 76, x.fut || !x.b, a.y)}<b>${MESI[x.m]}</b><small>${x.cur ? `in corso · ${x.n}/3` : x.n ? MET[x.n][0] : ''}</small></button>`).join('')}</div></div>`).join('')}
   </div>`, keep);
 }
 const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
