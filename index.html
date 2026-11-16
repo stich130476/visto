@@ -583,6 +583,11 @@ html[data-theme=light] .alm.m3 small{color:#a8740f}html[data-theme=light] .alm.m
 .prem .bar{display:block;height:4px;margin-top:8px;max-width:170px}.prem.ok .bar{display:none}
 .prm{display:block;overflow:visible}.prm.ok{filter:drop-shadow(0 8px 16px rgba(217,164,65,.35))}
 .ccard .tic:has(.prm) svg{width:130px;height:142px}
+.antl .sfh{display:flex;align-items:center;gap:10px;margin:10px 0 2px;padding:0 4px}.antl .sfh:first-child{margin-top:0}
+.sfh>i{font-style:normal;font-size:20px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--card2);flex:none}.sfh.ok>i{background:var(--grad)}
+.sfh b{display:block;font:700 16px/1.2 var(--serif)}.sfh small{font-size:12px;color:var(--mut)}.sfh>span{margin-left:auto;font-weight:800;font-size:13px;color:var(--mut2);white-space:nowrap}.sfh.ok>span{color:var(--a2)}
+.antl .sfv{font-size:13px;color:var(--mut2);margin:0 0 4px 50px;font-style:italic}
+.antl.tr .sfh~button{margin-left:18px;width:calc(100% - 18px)}
 </style>
 </head>
 <body>
@@ -621,7 +626,7 @@ html[data-theme=light] .alm.m3 small{color:#a8740f}html[data-theme=light] .alm.m
 
 <script>
 'use strict';
-const VERSIONE = '2.26';
+const VERSIONE = '2.26.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1492,7 +1497,7 @@ function troModal(d){
   else if (d.f.startsWith('mese:')){ const x = SF.mese.sfide.find(z => 'mese:' + z.id === d.f);
     if (x){ tx = `Sfida di <b>${SF.mese.nome}</b>: ${x.ok ? 'completata! ✓' : `sei a <b>${Math.min(x.cur, x.goal)} su ${x.goal}</b>, hai ancora ${SF.gg} giorn${SF.gg === 1 ? 'o' : 'i'}.`}${x.rows.length ? ' Finora:' : ''}`; rows = x.rows.map(sfR); } }
   else if (d.f.startsWith('bach:')){ const b = d.f === 'bach:cur' ? SF.mese : SF.bach.find(z => 'bach:' + z.k === d.f);
-    if (b){ tx = `Le tre sfide di <b>${b.nome} ${b.anno}</b>:`; rows = b.sfide.map(x => `<button style="pointer-events:none"><div class="pimg" style="display:grid;place-items:center;font-size:24px;background:var(--card)">${x.ic}</div><div style="min-width:0"><b>${esc(x.t)}</b><small>${esc(x.sub)}</small></div><span class="ok ${x.ok ? '' : 'mz'}">${x.ok ? '✓ fatta' : Math.min(x.cur, x.goal) + '/' + x.goal}</span></button>`); } }
+    if (b){ tx = `Le tre sfide di <b>${b.nome} ${b.anno}</b>, con i titoli che le hanno fatte avanzare:`; rows = b.sfide.flatMap(x => [`<div class="sfh ${x.ok ? 'ok' : ''}"><i>${x.ic}</i><div><b>${esc(x.t)}</b><small>${esc(x.sub)}</small></div><span>${x.ok ? '✓ fatta' : Math.min(x.cur, x.goal) + '/' + x.goal}</span></div>`, ...(x.rows.length ? x.rows.map(sfR) : [`<p class="sfv">${x.cur ? 'Conta i giorni o i generi, non singoli titoli.' : 'Ancora nessun titolo.'}</p>`])]); } }
   switch (fx || d.f.includes(':') ? '' : d.f){
     case 'Episodi visti': {
       tx = ok ? ennesimo(g, epsL, datati, x => `Il tuo <b>${g.toLocaleString('it-IT')}° episodio</b> è stato <b>${esc(showName(x.sh))}</b> ${x.e ? epCode(x.e) : ''}, il ${giorno(x.ts)}.`) : `Ne hai visti <b>${epsL.length.toLocaleString('it-IT')}</b>: ne mancano ${(g - epsL.length).toLocaleString('it-IT')}.`;
