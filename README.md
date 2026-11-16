@@ -44,6 +44,11 @@ Si apre dal browser e si installa sulla schermata Home di iPhone e iPad come una
 - 📺 **Serie TV**: spunti gli episodi visti stagione per stagione e sai subito qual è il prossimo.
 - 🎬 **Film**: una lista "da vedere" e un diario dei film visti, con voto e commento personale per ricordarti com'erano.
 - 🆕 **Novità**: nuove stagioni e nuovi episodi delle tue serie compaiono in cima, anche se riapri l'app dopo mesi.
+- 🔔 **Notifiche**, anche ad app chiusa, su iPhone e Apple Watch:
+  - è uscito un **nuovo episodio** di una serie che segui;
+  - arriva una **nuova stagione**;
+  - **torna** una serie che avevi finito o messo in pausa;
+  - esce al cinema o in streaming un **film della tua lista**.
 - 🍿 **Stasera cosa guardo?**: un suggerimento al volo tra le piattaforme di streaming.
 - ✨ **Consigliati per te**: proposte basate sui tuoi gusti.
 - 🏆 **Traguardi** e **Il mio anno in Visto!**: le tue statistiche e i tuoi generi preferiti.
@@ -70,7 +75,7 @@ Fatto: Visto! è sulla Home con la sua icona e si apre a tutto schermo.
 ## I tuoi dati sono tuoi
 
 Tutto quello che inserisci resta **nel tuo dispositivo**. Visto! non ha un server, non raccoglie dati e non ti chiede nessun account.
-Chi vuole può anche sincronizzare iPhone, iPad e computer e ricevere le notifiche delle nuove puntate, usando un proprio repository privato su GitHub. È facoltativo e pensato per utenti un po' esperti: l'app funziona benissimo anche senza.
+Chi vuole può anche sincronizzare iPhone, iPad e computer e attivare le notifiche, usando un proprio repository privato su GitHub. È facoltativo e pensato per utenti un po' esperti: l'app funziona benissimo anche senza.
 
 ## Ringraziamenti
 
