@@ -576,6 +576,13 @@ html[data-theme=light] .alm.m3 small{color:#a8740f}html[data-theme=light] .alm.m
 .alm.cur{background:linear-gradient(180deg,rgba(217,164,65,.10),transparent);box-shadow:inset 0 0 0 1px rgba(217,164,65,.45)}.alm.cur small{color:var(--a2)}
 .alm:active:not([disabled]){transform:scale(.96)}
 .med{filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+.prem{display:flex;align-items:center;gap:14px;margin:4px 0 12px;padding:12px 14px;border-radius:18px;background:linear-gradient(135deg,rgba(217,164,65,.10),rgba(217,164,65,.02));box-shadow:inset 0 0 0 1px rgba(217,164,65,.28);color:var(--mut)}
+.prem .prm{flex:none}.prem.ok{background:radial-gradient(120% 120% at 20% 30%,rgba(255,214,120,.22),rgba(217,164,65,.04));box-shadow:inset 0 0 0 1px rgba(217,164,65,.6),0 10px 30px rgba(217,164,65,.15)}
+.prem .k{font-size:10.5px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:#d9a441}.prem b{display:block;font:800 19px/1.15 var(--serif);color:var(--txt);margin:3px 0}
+.prem small{display:block;font-size:12.5px;line-height:1.4;color:var(--mut)}.prem small b{display:inline;font:inherit;font-weight:800;color:#d9a441;margin:0}
+.prem .bar{display:block;height:4px;margin-top:8px;max-width:170px}.prem.ok .bar{display:none}
+.prm{display:block;overflow:visible}.prm.ok{filter:drop-shadow(0 8px 16px rgba(217,164,65,.35))}
+.ccard .tic:has(.prm) svg{width:130px;height:142px}
 </style>
 </head>
 <body>
@@ -614,7 +621,7 @@ html[data-theme=light] .alm.m3 small{color:#a8740f}html[data-theme=light] .alm.m
 
 <script>
 'use strict';
-const VERSIONE = '2.25.1';
+const VERSIONE = '2.26';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -996,7 +1003,7 @@ function renderIo(){
   SF.fisse.forEach(x => SINGLE.push(T(x.ic, x.t, x.sub + x.extra, x.cur, x.goal)));
   SINGLE.sort((a, b) => b[3] - a[3]);
   const BADGE = [...FAM.flatMap(f => f[2]), ...SINGLE];
-  UI.tro = [...BADGE.filter(b => b[3]).map(b => ({ic:b[0], t:b[1], s:b[2]})), ...SF.mese.sfide.filter(x => x.ok).map(x => ({ic:x.ic, t:`${x.t} · ${SF.mese.nome} ${SF.mese.anno}`, s:'sfida del mese: ' + x.sub})), ...(SF.mese.sfide.every(x => x.ok) ? [{ic:medaglia(3, new Date().getMonth(), 64), t:`Medaglia d'oro · ${SF.mese.nome} ${SF.mese.anno}`, s:'tutte e tre le sfide del mese!', oro:1}] : [])];
+  UI.tro = [...BADGE.filter(b => b[3]).map(b => ({ic:b[0], t:b[1], s:b[2]})), ...SF.mese.sfide.filter(x => x.ok).map(x => ({ic:x.ic, t:`${x.t} · ${SF.mese.nome} ${SF.mese.anno}`, s:'sfida del mese: ' + x.sub})), ...(() => { const M = medagliere(SF); return M.anni.filter(a => a.mesi.filter(x => x.n === 3).length >= PREMIO).map(a => ({ic:proiettore(a.y, true, 110), t:`Proiettore d'oro ${a.y}`, s:`${PREMIO} mesi d'oro nello stesso anno: il Premio Visto! è tuo`, oro:2})); })(), ...(SF.mese.sfide.every(x => x.ok) ? [{ic:medaglia(3, new Date().getMonth(), 64), t:`Medaglia d'oro · ${SF.mese.nome} ${SF.mese.anno}`, s:'tutte e tre le sfide del mese!', oro:1}] : [])];
   UI.troTop = FAM.map(f => f[2].filter(b => b[3]).pop()).filter(Boolean).map(b => ({ic:b[0], t:b[1], s:b[2]}));
   const sync = C.ghToken && C.ghUser ? (C.syncErr ? `<span class="stat-ko">Errore: ${esc(C.syncErr)}</span>` : C.lastSync ? `<span class="stat-ok">Sincronizzato ${new Date(C.lastSync).toLocaleString('it-IT', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>` : 'Non ancora sincronizzato') : 'Non attiva';
   return `<h1 class="big">Io</h1><div class="sub">Il tuo divano, in numeri</div>
@@ -1446,7 +1453,7 @@ function festa(nuovi, titolo, tasto){
   nuovi.sort((a, b) => (a.oro || 0) - (b.oro || 0));
   const b = nuovi[nuovi.length - 1], altri = nuovi.slice(0, -1).slice(-4);
   const el = document.createElement('div'); el.id = 'cele'; el.className = 'cele';
-  el.innerHTML = `<div class="ccard"><div class="tic">${b.ic}</div><div class="lab">${titolo || (b.oro ? 'Mese tutto d\'oro!' : nuovi.length > 1 ? nuovi.length + ' nuovi traguardi' : 'Nuovo traguardo')}</div><h3>${esc(b.t)}</h3><p>${esc(b.s)}</p>
+  el.innerHTML = `<div class="ccard"><div class="tic">${b.ic}</div><div class="lab">${titolo || (b.oro === 2 ? 'Premio Visto! dell\'anno' : b.oro ? 'Mese tutto d\'oro!' : nuovi.length > 1 ? nuovi.length + ' nuovi traguardi' : 'Nuovo traguardo')}</div><h3>${esc(b.t)}</h3><p>${esc(b.s)}</p>
     ${altri.length ? `<div class="alt">${altri.map(a => `<span>${a.ic} <b>${esc(a.t)}</b> · ${esc(a.s)}</span>`).join('')}</div>` : ''}
     <button class="btn" data-act="celeOk">${tasto || 'Che bello!'}</button><button class="lnk" data-act="celeVedi">Vedi tutti i traguardi ›</button></div>`;
   document.body.appendChild(el);
@@ -1583,6 +1590,30 @@ function medaglia(n, m, sz = 64, vuota, y){ // n = sfide completate: 1 bronzo, 2
     ${piccola ? `<circle cx="50" cy="84" r="5" fill="${c3}" opacity=".6"/>` : testo(c3, .95) + `<g transform="translate(-.6 -.6)">${testo(c1, .55)}</g>`}
     <path d="M24 70a30 30 0 0 1 36-20" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".28"/></svg>`;
 }
+// Premio Visto! dell'anno: il Proiettore d'oro, con 6 mesi d'oro nello stesso anno
+const PREMIO = 6;
+function proiettore(y, ok, sz = 120){
+  const id = 'pr' + Math.random().toString(36).slice(2, 8), G = ok ? `url(#${id})` : 'currentColor', op = ok ? 1 : .13;
+  const bobina = (cx, cy, r) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${G}" opacity="${op}"/><circle cx="${cx}" cy="${cy}" r="${r - 2.2}" fill="none" stroke="${ok ? '#8a5a08' : 'currentColor'}" stroke-width=".8" opacity="${ok ? .6 : .25}"/>
+    ${[0, 72, 144, 216, 288].map(a => { const x = cx + Math.cos(a * Math.PI / 180) * r * .52, yy = cy + Math.sin(a * Math.PI / 180) * r * .52; return `<circle cx="${x.toFixed(1)}" cy="${yy.toFixed(1)}" r="${(r * .2).toFixed(1)}" fill="${ok ? '#14101c' : 'var(--bg,#0e0b14)'}" opacity="${ok ? .85 : .9}"/>`; }).join('')}
+    <circle cx="${cx}" cy="${cy}" r="${(r * .16).toFixed(1)}" fill="${ok ? '#fff3c4' : 'currentColor'}" opacity="${ok ? .9 : .2}"/>`;
+  return `<svg width="${sz}" height="${(sz * 175 / 160).toFixed(0)}" viewBox="0 0 160 175" class="prm ${ok ? 'ok' : ''}">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".45" stop-color="#e9b949"/><stop offset="1" stop-color="#8a5a08"/></linearGradient>
+    <linearGradient id="${id}m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3346"/><stop offset="1" stop-color="#0b0910"/></linearGradient>
+    <linearGradient id="${id}l" x1="0" x2="1"><stop offset="0" stop-color="#fff6d6" stop-opacity=".55"/><stop offset="1" stop-color="#fff6d6" stop-opacity="0"/></linearGradient></defs>
+    ${ok ? `<path d="M106 96 L160 66 L160 144 Z" fill="url(#${id}l)"/>` : ''}
+    <path d="M44 58 L60 92 M78 48 L74 92" stroke="${G}" stroke-width="2.2" opacity="${op}"/>
+    ${bobina(44, 50, 21)}${bobina(80, 42, 18)}
+    <rect x="34" y="88" width="62" height="34" rx="7" fill="${G}" opacity="${op}"/>
+    <rect x="40" y="94" width="30" height="4" rx="2" fill="${ok ? '#8a5a08' : 'currentColor'}" opacity="${ok ? .45 : .2}"/><rect x="40" y="102" width="22" height="3" rx="1.5" fill="${ok ? '#8a5a08' : 'currentColor'}" opacity="${ok ? .35 : .15}"/>
+    <rect x="94" y="96" width="10" height="18" rx="2" fill="${G}" opacity="${op}"/><circle cx="106" cy="105" r="9" fill="${G}" opacity="${op}"/><circle cx="106" cy="105" r="5" fill="${ok ? '#14101c' : 'var(--bg,#0e0b14)'}" opacity=".85"/><circle cx="104" cy="103" r="1.6" fill="#fff" opacity="${ok ? .8 : 0}"/>
+    <rect x="44" y="122" width="10" height="6" fill="${G}" opacity="${op}"/><rect x="76" y="122" width="10" height="6" fill="${G}" opacity="${op}"/>
+    <rect x="28" y="128" width="76" height="12" rx="2" fill="${ok ? `url(#${id}m)` : 'currentColor'}" opacity="${ok ? 1 : .1}"/>
+    <rect x="20" y="140" width="92" height="30" rx="3" fill="${ok ? `url(#${id}m)` : 'currentColor'}" opacity="${ok ? 1 : .1}"/>
+    <rect x="28" y="147" width="76" height="16" rx="2" fill="${ok ? `url(#${id})` : 'currentColor'}" opacity="${ok ? 1 : .14}"/>
+    <text x="66" y="158.5" text-anchor="middle" font-family="Georgia,serif" font-size="7.6" font-weight="700" letter-spacing="1" fill="${ok ? '#5c3a03' : 'currentColor'}" opacity="${ok ? 1 : .45}">VISTO! ${y}</text>
+    ${ok ? '<path d="M38 92a8 8 0 0 1 8-6h30" stroke="#fff" stroke-width="2" fill="none" opacity=".35" stroke-linecap="round"/>' : ''}</svg>`;
+}
 // medagliere: per ogni anno i 12 mesi (oro 3/3, argento 2/3, bronzo 1/3)
 function medagliere(SF){
   const tutti = [SF.mese, ...SF.bach], per = {}; tutti.forEach(b => per[b.k] = b);
@@ -1604,7 +1635,12 @@ function albumSheet(keep){
     <div class="alh"><div class="k">Visto! · Sfide del mese</div><h2>Medagliere</h2><p>Tre sfide ogni mese. Una vale il bronzo, due l'argento, tutte e tre l'oro.</p></div>
     <div class="alst">${[[3, M.ori, 'ori'], [2, M.arg, 'argenti'], [1, M.bro, 'bronzi']].map(([n, v, l]) => `<div>${pip(n)}<b>${v}</b><small>${l}</small></div>`).join('')}</div>
     ${M.best ? `<p class="alrec">Record: <b>${M.best} mes${M.best === 1 ? 'e' : 'i'} d'oro di fila</b></p>` : `<p class="alrec">Il primo oro ti aspetta: completa tutte le sfide di ${SF.mese.nome}.</p>`}
-    ${M.anni.map(a => `<div class="aly"><h3><span>${a.y}</span></h3><div class="algr">${a.mesi.map(x => `<button class="alm ${x.cur ? 'cur' : ''} ${x.n ? 'm' + x.n : ''}" ${x.b ? `data-act="troDet" data-f="${x.cur ? 'bach:cur' : 'bach:' + x.k}" data-t="Sfide di ${MESI[x.m]} ${a.y}" data-ic="${EMB[x.m]}" data-s="${x.n ? 'medaglia di ' + MET[x.n][0] : x.cur ? 'in corso' : 'nessuna medaglia'}" data-g="3" data-ok="${x.n === 3 ? 1 : ''}"` : 'disabled'}>${medaglia(x.n, x.m, 76, x.fut || !x.b, a.y)}<b>${MESI[x.m]}</b><small>${x.cur ? `in corso · ${x.n}/3` : x.n ? MET[x.n][0] : ''}</small></button>`).join('')}</div></div>`).join('')}
+    ${M.anni.map(a => { const o = a.mesi.filter(x => x.n === 3).length, ok = o >= PREMIO, ultimo = a.y < new Date().getFullYear();
+      return `<div class="aly"><h3><span>${a.y}</span></h3>
+      <div class="prem ${ok ? 'ok' : ''}">${proiettore(a.y, ok, 92)}<div><div class="k">${ok ? 'Premio conquistato' : ultimo ? 'Premio non assegnato' : 'Premio dell\'anno'}</div><b>Proiettore d'oro ${a.y}</b>
+        <small>${ok ? `${o} mesi d'oro: un anno da Oscar.` : ultimo ? `${o} mes${o === 1 ? 'e' : 'i'} d'oro su ${PREMIO}.` : `Si vince con ${PREMIO} mesi d'oro nell'anno. Sei a <b>${o} su ${PREMIO}</b>.`}</small>
+        <span class="bar"><i style="width:${Math.min(100, o / PREMIO * 100)}%"></i></span></div></div>
+      <div class="algr">${a.mesi.map(x => `<button class="alm ${x.cur ? 'cur' : ''} ${x.n ? 'm' + x.n : ''}" ${x.b ? `data-act="troDet" data-f="${x.cur ? 'bach:cur' : 'bach:' + x.k}" data-t="Sfide di ${MESI[x.m]} ${a.y}" data-ic="${EMB[x.m]}" data-s="${x.n ? 'medaglia di ' + MET[x.n][0] : x.cur ? 'in corso' : 'nessuna medaglia'}" data-g="3" data-ok="${x.n === 3 ? 1 : ''}"` : 'disabled'}>${medaglia(x.n, x.m, 76, x.fut || !x.b, a.y)}<b>${MESI[x.m]}</b><small>${x.cur ? `in corso · ${x.n}/3` : x.n ? MET[x.n][0] : ''}</small></button>`).join('')}</div></div>`; }).join('')}
   </div>`, keep);
 }
 const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
