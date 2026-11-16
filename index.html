@@ -626,7 +626,7 @@ html[data-theme=light] .alm.m3 small{color:#a8740f}html[data-theme=light] .alm.m
 
 <script>
 'use strict';
-const VERSIONE = '2.26.1';
+const VERSIONE = '2.26.2';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1537,7 +1537,10 @@ function troModal(d){
     case 'Varietà': {
       const gen = {}; ss.forEach(sh => { if (Object.keys(sh.watched).length) gen[mainGen(sh)] = (gen[mainGen(sh)] || 0) + 1; }); seen.forEach(m => gen[mainGen(m)] = (gen[mainGen(m)] || 0) + 1);
       const l = Object.entries(gen).filter(([k]) => k !== 'Altro').sort((a, b) => b[1] - a[1]);
-      tx = `Hai guardato <b>${l.length} generi</b>: ${l.map(([k, n]) => `${esc(k)} (${n})`).join(', ')}.`; break; }
+      tx = `Hai guardato <b>${l.length} generi</b>. Per ognuno, l'ultimo titolo visto:`;
+      l.forEach(([g, n]) => { const fm = seen.filter(m => mainGen(m) === g && m.seenAt).sort((a, b) => b.seenAt.localeCompare(a.seenAt))[0], sm = ss.filter(sh => mainGen(sh) === g && Object.keys(sh.watched).length).sort((a, b) => (b.lastW || 0) - (a.lastW || 0))[0];
+        const sub = `<b style="color:var(--a2)">${esc(g)}</b> · ${n} titol${n === 1 ? 'o' : 'i'}`;
+        if (fm && (!sm || fm.seenAt >= new Date(sm.lastW || 0).toLocaleDateString('sv'))) rows.push(rM(fm, sub)); else if (sm) rows.push(rS(sm, sub)); }); break; }
     case 'Nottambulo': {
       const l = [...datati.filter(x => new Date(x.ts).getHours() < 5), ...seen.filter(m => m.seenTs && m.seenAt && new Date(m.seenTs).toLocaleDateString('sv') === m.seenAt && new Date(m.seenTs).getHours() < 5).map(m => ({m, ts:m.seenTs}))].sort((a, b) => b.ts - a.ts);
       const nf = l.filter(x => x.m).length, ne = l.length - nf;
@@ -1553,14 +1556,17 @@ function troModal(d){
       rows = [`<button data-act="album"><div class="pimg" style="display:grid;place-items:center;font-size:26px;background:var(--card)">🏅</div><div><b>Apri il medagliere</b><small>tutti i mesi, anno per anno</small></div><span class="ok">›</span></button>`]; break; }
     case 'Pignolo': {
       const s1 = ss.filter(sh => sh.myRating).length, m1 = seen.filter(m => m.rating).length;
-      tx = `Hai dato <b>${s1 + m1} voti</b>: ${m1} a film e ${s1} a serie.${ok ? '' : ` Ne servono ${g}.`}`; break; }
+      tx = `Hai dato <b>${s1 + m1} voti</b>: ${m1} a film e ${s1} a serie.${ok ? '' : ` Ne servono ${g}.`} Gli ultimi:`;
+      seen.filter(m => m.rating).sort((a, b) => (b.seenAt || '').localeCompare(a.seenAt || '')).slice(0, 12).forEach(m => rows.push(rM(m, m.seenAt ? fData(m.seenAt) : 'film', '★'.repeat(m.rating)))); break; }
     case 'Cinque stelle': {
       const l = [...ss.filter(sh => sh.myRating === 5).map(sh => rS(sh, 'serie', '★★★★★')), ...seen.filter(m => m.rating === 5).map(m => rM(m, m.year || 'film', '★★★★★'))];
       tx = `I tuoi <b>${l.length} titoli da cinque stelle</b>${ok ? '' : ` (ne servono ${g})`}:`; rows = l; break; }
     case 'Anno pieno': {
       const y = String(new Date().getFullYear()), mm = new Set([...datati.map(x => new Date(x.ts).toLocaleDateString('sv')), ...seen.filter(m => m.seenAt).map(m => m.seenAt)].filter(k => k.startsWith(y)).map(k => +k.slice(5, 7)));
       const M = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
-      tx = `Nel ${y} hai visto qualcosa in <b>${mm.size} mesi su 12</b>: ${M.map((n, i) => mm.has(i + 1) ? `<b>${n}</b>` : `<span style="color:var(--mut2)">${n}</span>`).join(' · ')}.`; break; }
+      tx = `Nel ${y} hai visto qualcosa in <b>${mm.size} mesi su 12</b>: ${M.map((n, i) => mm.has(i + 1) ? `<b>${n}</b>` : `<span style="color:var(--mut2)">${n}</span>`).join(' · ')}. Il primo titolo di ogni mese:`;
+      for (let i = 1; i <= 12; i++){ const k = `${y}-${String(i).padStart(2, '0')}`, f = seen.filter(m => (m.seenAt || '').startsWith(k)).sort((a, b) => a.seenAt.localeCompare(b.seenAt))[0], e = datati.find(x => new Date(x.ts).toLocaleDateString('sv').startsWith(k));
+        const nm = MESI[i - 1]; if (f && (!e || f.seenAt <= new Date(e.ts).toLocaleDateString('sv'))) rows.push(rM(f, `<b style="color:var(--a2)">${nm}</b> · ${fData(f.seenAt)}`)); else if (e) rows.push(rS(e.sh, `<b style="color:var(--a2)">${nm}</b> · ${eTx(e)}`)); } break; }
   }
   $('#mcard').innerHTML = `<div class="trdh"><i class="${ok ? '' : 'off'}">${d.ic}</i><div><div class="k">${ok ? 'Traguardo raggiunto' : 'Da raggiungere'}</div><h4>${esc(d.t)}</h4><p>${esc(d.s)}</p></div></div>
     ${tx ? `<p class="trdt">${tx}</p>` : ''}${lista(rows)}<div class="mrow"><button class="btn ghost" data-act="closeModal">Chiudi</button></div>`;
@@ -1689,7 +1695,11 @@ function sfide(){
   const wk = new Set([...E.map(x => x.day), ...F.map(x => x.day)].filter(d => [0, 6].includes(new Date(d + 'T12:00').getDay())).map(d => { const t = new Date(d + 'T12:00'); t.setDate(t.getDate() - (t.getDay() === 0 ? 1 : 0)); return t.toLocaleDateString('sv'); }));
   const wl = [...wk].sort(); let wr = 0, wb = 0, wbEnd = '';
   wl.forEach((d, i) => { wr = i && new Date(d) - new Date(wl[i - 1]) === 7 * 864e5 ? wr + 1 : 1; if (wr > wb){ wb = wr; wbEnd = d; } });
-  add('🗓️', 'Weekend di cinema', 'visioni in 4 weekend di fila', wb, 4, wb ? `Il tuo record: <b>${wb} weekend di fila</b>${wb > 1 ? `, fino a quello del ${fData(wbEnd)}` : ''}.` : '');
+  const wkDi = d => { const t = new Date(d + 'T12:00'); if (![0, 6].includes(t.getDay())) return ''; t.setDate(t.getDate() - (t.getDay() === 0 ? 1 : 0)); return t.toLocaleDateString('sv'); };
+  const wkSet = new Set(); for (let k = 0; k < wb; k++){ const t = new Date(wbEnd + 'T12:00'); t.setDate(t.getDate() - 7 * k); wkSet.add(t.toLocaleDateString('sv')); }
+  const wkItems = [...F.filter(x => wkSet.has(wkDi(x.day))), ...Object.values(E.filter(x => wkSet.has(wkDi(x.day))).reduce((o, x) => { const k = x.sh.id + x.day; (o[k] = o[k] || []).push(x); return o; }, {}))].sort((a, b) => ((b.day || b[0].day)).localeCompare(a.day || a[0].day));
+  const gs = d => new Date(d + 'T12:00').toLocaleDateString('it-IT', {weekday:'short', day:'numeric', month:'short'});
+  add('🗓️', 'Weekend di cinema', 'visioni in 4 weekend di fila', wb, 4, wb ? `Il tuo record: <b>${wb} weekend di fila</b>${wb > 1 ? `, fino a quello del ${fData(wbEnd)}` : ''}. Cosa hai guardato:` : '', wkItems.slice(0, 20).map(x => Array.isArray(x) ? rS(x[0].sh, `${x.length} episod${x.length === 1 ? 'io' : 'i'} · ${gs(x[0].day)}`) : rM(x.m, gs(x.day))));
   // 10. Notte bianca
   const nE = E.filter(x => notte(x.ts)), nF = F.filter(x => notte(x.ts)), np = nE.length + nF.length * 2;
   add('🌙', 'Notte bianca', '3 film o 6 episodi dopo mezzanotte', np, 6, `Dopo mezzanotte: <b>${nE.length} episodi</b> e <b>${nF.length} film</b> (un film vale due episodi).`, [...nF.map(x => rM(x.m, `${fData(x.day)} alle ${new Date(x.ts).toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'})}`)), ...nE.slice(-6).reverse().map(x => rS(x.sh, `${x.e ? epCode(x.e) + ' · ' : ''}${fData(x.day)}`))]);
