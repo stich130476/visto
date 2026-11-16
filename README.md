@@ -85,5 +85,5 @@ Dati delle serie da [TVmaze](https://www.tvmaze.com/), dati e locandine dei film
 ---
 
 <p align="center">
-  Creata con 🖤💙 da <b>Stefano Fasolato</b>
+  <i>Stefano Fasolato</i>
 </p>

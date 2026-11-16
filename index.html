@@ -518,7 +518,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 .fadein{animation:fi .45s both}
 @keyframes fi{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .burst{position:fixed;z-index:95;pointer-events:none;width:8px;height:8px;border-radius:2px}
-.ver .firma{font:italic 600 15px/1.4 var(--serif);color:var(--txt);margin-bottom:8px;letter-spacing:.2px}
+.ver .firma{font:italic 600 18px/1.4 var(--serif);color:var(--txt);margin-bottom:8px;letter-spacing:.2px}
 .ver .firma b{font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
 
 /* ---------- SCHERMI LARGHI (PC, iPad orizzontale): solo da 1024px in su, il telefono non cambia ---------- */
@@ -578,7 +578,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.22';
+const VERSIONE = '2.22.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1018,7 +1018,7 @@ function renderIo(){
   <div class="box"><h4>Importa la tua cronologia</h4><p class="plot" style="font-size:14px;margin-bottom:10px">Carica il file "Attività di visione" scaricato da Netflix: serie e film vengono aggiunti già spuntati, con le date vere.</p><div class="acts" style="margin-top:0"><button class="btn small" data-act="netflix">📥 Importa da Netflix</button></div></div>
   ${backupBox()}
   </div>
-  <div class="ver"><div class="firma">Creata con 🖤💙 da <b>Stefano Fasolato</b></div>Visto! · versione <b>${VERSIONE}</b><br>Dati serie: TVmaze · Dati film: TMDB</div>`;
+  <div class="ver"><div class="firma"><b>Stefano Fasolato</b></div>Visto! · versione <b>${VERSIONE}</b><br>Dati serie: TVmaze · Dati film: TMDB</div>`;
 }
 
 /* ---------- BACKUP ---------- */
