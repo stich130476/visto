@@ -579,7 +579,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.22.2';
+const VERSIONE = '2.23';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -929,7 +929,8 @@ function renderIo(){
   const allTs = []; ss.forEach(sh => Object.values(sh.watched).forEach(ts => { if (ts > 1e11) allTs.push(ts); }));
   const giorni = [...new Set([...allTs.map(ts => new Date(ts).toLocaleDateString('sv')), ...seen.filter(m => m.seenAt).map(m => m.seenAt)])].sort();
   let streak = 0, run = 0; for (let i = 0; i < giorni.length; i++){ run = i && (new Date(giorni[i]) - new Date(giorni[i - 1])) === 864e5 ? run + 1 : 1; streak = Math.max(streak, run); }
-  const notturno = allTs.some(ts => { const h = new Date(ts).getHours(); return h >= 0 && h < 5; });
+  const filmNotte = m => m.seenTs && m.seenAt && new Date(m.seenTs).toLocaleDateString('sv') === m.seenAt && new Date(m.seenTs).getHours() < 5;
+  const notturno = allTs.some(ts => { const h = new Date(ts).getHours(); return h >= 0 && h < 5; }) || seen.some(filmNotte);
   const puntuale = ss.some(sh => sh.eps.some(e => { const ts = sh.watched[e.i]; return ts > 1e11 && e.d && new Date(ts).toLocaleDateString('sv') === e.d; }));
   const maxSerie = Math.max(0, ...ss.map(sh => Object.keys(sh.watched).length));
   const cinque = ss.filter(sh => sh.myRating === 5).length + seen.filter(m => m.rating === 5).length;
@@ -953,7 +954,7 @@ function renderIo(){
     ['🔥','Costanza', [T('🔥','Abitudinario','7 giorni di fila',streak,7), T('🗓️','Mese da record','30 giorni di fila',streak,30)]],
     ['✍️','Commenti', scala(commenti, [[10,'✍️','Critico'],[30,'📝','Recensore'],[100,'📚','Penna d\'oro']], g => `${g} commenti`)],
     ['🌍','Varietà', [T('🌍','Esploratore','6 generi diversi',generi,6), T('🧭','Onnivoro','tutti i 10 generi',generi,10)]]];
-  const SINGLE = [T('🦉','Nottambulo','un episodio dopo mezzanotte',+notturno,1), T('⏱️','Puntuale','un episodio il giorno d\'uscita',+puntuale,1),
+  const SINGLE = [T('🦉','Nottambulo','un episodio o un film dopo mezzanotte',+notturno,1), T('⏱️','Puntuale','un episodio il giorno d\'uscita',+puntuale,1),
     T('⭐','Pignolo','25 voti dati',votati,25), T('🌟','Cinque stelle','10 titoli da 5 stelle',cinque,10), T('📅','Anno pieno','visioni in tutti i 12 mesi',mesi,12)];
   SINGLE.sort((a, b) => b[3] - a[3]);
   const BADGE = [...FAM.flatMap(f => f[2]), ...SINGLE];
@@ -1382,6 +1383,7 @@ async function anteprima(k, id, keep){
 }
 // Traguardi: quando ne raggiungi uno nuovo, festa con i pop-corn
 function controllaTraguardi(){
+  const ml = D.movies[458253]; if (ml && ml.state === 'seen' && ml.seenAt === '2026-11-16' && !ml.seenTs) ml.seenTs = new Date('2026-11-16T03:00:00').getTime(); // finito verso le 3 (detto da Stefano)
   if (!Object.keys(D.series).length && !Object.keys(D.movies).length) return;
   try { renderIo(); } catch(e){ return; }
   const ora = UI.tro || []; if (!ora.length) return;
@@ -1471,9 +1473,10 @@ function troModal(d){
       const l = Object.entries(gen).filter(([k]) => k !== 'Altro').sort((a, b) => b[1] - a[1]);
       tx = `Hai guardato <b>${l.length} generi</b>: ${l.map(([k, n]) => `${esc(k)} (${n})`).join(', ')}.`; break; }
     case 'Nottambulo': {
-      const l = datati.filter(x => new Date(x.ts).getHours() < 5).reverse();
-      tx = l.length ? `Hai visto <b>${l.length} episod${l.length === 1 ? 'io' : 'i'}</b> dopo mezzanotte. I più recenti:` : 'Nessun episodio dopo mezzanotte, per ora.';
-      l.slice(0, 8).forEach(x => rows.push(rS(x.sh, `${eTx(x)}<br>${giorno(x.ts)} alle ${ora(x.ts)}`))); break; }
+      const l = [...datati.filter(x => new Date(x.ts).getHours() < 5), ...seen.filter(m => m.seenTs && m.seenAt && new Date(m.seenTs).toLocaleDateString('sv') === m.seenAt && new Date(m.seenTs).getHours() < 5).map(m => ({m, ts:m.seenTs}))].sort((a, b) => b.ts - a.ts);
+      const nf = l.filter(x => x.m).length, ne = l.length - nf;
+      tx = l.length ? `Dopo mezzanotte hai visto ${[ne ? `<b>${ne} episod${ne === 1 ? 'io' : 'i'}</b>` : '', nf ? `<b>${nf} film</b>` : ''].filter(Boolean).join(' e ')}. I più recenti:` : 'Niente dopo mezzanotte, per ora.';
+      l.slice(0, 8).forEach(x => rows.push(x.m ? rM(x.m, `finito il ${giorno(x.ts)} alle ${ora(x.ts)}`) : rS(x.sh, `${eTx(x)}<br>${giorno(x.ts)} alle ${ora(x.ts)}`))); break; }
     case 'Puntuale': {
       const l = datati.filter(x => x.e?.d && new Date(x.ts).toLocaleDateString('sv') === x.e.d).reverse();
       tx = l.length ? `Hai visto <b>${l.length} episod${l.length === 1 ? 'io' : 'i'}</b> il giorno stesso dell'uscita. I più recenti:` : 'Nessun episodio visto il giorno dell\'uscita, per ora.';
@@ -1724,7 +1727,7 @@ const A = {
     try {
       if (o.k === 'movie'){
         const m = PV['movie' + o.id] || await fetchMovie(o.id);
-        D.movies[m.id] = Object.assign(m, {state:d.s, added:Date.now(), rating:0, comment:'', seenAt:d.s === 'seen' && !C.archivio ? oggi() : ''});
+        D.movies[m.id] = Object.assign(m, {state:d.s, added:Date.now(), rating:0, comment:'', seenAt:d.s === 'seen' && !C.archivio ? oggi() : '', seenTs:d.s === 'seen' && !C.archivio ? Date.now() : 0});
         if (!D.lastCheck) D.lastCheck = Date.now();
         save(); burst(el); movieSheet(m.id);
         if (d.s === 'seen') setTimeout(() => rateModal(m.id), 400); else toast(`<b>${esc(m.title)}</b> tra i film da vedere`);
@@ -1777,7 +1780,7 @@ const A = {
     const col = el.parentElement; col.innerHTML = '<button class="add alt">…</button>';
     try {
       const m = await fetchMovie(d.id);
-      D.movies[m.id] = Object.assign(m, {state:d.s, added:Date.now(), rating:0, comment:'', seenAt:d.s === 'seen' && !C.archivio ? oggi() : ''});
+      D.movies[m.id] = Object.assign(m, {state:d.s, added:Date.now(), rating:0, comment:'', seenAt:d.s === 'seen' && !C.archivio ? oggi() : '', seenTs:d.s === 'seen' && !C.archivio ? Date.now() : 0});
       if (!D.lastCheck) D.lastCheck = Date.now();
       save(); col.innerHTML = `<button class="add done">${d.s === 'seen' ? '✓ Visto' : '✓ In lista'}</button>`; burst(col);
       if (d.s === 'seen') setTimeout(() => rateModal(m.id), d.rec ? 400 : 0); else { toast(`<b>${esc(m.title)}</b> tra i film da vedere`); if (d.rec) setTimeout(() => { $('#modal').classList.remove('open'); render(); if (UI.open?.type === 'person') refreshView(); }, 500); }
@@ -1834,7 +1837,7 @@ const A = {
   pause(d){ const sh = D.series[d.id]; sh.paused = !sh.paused; save(); showSheet(+d.id, true); toast(sh.paused ? 'Serie messa in pausa' : 'Bentornato!'); },
   removeShow(d){ const sh = D.series[d.id]; delete D.series[d.id]; save(); closeSheet(); toast(`<b>${esc(showName(sh))}</b> rimossa`, 'Annulla', () => { D.series[d.id] = sh; save(); render(); }); },
   removeMovie(d){ const m = D.movies[d.id]; delete D.movies[d.id]; save(); closeSheet(); toast(`<b>${esc(m.title)}</b> rimosso`, 'Annulla', () => { D.movies[d.id] = m; save(); render(); }); },
-  unsee(d){ const m = D.movies[d.id]; m.state = 'todo'; m.seenAt = ''; save(); movieSheet(d.id); },
+  unsee(d){ const m = D.movies[d.id]; m.state = 'todo'; m.seenAt = ''; m.seenTs = 0; save(); movieSheet(d.id); },
   rate(d){ rateModal(d.id); },
   epWhen(d){
     const sh = D.series[d.id], e = sh.eps.find(x => x.i == d.e), v = sh.watched[d.e];
@@ -1950,6 +1953,7 @@ const A = {
     if (UI.rate.show){ const sh = D.series[UI.rate.id]; sh.myRating = UI.rate.r; sh.notes = $('#rCom').innerText.trim(); save(); $('#modal').classList.remove('open'); toast('✓ Giudizio salvato'); refreshView(); return; }
     const m = D.movies[UI.rate.id], first = m.state !== 'seen';
     Object.assign(m, {state:'seen', rating:UI.rate.r, seenAt:$('#rDate').classList.contains('hide') ? '' : ($('#rDate').value || oggi()), comment:$('#rCom').innerText.trim()});
+    if (m.seenAt === oggi()){ if (!m.seenTs || new Date(m.seenTs).toLocaleDateString('sv') !== m.seenAt) m.seenTs = Date.now(); } else m.seenTs = 0;
     save(); $('#modal').classList.remove('open');
     if (first) toast(`🎬 <b>${esc(m.title)}</b> è nel tuo diario`);
     if (UI.open?.type === 'movie') movieSheet(m.id); else { UI.filmSeg = 'seen'; render(); }
