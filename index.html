@@ -541,6 +541,17 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
   .cwc:hover,.tile:hover{transform:translateY(-2px)}
   button,[role=button],[data-act]{cursor:pointer}
 }
+.msf{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mcard2{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 6px 10px;border-radius:15px;background:var(--card2);border:1px solid var(--line);color:inherit;font:inherit;text-align:center;cursor:pointer}
+.mcard2>i{font-style:normal;font-size:20px;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;margin-bottom:4px;background:var(--card)}
+.mcard2.ok{border-color:rgba(255,154,77,.55);background:rgba(255,154,77,.10)}.mcard2.ok>i{background:var(--grad);color:#1a1020;font-weight:900;box-shadow:0 6px 16px rgba(255,120,80,.35)}
+.mcard2 b{font:700 14px/1.15 var(--serif)}.mcard2 small{font-size:10.5px;color:var(--mut);line-height:1.25}
+.mcard2 .bar{display:block;flex:none;width:80%;height:4px;margin-top:6px}.mcard2 .tp{color:var(--a2);font-weight:700}
+.mcard2:active{transform:scale(.96)}
+.bach{display:flex;gap:6px;overflow-x:auto;margin:10px -16px 0;padding:0 16px 2px;scrollbar-width:none}.bach::-webkit-scrollbar{display:none}
+.bm{flex:none;min-width:52px;padding:6px 8px;border-radius:12px;background:var(--card2);color:inherit;font:inherit;display:flex;flex-direction:column;align-items:center;cursor:pointer}
+.bm b{font-size:11px;text-transform:capitalize}.bm small{font-size:10px;letter-spacing:1px;color:var(--a2)}.bm.zero small{color:var(--mut2)}
+.bm.full{background:var(--grad)}.bm.full b,.bm.full small{color:#1a1020}
 </style>
 </head>
 <body>
@@ -579,7 +590,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.23';
+const VERSIONE = '2.24';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -956,9 +967,11 @@ function renderIo(){
     ['🌍','Varietà', [T('🌍','Esploratore','6 generi diversi',generi,6), T('🧭','Onnivoro','tutti i 10 generi',generi,10)]]];
   const SINGLE = [T('🦉','Nottambulo','un episodio o un film dopo mezzanotte',+notturno,1), T('⏱️','Puntuale','un episodio il giorno d\'uscita',+puntuale,1),
     T('⭐','Pignolo','25 voti dati',votati,25), T('🌟','Cinque stelle','10 titoli da 5 stelle',cinque,10), T('📅','Anno pieno','visioni in tutti i 12 mesi',mesi,12)];
+  const SF = sfide(); UI.sf = SF;
+  SF.fisse.forEach(x => SINGLE.push(T(x.ic, x.t, x.sub + x.extra, x.cur, x.goal)));
   SINGLE.sort((a, b) => b[3] - a[3]);
   const BADGE = [...FAM.flatMap(f => f[2]), ...SINGLE];
-  UI.tro = BADGE.filter(b => b[3]).map(b => ({ic:b[0], t:b[1], s:b[2]}));
+  UI.tro = [...BADGE.filter(b => b[3]).map(b => ({ic:b[0], t:b[1], s:b[2]})), ...SF.mese.sfide.filter(x => x.ok).map(x => ({ic:x.ic, t:`${x.t} · ${SF.mese.nome} ${SF.mese.anno}`, s:'sfida del mese: ' + x.sub}))];
   UI.troTop = FAM.map(f => f[2].filter(b => b[3]).pop()).filter(Boolean).map(b => ({ic:b[0], t:b[1], s:b[2]}));
   const sync = C.ghToken && C.ghUser ? (C.syncErr ? `<span class="stat-ko">Errore: ${esc(C.syncErr)}</span>` : C.lastSync ? `<span class="stat-ok">Sincronizzato ${new Date(C.lastSync).toLocaleString('it-IT', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>` : 'Non ancora sincronizzato') : 'Non attiva';
   return `<h1 class="big">Io</h1><div class="sub">Il tuo divano, in numeri</div>
@@ -989,6 +1002,9 @@ function renderIo(){
     <div class="tfams">${FAM.map(([fi, fn, items]) => { const done = items.filter(b => b[3]).length, nx = items.findIndex(b => !b[3]);
       return `<div class="tfam"><div class="tfh"><span>${fi} ${fn}</span><em>livello ${done} di ${items.length}</em></div><div class="tpath">${items.map(([ic, t, sub, ok, cur, goal], i) => `${i ? `<div class="tlink ${ok ? 'on' : ''}"></div>` : ''}<button class="tier ${ok ? 'done' : i === nx ? 'next' : 'lock'}" data-act="troDet" data-f="${esc(fn)}" data-t="${esc(t)}" data-ic="${ic}" data-s="${esc(sub)}" data-g="${goal}" data-ok="${ok ? 1 : ''}"><i>${ic}</i><b>${t}</b><small>${sub}</small>${i === nx && goal > 1 ? `<span class="bar"><i style="width:${Math.min(100, cur / goal * 100)}%"></i></span><small class="tp">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</small>` : ''}</button>`).join('')}</div></div>`; }).join('')}
     </div>
+    <div class="tfh" style="margin-top:14px"><span>🗓️ Sfide di ${SF.mese.nome}</span><em>${SF.mese.sfide.filter(x => x.ok).length} di 3 · ${SF.gg === 1 ? 'ultimo giorno' : `ancora ${SF.gg} giorni`}</em></div>
+    <div class="msf">${SF.mese.sfide.map(x => `<button class="mcard2 ${x.ok ? 'ok' : ''}" data-act="troDet" data-f="mese:${x.id}" data-t="${esc(x.t)}" data-ic="${x.ic}" data-s="${esc(x.sub)}" data-g="${x.goal}" data-ok="${x.ok ? 1 : ''}"><i>${x.ok ? '✓' : x.ic}</i><b>${esc(x.t)}</b><small>${esc(x.sub)}</small><span class="bar"><i style="width:${Math.min(100, x.cur / x.goal * 100)}%"></i></span><small class="tp">${Math.min(x.cur, x.goal)}/${x.goal}</small></button>`).join('')}</div>
+    ${SF.bach.length ? `<div class="bach">${SF.bach.map(b => { const n = b.sfide.filter(x => x.ok).length; return `<button class="bm ${n === 3 ? 'full' : n ? '' : 'zero'}" data-act="troDet" data-f="bach:${b.k}" data-t="Sfide di ${b.nome} ${b.anno}" data-ic="🗓️" data-s="${n} su 3 completate" data-g="3" data-ok="${n === 3 ? 1 : ''}"><b>${b.nome.slice(0, 3)}</b><small>${'●'.repeat(n)}${'○'.repeat(3 - n)}</small></button>`; }).join('')}</div>` : ''}
     <div class="tfh" style="margin-top:14px"><span>🎯 Sfide</span><em>${SINGLE.filter(b => b[3]).length} di ${SINGLE.length}</em></div>
     <div class="badges">${SINGLE.map(([ic, t, sub, ok, cur, goal]) => `<button class="badge ${ok ? '' : 'off'}" data-act="troDet" data-f="${esc(t)}" data-t="${esc(t)}" data-ic="${ic}" data-s="${esc(sub)}" data-g="${goal}" data-ok="${ok ? 1 : ''}"><i>${ic}</i><span>${t}<small>${sub}${!ok && goal > 1 ? ` · <b style="color:var(--a2)">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</b>` : ''}</small></span></button>`).join('')}</div></div>
   <h2 class="sec">Impostazioni</h2>
@@ -1391,17 +1407,21 @@ function controllaTraguardi(){
     D.trofei = ora.map(b => b.t); save();
     festa([...(UI.troTop || []).slice(0, 3), {ic:'🏆', t:`${ora.length} traguardi`, s:'tutti quelli conquistati finora, festeggiati insieme'}], 'I tuoi traguardi'); return;
   }
-  const nuovi = ora.filter(b => !D.trofei.includes(b.t)); if (!nuovi.length) return;
+  const nuovi = ora.filter(b => !D.trofei.includes(b.t));
+  if (!nuovi.length){ // niente di nuovo: se è iniziato un mese, presento le sue sfide
+    const M = UI.sf?.mese; if (M && D.sfMese !== M.k && !$('#cele')){ D.sfMese = M.k; save(); festa(M.sfide.map(x => ({ic:x.ic, t:x.t, s:x.sub})).reverse(), `Le sfide di ${M.nome}`, 'Accetto la sfida!'); }
+    return;
+  }
   D.trofei = [...D.trofei, ...nuovi.map(b => b.t)]; save();
   festa(nuovi);
 }
-function festa(nuovi, titolo){
+function festa(nuovi, titolo, tasto){
   if ($('#cele')) return;
-  const b = nuovi[nuovi.length - 1], altri = nuovi.slice(0, -1).slice(-3);
+  const b = nuovi[nuovi.length - 1], altri = nuovi.slice(0, -1).slice(-4);
   const el = document.createElement('div'); el.id = 'cele'; el.className = 'cele';
   el.innerHTML = `<div class="ccard"><div class="tic">${b.ic}</div><div class="lab">${titolo || (nuovi.length > 1 ? nuovi.length + ' nuovi traguardi' : 'Nuovo traguardo')}</div><h3>${esc(b.t)}</h3><p>${esc(b.s)}</p>
     ${altri.length ? `<div class="alt">${altri.map(a => `<span>${a.ic} <b>${esc(a.t)}</b> · ${esc(a.s)}</span>`).join('')}</div>` : ''}
-    <button class="btn" data-act="celeOk">Che bello!</button><button class="lnk" data-act="celeVedi">Vedi tutti i traguardi ›</button></div>`;
+    <button class="btn" data-act="celeOk">${tasto || 'Che bello!'}</button><button class="lnk" data-act="celeVedi">Vedi tutti i traguardi ›</button></div>`;
   document.body.appendChild(el);
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('on')));
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -1432,7 +1452,14 @@ function troModal(d){
   const ennesimo = (n, arr, datati, nome) => { // chi ti ha fatto raggiungere il traguardo
     if (n <= arr.length - datati.length) return `Lo hai raggiunto con i titoli che hai segnato come visti in passato, senza data.`;
     const x = datati[n - (arr.length - datati.length) - 1]; return x ? nome(x) : ''; };
-  switch (d.f){
+  const sfR = r => r.it ? (r.k === 's' ? rS(r.it, r.sub) : rM(r.it, r.sub)) : '';
+  const SF = UI.sf || sfide(), fx = SF.fisse.find(x => x.t === d.f);
+  if (fx){ tx = fx.tx || ''; rows = fx.rows.map(sfR); }
+  else if (d.f.startsWith('mese:')){ const x = SF.mese.sfide.find(z => 'mese:' + z.id === d.f);
+    if (x){ tx = `Sfida di <b>${SF.mese.nome}</b>: ${x.ok ? 'completata! ✓' : `sei a <b>${Math.min(x.cur, x.goal)} su ${x.goal}</b>, hai ancora ${SF.gg} giorn${SF.gg === 1 ? 'o' : 'i'}.`}${x.rows.length ? ' Finora:' : ''}`; rows = x.rows.map(sfR); } }
+  else if (d.f.startsWith('bach:')){ const b = SF.bach.find(z => 'bach:' + z.k === d.f);
+    if (b){ tx = `Le tre sfide di <b>${b.nome} ${b.anno}</b>:`; rows = b.sfide.map(x => `<button style="pointer-events:none"><div class="pimg" style="display:grid;place-items:center;font-size:24px;background:var(--card)">${x.ic}</div><div style="min-width:0"><b>${esc(x.t)}</b><small>${esc(x.sub)}</small></div><span class="ok ${x.ok ? '' : 'mz'}">${x.ok ? '✓ fatta' : Math.min(x.cur, x.goal) + '/' + x.goal}</span></button>`); } }
+  switch (fx || d.f.includes(':') ? '' : d.f){
     case 'Episodi visti': {
       tx = ok ? ennesimo(g, epsL, datati, x => `Il tuo <b>${g.toLocaleString('it-IT')}° episodio</b> è stato <b>${esc(showName(x.sh))}</b> ${x.e ? epCode(x.e) : ''}, il ${giorno(x.ts)}.`) : `Ne hai visti <b>${epsL.length.toLocaleString('it-IT')}</b>: ne mancano ${(g - epsL.length).toLocaleString('it-IT')}.`;
       const x = ok && g > passati ? datati[g - passati - 1] : null; if (x) rows.push(rS(x.sh, `${eTx(x)}<br>${giorno(x.ts)}`));
@@ -1495,6 +1522,82 @@ function troModal(d){
   $('#mcard').innerHTML = `<div class="trdh"><i class="${ok ? '' : 'off'}">${d.ic}</i><div><div class="k">${ok ? 'Traguardo raggiunto' : 'Da raggiungere'}</div><h4>${esc(d.t)}</h4><p>${esc(d.s)}</p></div></div>
     ${tx ? `<p class="trdt">${tx}</p>` : ''}${lista(rows)}<div class="mrow"><button class="btn ghost" data-act="closeModal">Chiudi</button></div>`;
   $('#modal').classList.add('open');
+}
+// ===== SFIDE: dieci fisse in più + tre nuove ogni mese =====
+const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+function sfide(){
+  const ss = Object.values(D.series), seen = Object.values(D.movies).filter(m => m.state === 'seen');
+  const giornoDi = ts => new Date(ts).toLocaleDateString('sv');
+  const E = []; ss.forEach(sh => { const byId = Object.fromEntries(sh.eps.map(e => [e.i, e])); Object.entries(sh.watched).forEach(([id, ts]) => { if (ts > 1e11) E.push({sh, e:byId[id], ts, day:giornoDi(ts)}); }); });
+  const F = seen.filter(m => m.seenAt).map(m => ({m, day:m.seenAt, ts:m.seenTs && giornoDi(m.seenTs) === m.seenAt ? m.seenTs : 0}));
+  const notte = ts => ts && new Date(ts).getHours() < 5;
+  const rS = (sh, sub) => ({k:'s', it:sh, sub}), rM = (m, sub) => ({k:'m', it:m, sub});
+  const anni = l => [...new Set(l.map(x => x.day.slice(0, 4)))];
+  const out = [];
+  const add = (ic, t, sub, cur, goal, tx, rows = [], extra = '') => out.push({ic, t, sub, cur, goal, ok:cur >= goal, tx, rows, extra});
+  // 1. Halloween e 2. Natale: ripartono ogni anno
+  const hw = [...F.filter(x => x.day.slice(5) === '10-31' && mainGen(x.m) === 'Horror & Mistero'), ...E.filter(x => x.day.slice(5) === '10-31' && mainGen(x.sh) === 'Horror & Mistero')], hwA = anni(hw);
+  add('🎃', 'Notte di Halloween', 'un horror il 31 ottobre', hwA.length, 1, hwA.length ? `Hai festeggiato Halloween con un horror in <b>${hwA.length} ann${hwA.length === 1 ? 'o' : 'i'}</b>: ${hwA.join(', ')}. Si rinnova ogni anno.` : 'Guarda un horror il 31 ottobre: la sfida si rinnova ogni anno.', hw.slice(-8).reverse().map(x => x.m ? rM(x.m, fData(x.day)) : rS(x.sh, `${x.e ? epCode(x.e) + ' · ' : ''}${fData(x.day)}`)), hwA.length > 1 ? ' ×' + hwA.length : '');
+  const nt = F.filter(x => ['12-24','12-25','12-26'].includes(x.day.slice(5))), ntA = anni(nt);
+  add('🎄', 'Natale sul divano', 'un film tra il 24 e il 26 dicembre', ntA.length, 1, ntA.length ? `Film di Natale in <b>${ntA.length} ann${ntA.length === 1 ? 'o' : 'i'}</b>: ${ntA.join(', ')}. Si rinnova ogni anno.` : 'Guarda un film tra il 24 e il 26 dicembre: la sfida si rinnova ogni anno.', nt.slice(-8).reverse().map(x => rM(x.m, fData(x.day))), ntA.length > 1 ? ' ×' + ntA.length : '');
+  // 3. Doppietta
+  const perG = {}; F.forEach(x => (perG[x.day] = perG[x.day] || []).push(x));
+  const dop = Object.entries(perG).filter(([, l]) => l.length >= 2).sort((a, b) => b[1].length - a[1].length || b[0].localeCompare(a[0]));
+  add('🎬', 'Doppietta', 'due film nello stesso giorno', dop.length ? 2 : (Object.values(perG).length ? 1 : 0), 2, dop.length ? `L'hai fatto in <b>${dop.length} giorn${dop.length === 1 ? 'o' : 'i'}</b>. Il record: <b>${dop[0][1].length} film</b> il ${fData(dop[0][0])}.` : 'Due film nello stesso giorno: non è ancora successo.', dop.length ? dop[0][1].map(x => rM(x.m, fData(x.day))) : []);
+  // 4. Stagione in un giorno
+  const st1 = []; ss.forEach(sh => { const se = {}; sh.eps.forEach(e => (se[e.s] = se[e.s] || []).push(e));
+    Object.entries(se).forEach(([n, l]) => { if (l.length < 3) return; const ts = l.map(e => sh.watched[e.i]); if (ts.every(t => t > 1e11) && new Set(ts.map(giornoDi)).size === 1) st1.push({sh, n, day:giornoDi(ts[0]), k:l.length}); }); });
+  add('📦', 'Stagione in un giorno', 'un\'intera stagione in un giorno', st1.length ? 1 : 0, 1, st1.length ? `Hai divorato <b>${st1.length} stagion${st1.length === 1 ? 'e' : 'i'}</b> in un giorno solo:` : 'Un\'intera stagione (almeno 3 episodi) nello stesso giorno.', st1.sort((a, b) => b.day.localeCompare(a.day)).slice(0, 8).map(x => rS(x.sh, `stagione ${x.n} · ${x.k} episodi il ${fData(x.day)}`)));
+  // 5. Prima visione
+  const pv = F.filter(x => x.m.rel && x.day >= x.m.rel.slice(0, 10) && (new Date(x.day) - new Date(x.m.rel.slice(0, 10))) <= 7 * 864e5);
+  add('🎞️', 'Prima visione', 'un film entro una settimana dall\'uscita', pv.length ? 1 : 0, 1, pv.length ? `<b>${pv.length} film</b> visti entro una settimana dall'uscita:` : 'Guarda un film entro 7 giorni dalla sua uscita.', pv.slice(-8).reverse().map(x => rM(x.m, `uscito il ${fData(x.m.rel.slice(0, 10))} · visto il ${fData(x.day)}`)));
+  // 6. Fedele al regista
+  const reg = {}; seen.forEach(m => (m.director || '').split(', ').filter(Boolean).forEach(r => (reg[r] = reg[r] || []).push(m)));
+  const regTop = Object.entries(reg).sort((a, b) => b[1].length - a[1].length)[0];
+  add('🎭', 'Fedele al regista', '5 film dello stesso regista', regTop ? regTop[1].length : 0, 5, regTop ? `Il tuo regista più visto è <b>${esc(regTop[0])}</b>, con <b>${regTop[1].length} film</b>:` : '', regTop ? regTop[1].map(m => rM(m, m.year || '')) : []);
+  // 7. Vecchia pellicola
+  const old = seen.filter(m => m.year && +m.year < 1970).sort((a, b) => a.year - b.year);
+  add('📽️', 'Vecchia pellicola', 'un film uscito prima del 1970', old.length ? 1 : 0, 1, old.length ? `<b>${old.length} film</b> di prima del 1970:` : 'Guarda un film uscito prima del 1970.', old.slice(0, 8).map(m => rM(m, m.year)));
+  // 8. Gran finale
+  const gf = E.filter(x => x.e?.d && x.day === x.e.d && x.sh.status === 'Ended' && x.e === x.sh.eps.filter(e => e.d && e.d <= oggi()).at(-1));
+  add('🏁', 'Gran finale', 'l\'ultimo episodio di una serie il giorno d\'uscita', gf.length ? 1 : 0, 1, gf.length ? 'Finali visti il giorno stesso:' : 'Guarda l\'ultimo episodio di una serie il giorno in cui esce.', gf.map(x => rS(x.sh, `${epCode(x.e)} · ${fData(x.day)}`)));
+  // 9. Weekend di cinema: 4 fine settimana di fila
+  const wk = new Set([...E.map(x => x.day), ...F.map(x => x.day)].filter(d => [0, 6].includes(new Date(d + 'T12:00').getDay())).map(d => { const t = new Date(d + 'T12:00'); t.setDate(t.getDate() - (t.getDay() === 0 ? 1 : 0)); return t.toLocaleDateString('sv'); }));
+  const wl = [...wk].sort(); let wr = 0, wb = 0, wbEnd = '';
+  wl.forEach((d, i) => { wr = i && new Date(d) - new Date(wl[i - 1]) === 7 * 864e5 ? wr + 1 : 1; if (wr > wb){ wb = wr; wbEnd = d; } });
+  add('🗓️', 'Weekend di cinema', 'visioni in 4 weekend di fila', wb, 4, wb ? `Il tuo record: <b>${wb} weekend di fila</b>${wb > 1 ? `, fino a quello del ${fData(wbEnd)}` : ''}.` : '');
+  // 10. Notte bianca
+  const nE = E.filter(x => notte(x.ts)), nF = F.filter(x => notte(x.ts)), np = nE.length + nF.length * 2;
+  add('🌙', 'Notte bianca', '3 film o 6 episodi dopo mezzanotte', np, 6, `Dopo mezzanotte: <b>${nE.length} episodi</b> e <b>${nF.length} film</b> (un film vale due episodi).`, [...nF.map(x => rM(x.m, `${fData(x.day)} alle ${new Date(x.ts).toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'})}`)), ...nE.slice(-6).reverse().map(x => rS(x.sh, `${x.e ? epCode(x.e) + ' · ' : ''}${fData(x.day)}`))]);
+
+  // ===== sfide del mese: 3 nuove il 1° di ogni mese =====
+  const GENM = ['Commedia','Drammatico','Fantascienza','Thriller & Crime','Animazione','Avventura','Storico','Fantasy','Commedia','Horror & Mistero','Thriller & Crime','Animazione'];
+  const POOL = [
+    ['film4', '🎬', 'Quattro film', '4 film nel mese', l => [l.F.length, 4, l.F.map(x => rM(x.m, fData(x.day)))]],
+    ['ep25', '📺', 'Venticinque episodi', '25 episodi nel mese', l => { const c = {}; l.E.forEach(x => c[x.sh.id] = (c[x.sh.id] || 0) + 1); return [l.E.length, 25, Object.entries(c).sort((a, b) => b[1] - a[1]).map(([id, n]) => rS(D.series[id], `${n} episodi`))]; }],
+    ['fine', '🏁', 'Fine corsa', 'finisci una serie', l => { const f = ss.filter(sh => ['finite','attesa'].includes(showStats(sh).st) && Object.values(sh.watched).some(t => t > 1e11 && giornoDi(t).slice(0, 7) === l.k) && Math.max(...Object.values(sh.watched)) > 1e11 && giornoDi(Math.max(...Object.values(sh.watched))).slice(0, 7) === l.k); return [f.length, 1, f.map(sh => rS(sh, 'finita questo mese'))]; }],
+    ['nuova', '🆕', 'Una serie nuova', 'inizia una serie mai vista', l => { const f = ss.filter(sh => { const v = Object.values(sh.watched); return v.length && v.every(t => t > 1e11) && giornoDi(Math.min(...v)).slice(0, 7) === l.k; }); return [f.length, 1, f.map(sh => rS(sh, `iniziata il ${fData(giornoDi(Math.min(...Object.values(sh.watched))))}`))]; }],
+    ['lista', '🧹', 'Dalla lista al divano', 'un film che aspettava da 3 mesi', l => { const f = l.F.filter(x => x.m.added && new Date(x.day) - x.m.added > 90 * 864e5); return [f.length, 1, f.map(x => rM(x.m, `in lista dal ${fData(giornoDi(x.m.added))}`))]; }],
+    ['classico', '📽️', 'Un classico', 'un film del 1990 o prima', l => { const f = l.F.filter(x => x.m.year && +x.m.year <= 1990); return [f.length, 1, f.map(x => rM(x.m, x.m.year))]; }],
+    ['varieta', '🌈', 'Tre generi', '3 generi diversi nel mese', l => { const g = new Set([...l.F.map(x => mainGen(x.m)), ...l.E.map(x => mainGen(x.sh))].filter(g => g !== 'Altro')); return [g.size, 3, []]; }],
+    ['giudice', '⭐', 'Giudice', 'vota 3 film visti nel mese', l => { const f = l.F.filter(x => x.m.rating); return [f.length, 3, f.map(x => rM(x.m, '★'.repeat(x.m.rating)))]; }],
+    ['weekend', '🛋️', 'Weekend pieno', 'sabato e domenica dello stesso weekend', l => { const d = new Set([...l.E, ...l.F].map(x => x.day)); const ok = [...d].some(x => new Date(x + 'T12:00').getDay() === 6 && d.has(new Date(new Date(x + 'T12:00').getTime() + 864e5).toLocaleDateString('sv'))); return [+ok, 1, []]; }],
+  ];
+  const mese = (y, m) => { // m = 0..11
+    const k = `${y}-${String(m + 1).padStart(2, '0')}`, l = {k, E:E.filter(x => x.day.startsWith(k)), F:F.filter(x => x.day.startsWith(k))};
+    const g = GENM[m], gl = [...new Set([...l.F.filter(x => mainGen(x.m) === g).map(x => 'm' + x.m.id), ...l.E.filter(x => mainGen(x.sh) === g).map(x => 's' + x.sh.id)])];
+    const sfG = {id:'gen', ic:'🎭', t:`Mese ${g === 'Horror & Mistero' ? 'da brivido' : 'di ' + g.toLowerCase().replace(' & ', ' e ')}`, sub:`3 titoli ${g}`, cur:gl.length, goal:3,
+      rows:gl.map(id => id[0] === 'm' ? rM(D.movies[id.slice(1)], 'film') : rS(D.series[id.slice(1)], 'serie'))};
+    let seed = y * 12 + m; const pool = POOL.slice(), pick = [];
+    while (pick.length < 2){ seed = (seed * 9301 + 49297) % 233280; pick.push(pool.splice(seed % pool.length, 1)[0]); }
+    return {k, nome:MESI[m], anno:y, sfide:[sfG, ...pick.map(([id, ic, t, sub, f]) => { const [cur, goal, rows] = f(l); return {id, ic, t, sub, cur, goal, rows}; })].map(x => Object.assign(x, {ok:x.cur >= x.goal}))};
+  };
+  const now = new Date(), cur = mese(now.getFullYear(), now.getMonth());
+  const fine = new Date(now.getFullYear(), now.getMonth() + 1, 1), gg = Math.ceil((fine - now) / 864e5);
+  // bacheca: i mesi passati da quando segni le visioni con la data
+  const primo = [...E.map(x => x.day), ...F.map(x => x.day)].sort()[0], bach = [];
+  if (primo){ let y = now.getFullYear(), m = now.getMonth() - 1; for (let i = 0; i < 12; i++, m--){ if (m < 0){ m = 11; y--; } if (`${y}-${String(m + 1).padStart(2, '0')}` < primo.slice(0, 7)) break; bach.push(mese(y, m)); } }
+  return {fisse:out, mese:cur, gg, bach};
 }
 const PERS = {};
 // TMDB → TVmaze per le serie che TMDB registra con un altro id (es. le antologie come Monster)
