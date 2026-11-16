@@ -552,6 +552,16 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 .bm{flex:none;min-width:52px;padding:6px 8px;border-radius:12px;background:var(--card2);color:inherit;font:inherit;display:flex;flex-direction:column;align-items:center;cursor:pointer}
 .bm b{font-size:11px;text-transform:capitalize}.bm small{font-size:10px;letter-spacing:1px;color:var(--a2)}.bm.zero small{color:var(--mut2)}
 .bm.full{background:var(--grad)}.bm.full b,.bm.full small{color:#1a1020}
+.medrow{display:block;width:100%;margin-top:12px;padding:10px 12px 8px;border-radius:15px;background:var(--card2);color:inherit;font:inherit;text-align:left;cursor:pointer}
+.mrh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.mrh span{font-weight:700;font-size:14px;white-space:nowrap}.mrh em{font-style:normal;font-size:11.5px;color:var(--a2);font-weight:700;text-align:right}
+.mrs{display:grid;grid-template-columns:repeat(12,1fr);gap:1px;margin-top:6px}.ms{display:flex;flex-direction:column;align-items:center;min-width:0}.ms small{font-size:9px;color:var(--mut);text-transform:capitalize}.ms.cur small{color:var(--a2);font-weight:800}
+.med{display:block;overflow:visible;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35))}.med.vuota{color:var(--mut);filter:none}
+.alst{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}.alst div{background:var(--card);border-radius:14px;padding:10px 4px;text-align:center}.alst b{display:block;font:800 24px/1 var(--serif);background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}.alst small{font-size:10.5px;color:var(--mut)}
+.algr{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 4px}
+.alm{display:flex;flex-direction:column;align-items:center;gap:1px;background:none;color:inherit;font:inherit;cursor:pointer;padding:6px 0;border-radius:12px}.alm[disabled]{cursor:default}
+.alm b{font-size:12px;text-transform:capitalize;margin-top:2px}.alm small{font-size:10.5px;color:var(--mut);min-height:13px}.alm.cur{background:rgba(255,154,77,.10);outline:1.5px solid rgba(255,154,77,.5)}
+.alm:active:not([disabled]){transform:scale(.95)}
+.ccard .tic svg{width:64px;height:80px;margin-top:-6px}
 </style>
 </head>
 <body>
@@ -590,7 +600,7 @@ html[data-theme=light] .ynav button{background:rgba(70,45,30,.08)}
 
 <script>
 'use strict';
-const VERSIONE = '2.24';
+const VERSIONE = '2.25';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -964,6 +974,7 @@ function renderIo(){
     ['🏃','Maratone', [T('🏃','Maratoneta','6 episodi in un giorno',marN,6), T('⚡','Binge-watcher','10 episodi in un giorno',marN,10)]],
     ['🔥','Costanza', [T('🔥','Abitudinario','7 giorni di fila',streak,7), T('🗓️','Mese da record','30 giorni di fila',streak,30)]],
     ['✍️','Commenti', scala(commenti, [[10,'✍️','Critico'],[30,'📝','Recensore'],[100,'📚','Penna d\'oro']], g => `${g} commenti`)],
+    ['🥇','Medaglie d\'oro', scala(medagliere(sfide()).ori, [[1,'🥇','Primo oro'],[3,'🏅','Tris d\'oro'],[6,'🎖️','Semestre d\'oro'],[12,'👑','Anno d\'oro']], g => `${g} mes${g === 1 ? 'e' : 'i'} tutto d'oro`)],
     ['🌍','Varietà', [T('🌍','Esploratore','6 generi diversi',generi,6), T('🧭','Onnivoro','tutti i 10 generi',generi,10)]]];
   const SINGLE = [T('🦉','Nottambulo','un episodio o un film dopo mezzanotte',+notturno,1), T('⏱️','Puntuale','un episodio il giorno d\'uscita',+puntuale,1),
     T('⭐','Pignolo','25 voti dati',votati,25), T('🌟','Cinque stelle','10 titoli da 5 stelle',cinque,10), T('📅','Anno pieno','visioni in tutti i 12 mesi',mesi,12)];
@@ -971,7 +982,7 @@ function renderIo(){
   SF.fisse.forEach(x => SINGLE.push(T(x.ic, x.t, x.sub + x.extra, x.cur, x.goal)));
   SINGLE.sort((a, b) => b[3] - a[3]);
   const BADGE = [...FAM.flatMap(f => f[2]), ...SINGLE];
-  UI.tro = [...BADGE.filter(b => b[3]).map(b => ({ic:b[0], t:b[1], s:b[2]})), ...SF.mese.sfide.filter(x => x.ok).map(x => ({ic:x.ic, t:`${x.t} · ${SF.mese.nome} ${SF.mese.anno}`, s:'sfida del mese: ' + x.sub}))];
+  UI.tro = [...BADGE.filter(b => b[3]).map(b => ({ic:b[0], t:b[1], s:b[2]})), ...SF.mese.sfide.filter(x => x.ok).map(x => ({ic:x.ic, t:`${x.t} · ${SF.mese.nome} ${SF.mese.anno}`, s:'sfida del mese: ' + x.sub})), ...(SF.mese.sfide.every(x => x.ok) ? [{ic:medaglia(3, new Date().getMonth(), 64), t:`Medaglia d'oro · ${SF.mese.nome} ${SF.mese.anno}`, s:'tutte e tre le sfide del mese!', oro:1}] : [])];
   UI.troTop = FAM.map(f => f[2].filter(b => b[3]).pop()).filter(Boolean).map(b => ({ic:b[0], t:b[1], s:b[2]}));
   const sync = C.ghToken && C.ghUser ? (C.syncErr ? `<span class="stat-ko">Errore: ${esc(C.syncErr)}</span>` : C.lastSync ? `<span class="stat-ok">Sincronizzato ${new Date(C.lastSync).toLocaleString('it-IT', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>` : 'Non ancora sincronizzato') : 'Non attiva';
   return `<h1 class="big">Io</h1><div class="sub">Il tuo divano, in numeri</div>
@@ -1004,7 +1015,8 @@ function renderIo(){
     </div>
     <div class="tfh" style="margin-top:14px"><span>🗓️ Sfide di ${SF.mese.nome}</span><em>${SF.mese.sfide.filter(x => x.ok).length} di 3 · ${SF.gg === 1 ? 'ultimo giorno' : `ancora ${SF.gg} giorni`}</em></div>
     <div class="msf">${SF.mese.sfide.map(x => `<button class="mcard2 ${x.ok ? 'ok' : ''}" data-act="troDet" data-f="mese:${x.id}" data-t="${esc(x.t)}" data-ic="${x.ic}" data-s="${esc(x.sub)}" data-g="${x.goal}" data-ok="${x.ok ? 1 : ''}"><i>${x.ok ? '✓' : x.ic}</i><b>${esc(x.t)}</b><small>${esc(x.sub)}</small><span class="bar"><i style="width:${Math.min(100, x.cur / x.goal * 100)}%"></i></span><small class="tp">${Math.min(x.cur, x.goal)}/${x.goal}</small></button>`).join('')}</div>
-    ${SF.bach.length ? `<div class="bach">${SF.bach.map(b => { const n = b.sfide.filter(x => x.ok).length; return `<button class="bm ${n === 3 ? 'full' : n ? '' : 'zero'}" data-act="troDet" data-f="bach:${b.k}" data-t="Sfide di ${b.nome} ${b.anno}" data-ic="🗓️" data-s="${n} su 3 completate" data-g="3" data-ok="${n === 3 ? 1 : ''}"><b>${b.nome.slice(0, 3)}</b><small>${'●'.repeat(n)}${'○'.repeat(3 - n)}</small></button>`; }).join('')}</div>` : ''}
+    ${(() => { const M = medagliere(SF); return `<button class="medrow" data-act="album"><div class="mrh"><span>🏅 Medagliere ${M.anni[0].y}</span><em>${M.ori} or${M.ori === 1 ? 'o' : 'i'} · ${M.arg} argent${M.arg === 1 ? 'o' : 'i'} · ${M.bro} bronz${M.bro === 1 ? 'o' : 'i'} ›</em></div>
+      <div class="mrs">${M.anni[0].mesi.map(x => `<div class="ms ${x.cur ? 'cur' : ''}">${medaglia(x.n, x.m, 30, x.fut || !x.b)}<small>${MESI[x.m].slice(0, 3)}</small></div>`).join('')}</div></button>`; })()}
     <div class="tfh" style="margin-top:14px"><span>🎯 Sfide</span><em>${SINGLE.filter(b => b[3]).length} di ${SINGLE.length}</em></div>
     <div class="badges">${SINGLE.map(([ic, t, sub, ok, cur, goal]) => `<button class="badge ${ok ? '' : 'off'}" data-act="troDet" data-f="${esc(t)}" data-t="${esc(t)}" data-ic="${ic}" data-s="${esc(sub)}" data-g="${goal}" data-ok="${ok ? 1 : ''}"><i>${ic}</i><span>${t}<small>${sub}${!ok && goal > 1 ? ` · <b style="color:var(--a2)">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</b>` : ''}</small></span></button>`).join('')}</div></div>
   <h2 class="sec">Impostazioni</h2>
@@ -1417,9 +1429,10 @@ function controllaTraguardi(){
 }
 function festa(nuovi, titolo, tasto){
   if ($('#cele')) return;
+  nuovi.sort((a, b) => (a.oro || 0) - (b.oro || 0));
   const b = nuovi[nuovi.length - 1], altri = nuovi.slice(0, -1).slice(-4);
   const el = document.createElement('div'); el.id = 'cele'; el.className = 'cele';
-  el.innerHTML = `<div class="ccard"><div class="tic">${b.ic}</div><div class="lab">${titolo || (nuovi.length > 1 ? nuovi.length + ' nuovi traguardi' : 'Nuovo traguardo')}</div><h3>${esc(b.t)}</h3><p>${esc(b.s)}</p>
+  el.innerHTML = `<div class="ccard"><div class="tic">${b.ic}</div><div class="lab">${titolo || (b.oro ? 'Mese tutto d\'oro!' : nuovi.length > 1 ? nuovi.length + ' nuovi traguardi' : 'Nuovo traguardo')}</div><h3>${esc(b.t)}</h3><p>${esc(b.s)}</p>
     ${altri.length ? `<div class="alt">${altri.map(a => `<span>${a.ic} <b>${esc(a.t)}</b> · ${esc(a.s)}</span>`).join('')}</div>` : ''}
     <button class="btn" data-act="celeOk">${tasto || 'Che bello!'}</button><button class="lnk" data-act="celeVedi">Vedi tutti i traguardi ›</button></div>`;
   document.body.appendChild(el);
@@ -1457,7 +1470,7 @@ function troModal(d){
   if (fx){ tx = fx.tx || ''; rows = fx.rows.map(sfR); }
   else if (d.f.startsWith('mese:')){ const x = SF.mese.sfide.find(z => 'mese:' + z.id === d.f);
     if (x){ tx = `Sfida di <b>${SF.mese.nome}</b>: ${x.ok ? 'completata! ✓' : `sei a <b>${Math.min(x.cur, x.goal)} su ${x.goal}</b>, hai ancora ${SF.gg} giorn${SF.gg === 1 ? 'o' : 'i'}.`}${x.rows.length ? ' Finora:' : ''}`; rows = x.rows.map(sfR); } }
-  else if (d.f.startsWith('bach:')){ const b = SF.bach.find(z => 'bach:' + z.k === d.f);
+  else if (d.f.startsWith('bach:')){ const b = d.f === 'bach:cur' ? SF.mese : SF.bach.find(z => 'bach:' + z.k === d.f);
     if (b){ tx = `Le tre sfide di <b>${b.nome} ${b.anno}</b>:`; rows = b.sfide.map(x => `<button style="pointer-events:none"><div class="pimg" style="display:grid;place-items:center;font-size:24px;background:var(--card)">${x.ic}</div><div style="min-width:0"><b>${esc(x.t)}</b><small>${esc(x.sub)}</small></div><span class="ok ${x.ok ? '' : 'mz'}">${x.ok ? '✓ fatta' : Math.min(x.cur, x.goal) + '/' + x.goal}</span></button>`); } }
   switch (fx || d.f.includes(':') ? '' : d.f){
     case 'Episodi visti': {
@@ -1508,6 +1521,10 @@ function troModal(d){
       const l = datati.filter(x => x.e?.d && new Date(x.ts).toLocaleDateString('sv') === x.e.d).reverse();
       tx = l.length ? `Hai visto <b>${l.length} episod${l.length === 1 ? 'io' : 'i'}</b> il giorno stesso dell'uscita. I più recenti:` : 'Nessun episodio visto il giorno dell\'uscita, per ora.';
       l.slice(0, 8).forEach(x => rows.push(rS(x.sh, `${eTx(x)}<br>uscito e visto il ${giorno(x.ts)}`))); break; }
+    case 'Medaglie d\'oro': {
+      const M = medagliere(SF), l = M.anni.flatMap(a => a.mesi).filter(x => x.n === 3);
+      tx = l.length ? `Mesi tutti d'oro: <b>${l.map(x => MESI[x.m] + ' ' + x.y).join(', ')}</b>. Il tuo record è di <b>${M.best} di fila</b>.` : `Completa tutte e tre le sfide di un mese per la tua prima medaglia d'oro: questo mese sei a ${SF.mese.sfide.filter(x => x.ok).length} su 3.`;
+      rows = [`<button data-act="album"><div class="pimg" style="display:grid;place-items:center;font-size:26px;background:var(--card)">🏅</div><div><b>Apri il medagliere</b><small>tutti i mesi, anno per anno</small></div><span class="ok">›</span></button>`]; break; }
     case 'Pignolo': {
       const s1 = ss.filter(sh => sh.myRating).length, m1 = seen.filter(m => m.rating).length;
       tx = `Hai dato <b>${s1 + m1} voti</b>: ${m1} a film e ${s1} a serie.${ok ? '' : ` Ne servono ${g}.`}`; break; }
@@ -1524,6 +1541,45 @@ function troModal(d){
   $('#modal').classList.add('open');
 }
 // ===== SFIDE: dieci fisse in più + tre nuove ogni mese =====
+const EMB = ['❄️','💘','🌱','🌸','🌼','☀️','🏖️','🌻','🍂','🎃','🍁','🎄'];
+const MET = {3:['oro','#fff3b0','#f5c542','#a8740f'], 2:['argento','#ffffff','#c9d1dc','#7d8794'], 1:['bronzo','#ffd9b0','#d08a4c','#7a4a22']};
+function medaglia(n, m, sz = 64, vuota){ // n = sfide completate (1 bronzo, 2 argento, 3 oro)
+  const id = 'md' + Math.random().toString(36).slice(2, 8);
+  if (!n) return `<svg width="${sz}" height="${sz * 1.25}" viewBox="0 0 80 100" class="med vuota"><circle cx="40" cy="58" r="30" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="${vuota ? '3 5' : '0'}" opacity=".35"/><text x="40" y="66" text-anchor="middle" font-size="22" opacity="${vuota ? .25 : .45}">${vuota ? '?' : EMB[m]}</text></svg>`;
+  const [, c1, c2, c3] = MET[n];
+  return `<svg width="${sz}" height="${sz * 1.25}" viewBox="0 0 80 100" class="med">
+    <defs><radialGradient id="${id}" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="${c1}"/><stop offset=".55" stop-color="${c2}"/><stop offset="1" stop-color="${c3}"/></radialGradient>
+    <linearGradient id="${id}r" x1="0" x2="1"><stop offset="0" stop-color="#ff5e62"/><stop offset="1" stop-color="#ffb347"/></linearGradient></defs>
+    <path d="M22 0h14l10 34H32z" fill="url(#${id}r)"/><path d="M58 0H44L34 34h14z" fill="url(#${id}r)" opacity=".85"/>
+    <circle cx="40" cy="62" r="31" fill="url(#${id})" stroke="${c3}" stroke-width="1.5"/>
+    <circle cx="40" cy="62" r="25" fill="none" stroke="${c1}" stroke-width="1.2" opacity=".8"/>
+    <circle cx="40" cy="62" r="25" fill="none" stroke="${c3}" stroke-width="2.5" stroke-dasharray="1 3.3" opacity=".55"/>
+    <text x="40" y="71" text-anchor="middle" font-size="24">${EMB[m]}</text>
+    <ellipse cx="30" cy="47" rx="10" ry="5" fill="#fff" opacity=".35" transform="rotate(-30 30 47)"/></svg>`;
+}
+// medagliere: per ogni anno i 12 mesi (oro 3/3, argento 2/3, bronzo 1/3)
+function medagliere(SF){
+  const tutti = [SF.mese, ...SF.bach], per = {}; tutti.forEach(b => per[b.k] = b);
+  const now = new Date(), y0 = +(SF.bach.at(-1)?.k || SF.mese.k).slice(0, 4), anni = [];
+  let ori = 0, arg = 0, bro = 0, fila = 0, best = 0;
+  for (let y = now.getFullYear(); y >= y0; y--){
+    const mesi = []; for (let m = 0; m < 12; m++){ const k = `${y}-${String(m + 1).padStart(2, '0')}`, b = per[k], n = b ? b.sfide.filter(x => x.ok).length : 0;
+      mesi.push({k, m, y, n, b, cur:k === SF.mese.k, fut:!b && k > SF.mese.k}); }
+    anni.push({y, mesi});
+  }
+  [...anni].reverse().forEach(a => a.mesi.forEach(x => { if (!x.b) return; if (x.n === 3){ ori++; fila++; best = Math.max(best, fila); } else { if (!x.cur) fila = 0; if (x.n === 2) arg++; if (x.n === 1) bro++; } }));
+  return {anni, ori, arg, bro, fila, best};
+}
+function albumSheet(keep){
+  UI.open = {type:'album'};
+  const SF = sfide(), M = medagliere(SF);
+  openSheet(`<div class="pad" style="padding-top:calc(var(--st) + 64px)">
+    <h2 class="sec" style="margin-top:0">🏅 Medagliere</h2>
+    <p class="hint" style="margin:-6px 0 14px">Ogni mese tre sfide: una completata vale il <b>bronzo</b>, due l'<b>argento</b>, tutte e tre l'<b>oro</b>.</p>
+    <div class="alst"><div><b>${M.ori}</b><small>ori</small></div><div><b>${M.arg}</b><small>argenti</small></div><div><b>${M.bro}</b><small>bronzi</small></div><div><b>${M.best}</b><small>ori di fila</small></div></div>
+    ${M.anni.map(a => `<div class="box"><h4>${a.y}</h4><div class="algr">${a.mesi.map(x => `<button class="alm ${x.cur ? 'cur' : ''}" ${x.b ? `data-act="troDet" data-f="${x.cur ? 'bach:cur' : 'bach:' + x.k}" data-t="Sfide di ${MESI[x.m]} ${a.y}" data-ic="${EMB[x.m]}" data-s="${x.n ? 'medaglia di ' + MET[x.n][0] : x.cur ? 'in corso' : 'nessuna medaglia'}" data-g="3" data-ok="${x.n === 3 ? 1 : ''}"` : 'disabled'}>${medaglia(x.n, x.m, 58, x.fut || !x.b)}<b>${MESI[x.m]}</b><small>${x.cur ? `in corso · ${x.n}/3` : x.n ? MET[x.n][0] : x.b ? '—' : ''}</small></button>`).join('')}</div></div>`).join('')}
+  </div>`, keep);
+}
 const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
 function sfide(){
   const ss = Object.values(D.series), seen = Object.values(D.movies).filter(m => m.state === 'seen');
@@ -1596,7 +1652,8 @@ function sfide(){
   const fine = new Date(now.getFullYear(), now.getMonth() + 1, 1), gg = Math.ceil((fine - now) / 864e5);
   // bacheca: i mesi passati da quando segni le visioni con la data
   const primo = [...E.map(x => x.day), ...F.map(x => x.day)].sort()[0], bach = [];
-  if (primo){ let y = now.getFullYear(), m = now.getMonth() - 1; for (let i = 0; i < 12; i++, m--){ if (m < 0){ m = 11; y--; } if (`${y}-${String(m + 1).padStart(2, '0')}` < primo.slice(0, 7)) break; bach.push(mese(y, m)); } }
+  if (primo){ let y = now.getFullYear(), m = now.getMonth() - 1; for (let i = 0; i < 240; i++, m--){ if (m < 0){ m = 11; y--; } if (`${y}-${String(m + 1).padStart(2, '0')}` < primo.slice(0, 7)) break; bach.push(mese(y, m)); } }
+  while (bach.length && !bach.at(-1).sfide.some(x => x.ok)) bach.pop(); // il medagliere parte dalla prima medaglia
   return {fisse:out, mese:cur, gg, bach};
 }
 const PERS = {};
@@ -1812,7 +1869,7 @@ function toast(msg, label, fn, ms = 4000){
   if (label) $('#tBtn').onclick = () => { t.classList.remove('on'); fn(); };
   clearTimeout(UI.tt); UI.tt = setTimeout(() => t.classList.remove('on'), ms);
 }
-function refreshView(){ if (UI.open?.type === 'person') personSheet(UI.open.id, UI.pseg); else if (UI.open?.type === 'show') showSheet(UI.open.id, true); else if (UI.open?.type === 'movie') movieSheet(UI.open.id, true); else if (UI.open?.type === 'pv') anteprima(UI.open.k, UI.open.id, true); else render(); }
+function refreshView(){ if (UI.open?.type === 'person') personSheet(UI.open.id, UI.pseg); else if (UI.open?.type === 'show') showSheet(UI.open.id, true); else if (UI.open?.type === 'movie') movieSheet(UI.open.id, true); else if (UI.open?.type === 'pv') anteprima(UI.open.k, UI.open.id, true); else if (UI.open?.type === 'album') albumSheet(true); else render(); }
 
 const A = {
   enter(){ $('#intro').classList.add('out'); setTimeout(() => $('#intro').remove(), 900); },
@@ -1820,6 +1877,7 @@ const A = {
   filmSeg(d){ UI.filmSeg = d.s; render(); },
   serSeg(d){ UI.serSeg = d.s; render(); },
   antoOpen(d){ antoModal(d.n); },
+  album(){ $('#modal').classList.remove('open'); UI.back = null; albumSheet(); },
   troDet(d){ troModal(d); },
   troGo(d){ $('#modal').classList.remove('open'); if (d.k === 's') showSheet(+d.id); else movieSheet(isNaN(+d.id) ? d.id : +d.id); },
   celeOk(){ const el = $('#cele'); if (!el) return; el.classList.remove('on'); setTimeout(() => el.remove(), 380); },
