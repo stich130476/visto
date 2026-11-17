@@ -10,8 +10,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Visto!">
 <meta name="theme-color" content="#0a0910">
-<link rel="apple-touch-icon" href="icona-180.png">
-<link rel="icon" href="icona-192.png">
+<link rel="apple-touch-icon" href="icona-180.png?v=2">
+<link rel="icon" href="icona-192.png?v=2">
 <link rel="manifest" href="manifest.json">
 <title>Visto!</title>
 <style>
@@ -652,6 +652,8 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 .vcerca{flex:none;display:inline-grid;place-items:center;width:28px;height:28px;margin-left:2px;padding:0;border-radius:50%;color:var(--a2);background:rgba(255,154,77,.12);border:1px solid rgba(255,154,77,.4);cursor:pointer}
 .vcerca svg{width:15px;height:15px}.vcerca.on{cursor:default}.vcerca .mmsp{width:13px;height:13px;border-width:2px}
 .vcerca:active{transform:scale(.95)}
+.trasl{margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--card2);border:1px dashed rgba(255,154,77,.45)}
+.trasl b{display:block;font-size:14px}.trasl small{display:block;font-size:12.5px;color:var(--mut);line-height:1.45;margin-top:3px}
 </style>
 </head>
 <body>
@@ -688,7 +690,7 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 
 <script>
 'use strict';
-const VERSIONE = '2.29';
+const VERSIONE = '2.30';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1195,6 +1197,8 @@ function renderIo(){
     <div class="lbl">Repository privato dei dati</div><input class="fld" id="ghRepo" value="${esc(C.ghRepo)}" autocapitalize="off" spellcheck="false">
     <div class="lbl">Token</div><input class="fld" id="ghToken" type="password" value="${esc(C.ghToken)}" placeholder="github_pat_…" autocapitalize="off" spellcheck="false">
     <div class="acts"><button class="btn small" data-act="saveGh">Salva e sincronizza</button></div>
+    <div class="trasl"><b>🚚 Trasloco delle chiavi</b><small>Prima di togliere Visto! dalla Home (per esempio per avere l'icona nuova) copia le chiavi; nella nuova installazione incollale qui e ritrovi tutto.</small>
+      <div class="acts" style="margin-top:8px">${C.ghToken ? '<button class="btn small ghost" data-act="copiaChiavi">📋 Copia le chiavi</button>' : ''}<button class="btn small ${C.ghToken ? 'ghost' : ''}" data-act="incollaChiavi">📥 Incolla le chiavi</button></div></div>
   </div>
   <div class="box"><h4>Importa la tua cronologia</h4><p class="plot" style="font-size:14px;margin-bottom:10px">Carica il file "Attività di visione" scaricato da Netflix: serie e film vengono aggiunti già spuntati, con le date vere.</p><div class="acts" style="margin-top:0"><button class="btn small" data-act="netflix">📥 Importa da Netflix</button></div></div>
   ${backupBox()}
@@ -2343,6 +2347,20 @@ const A = {
     C.tmdb = $('#tmdbKey').value.trim(); saveCfg();
     if (!C.tmdb) return toast('Chiave rimossa');
     try { await tmdb('/configuration'); toast('✓ Chiave TMDB valida'); enrichAll().then(() => loadRecs(true)); } catch(e){ toast('La chiave non funziona, controllala'); }
+  },
+  async copiaChiavi(){
+    const codice = 'VISTO1:' + btoa(unescape(encodeURIComponent(JSON.stringify({u:C.ghUser, r:C.ghRepo, t:C.ghToken, k:C.tmdb || D.tmdbKey || ''}))));
+    try { await navigator.clipboard.writeText(codice); toast('📋 Chiavi copiate: ora puoi togliere Visto! dalla Home e riaggiungerlo'); }
+    catch(e){ toast('Non riesco a copiare: riprova'); }
+  },
+  async incollaChiavi(){
+    let t = ''; try { t = (await navigator.clipboard.readText() || '').trim(); } catch(e){}
+    if (!t.startsWith('VISTO1:')) return toast('Negli appunti non ci sono le chiavi di Visto!: copiale prima dalla vecchia app');
+    let c; try { c = JSON.parse(decodeURIComponent(escape(atob(t.slice(7))))); } catch(e){ return toast('Le chiavi copiate non sono leggibili'); }
+    Object.assign(C, {ghUser:c.u, ghRepo:c.r || 'visto-dati', ghToken:c.t, sha:''}); if (c.k) C.tmdb = c.k; saveCfg();
+    toast('Ritrovo i tuoi dati…'); await pull(true); render();
+    toast(C.syncErr ? 'Errore: ' + esc(C.syncErr) : '✅ Bentornato! Hai ritrovato tutto');
+    try { await navigator.clipboard.writeText(''); } catch(e){}
   },
   async saveGh(){
     C.ghUser = $('#ghUser').value.trim(); C.ghRepo = $('#ghRepo').value.trim() || 'visto-dati'; C.ghToken = $('#ghToken').value.trim(); C.sha = ''; saveCfg();
