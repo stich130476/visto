@@ -588,6 +588,11 @@ html[data-theme=light] .alm.m3 small{color:#a8740f}html[data-theme=light] .alm.m
 .sfh b{display:block;font:700 16px/1.2 var(--serif)}.sfh small{font-size:12px;color:var(--mut)}.sfh>span{margin-left:auto;font-weight:800;font-size:13px;color:var(--mut2);white-space:nowrap}.sfh.ok>span{color:var(--a2)}
 .antl .sfv{font-size:13px;color:var(--mut2);margin:0 0 4px 50px;font-style:italic}
 .antl.tr .sfh~button{margin-left:18px;width:calc(100% - 18px)}
+.mcard2>i,.sfh>i{position:relative}
+.ck{position:absolute;right:-5px;bottom:-4px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:10.5px;font-weight:900;line-height:1;color:#ffd27a;background:#1a1020;box-shadow:0 0 0 2px var(--card),0 3px 8px rgba(0,0,0,.35);animation:ckIn .5s cubic-bezier(.2,1.6,.4,1)}
+html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)}
+@keyframes ckIn{from{transform:scale(0)}to{transform:scale(1)}}
+.mcard2.ok>i{color:inherit;font-weight:400}
 </style>
 </head>
 <body>
@@ -626,7 +631,7 @@ html[data-theme=light] .alm.m3 small{color:#a8740f}html[data-theme=light] .alm.m
 
 <script>
 'use strict';
-const VERSIONE = '2.26.2';
+const VERSIONE = '2.26.3';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1040,7 +1045,7 @@ function renderIo(){
       return `<div class="tfam"><div class="tfh"><span>${fi} ${fn}</span><em>livello ${done} di ${items.length}</em></div><div class="tpath">${items.map(([ic, t, sub, ok, cur, goal], i) => `${i ? `<div class="tlink ${ok ? 'on' : ''}"></div>` : ''}<button class="tier ${ok ? 'done' : i === nx ? 'next' : 'lock'}" data-act="troDet" data-f="${esc(fn)}" data-t="${esc(t)}" data-ic="${ic}" data-s="${esc(sub)}" data-g="${goal}" data-ok="${ok ? 1 : ''}"><i>${ic}</i><b>${t}</b><small>${sub}</small>${i === nx && goal > 1 ? `<span class="bar"><i style="width:${Math.min(100, cur / goal * 100)}%"></i></span><small class="tp">${fmtN(Math.min(cur, goal))}/${fmtN(goal)}</small>` : ''}</button>`).join('')}</div></div>`; }).join('')}
     </div>
     <div class="tfh" style="margin-top:14px"><span>🗓️ Sfide di ${SF.mese.nome}</span><em>${SF.mese.sfide.filter(x => x.ok).length} di 3 · ${SF.gg === 1 ? 'ultimo giorno' : `ancora ${SF.gg} giorni`}</em></div>
-    <div class="msf">${SF.mese.sfide.map(x => `<button class="mcard2 ${x.ok ? 'ok' : ''}" data-act="troDet" data-f="mese:${x.id}" data-t="${esc(x.t)}" data-ic="${x.ic}" data-s="${esc(x.sub)}" data-g="${x.goal}" data-ok="${x.ok ? 1 : ''}"><i>${x.ok ? '✓' : x.ic}</i><b>${esc(x.t)}</b><small>${esc(x.sub)}</small><span class="bar"><i style="width:${Math.min(100, x.cur / x.goal * 100)}%"></i></span><small class="tp">${Math.min(x.cur, x.goal)}/${x.goal}</small></button>`).join('')}</div>
+    <div class="msf">${SF.mese.sfide.map(x => `<button class="mcard2 ${x.ok ? 'ok' : ''}" data-act="troDet" data-f="mese:${x.id}" data-t="${esc(x.t)}" data-ic="${x.ic}" data-s="${esc(x.sub)}" data-g="${x.goal}" data-ok="${x.ok ? 1 : ''}"><i>${x.ic}${x.ok ? '<em class="ck">✓</em>' : ''}</i><b>${esc(x.t)}</b><small>${esc(x.sub)}</small><span class="bar"><i style="width:${Math.min(100, x.cur / x.goal * 100)}%"></i></span><small class="tp">${Math.min(x.cur, x.goal)}/${x.goal}</small></button>`).join('')}</div>
     ${(() => { const M = medagliere(SF); return `<button class="medrow" data-act="album"><div class="mrh"><span>🏅 Medagliere ${M.anni[0].y}</span><em>${M.ori} or${M.ori === 1 ? 'o' : 'i'} · ${M.arg} argent${M.arg === 1 ? 'o' : 'i'} · ${M.bro} bronz${M.bro === 1 ? 'o' : 'i'} ›</em></div>
       <div class="mrs">${M.anni[0].mesi.map(x => `<div class="ms ${x.cur ? 'cur' : ''}">${medaglia(x.n, x.m, 30, x.fut || !x.b)}<small>${MESI[x.m].slice(0, 3)}</small></div>`).join('')}</div></button>`; })()}
     <div class="tfh" style="margin-top:14px"><span>🎯 Sfide</span><em>${SINGLE.filter(b => b[3]).length} di ${SINGLE.length}</em></div>
@@ -1497,7 +1502,7 @@ function troModal(d){
   else if (d.f.startsWith('mese:')){ const x = SF.mese.sfide.find(z => 'mese:' + z.id === d.f);
     if (x){ tx = `Sfida di <b>${SF.mese.nome}</b>: ${x.ok ? 'completata! ✓' : `sei a <b>${Math.min(x.cur, x.goal)} su ${x.goal}</b>, hai ancora ${SF.gg} giorn${SF.gg === 1 ? 'o' : 'i'}.`}${x.rows.length ? ' Finora:' : ''}`; rows = x.rows.map(sfR); } }
   else if (d.f.startsWith('bach:')){ const b = d.f === 'bach:cur' ? SF.mese : SF.bach.find(z => 'bach:' + z.k === d.f);
-    if (b){ tx = `Le tre sfide di <b>${b.nome} ${b.anno}</b>, con i titoli che le hanno fatte avanzare:`; rows = b.sfide.flatMap(x => [`<div class="sfh ${x.ok ? 'ok' : ''}"><i>${x.ic}</i><div><b>${esc(x.t)}</b><small>${esc(x.sub)}</small></div><span>${x.ok ? '✓ fatta' : Math.min(x.cur, x.goal) + '/' + x.goal}</span></div>`, ...(x.rows.length ? x.rows.map(sfR) : [`<p class="sfv">${x.cur ? 'Conta i giorni o i generi, non singoli titoli.' : 'Ancora nessun titolo.'}</p>`])]); } }
+    if (b){ tx = `Le tre sfide di <b>${b.nome} ${b.anno}</b>, con i titoli che le hanno fatte avanzare:`; rows = b.sfide.flatMap(x => [`<div class="sfh ${x.ok ? 'ok' : ''}"><i>${x.ic}${x.ok ? '<em class="ck">✓</em>' : ''}</i><div><b>${esc(x.t)}</b><small>${esc(x.sub)}</small></div><span>${x.ok ? '✓ fatta' : Math.min(x.cur, x.goal) + '/' + x.goal}</span></div>`, ...(x.rows.length ? x.rows.map(sfR) : [`<p class="sfv">${x.cur ? 'Conta i giorni o i generi, non singoli titoli.' : 'Ancora nessun titolo.'}</p>`])]); } }
   switch (fx || d.f.includes(':') ? '' : d.f){
     case 'Episodi visti': {
       tx = ok ? ennesimo(g, epsL, datati, x => `Il tuo <b>${g.toLocaleString('it-IT')}° episodio</b> è stato <b>${esc(showName(x.sh))}</b> ${x.e ? epCode(x.e) : ''}, il ${giorno(x.ts)}.`) : `Ne hai visti <b>${epsL.length.toLocaleString('it-IT')}</b>: ne mancano ${(g - epsL.length).toLocaleString('it-IT')}.`;
