@@ -643,7 +643,7 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 
 <script>
 'use strict';
-const VERSIONE = '2.28.1';
+const VERSIONE = '2.28.2';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -814,11 +814,11 @@ function votiNuovi(prima, dopo, fonte){
   if (ex) Object.assign(ex, n, {read:false}); else addNews(n);
   save(); render(); return nuovi.length;
 }
-function votiModal(n){
+function votiModal(n, notte){
   const righe = (n.keys || []).map(k => { const m = k[0] === 'm', it = m ? D.movies[k.slice(1)] : D.series[k.slice(1)]; if (!it) return '';
     const mm = MM[k], im = IMDB[k], v = mm?.voto ? `<span class="stars">${stelleMM(mm.voto)}</span> <b>${mm.voto.toFixed(1).replace('.', ',')}</b>` : im?.v ? `<span class="stars">${stelleMM(im.v / 2)}</span> <b>${im.v.toFixed(1).replace('.', ',')}</b>/10` : '';
     return `<button data-act="troGo" data-k="${m ? 'm' : 's'}" data-id="${it.id}">${poster(m ? movImg(it, 'w185') : showImg(it, 'w185'), m ? it.title : showName(it), 'pimg')}<div style="min-width:0"><b>${esc(m ? it.title : showName(it))}</b><small style="white-space:nowrap">${mm?.voto ? '<span class="mmlogo sm">MYmovies</span>' : '<span class="imdblogo sm">IMDb</span>'} ${v}</small></div></button>`; }).join('');
-  $('#mcard').innerHTML = `<div class="trdh"><i>⭐</i><div><div class="k">Appena arrivati</div><h4>Nuovi voti</h4><p>${fData(n.d)}</p></div></div>
+  $('#mcard').innerHTML = `<div class="trdh"><i>⭐</i><div><div class="k">${notte ? 'Arrivati stanotte' : 'Appena arrivati'}</div><h4>Nuovi voti</h4><p>${fData(n.d)}</p></div></div>
     <p class="trdt">Questi titoli hanno appena ricevuto il voto della critica e del pubblico:</p><div class="antl tr">${righe}</div>
     <div class="mrow"><button class="btn ghost" data-act="closeModal">Chiudi</button></div>`;
   $('#modal').classList.add('open');
@@ -2749,7 +2749,14 @@ document.addEventListener('wheel', e => {
   } else $('#intro').remove();
   await pull();
   setTimeout(controllaImport, 1500);
-  caricaMM();
+  UI.vn = 0;
+  caricaMM().then(() => { // voti arrivati di notte: alla prima apertura si mostrano subito
+    if (!UI.vn) return;
+    const mostra = (t = 0) => { const n = D.news.find(x => x.id === `voti-${oggi()}`); if (!n) return;
+      if ($('#cele') || $('#modal').classList.contains('open') || $('#intro')){ if (t < 80) setTimeout(() => mostra(t + 1), 1500); return; }
+      n.read = true; save(); render(); votiModal(n, true); };
+    setTimeout(mostra, 1800);
+  });
   if (C.tmdb && Object.values(D.series).some(s => !s.tmdb || !s.itEp)) enrichAll();
   await checkNews(false);
   migGeneri().then(migPoster);
