@@ -602,6 +602,9 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 .mmsp{display:block;width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(255,154,77,.25);border-top-color:var(--a2);animation:mmsp .8s linear infinite}
 @keyframes mmsp{to{transform:rotate(360deg)}}
 .antl small b{display:inline;font:inherit;font-weight:800;color:var(--txt)}
+.vcerca{display:inline-flex;align-items:center;gap:5px;margin-left:4px;padding:3px 9px;border-radius:999px;font:inherit;font-size:11.5px;font-weight:700;color:var(--a2);background:rgba(255,154,77,.12);border:1px solid rgba(255,154,77,.35);cursor:pointer;white-space:nowrap}
+.vcerca.on{cursor:default}.vcerca .mmsp{width:11px;height:11px;border-width:2px}
+.vcerca:active{transform:scale(.95)}
 </style>
 </head>
 <body>
@@ -640,7 +643,7 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 
 <script>
 'use strict';
-const VERSIONE = '2.27';
+const VERSIONE = '2.28';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -820,12 +823,47 @@ function votiModal(n){
     <div class="mrow"><button class="btn ghost" data-act="closeModal">Chiudi</button></div>`;
   $('#modal').classList.add('open');
 }
+async function ricercaVoti(solo){ // solo = chiave di un titolo (m123 / s45), vuoto = tutti
+  if (UI.mmBusy) return toast('Sto già cercando, un attimo…');
+  if (!C.ghToken || !C.ghUser) return toast('Prima collega GitHub in Sincronizzazione');
+  const base = `https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/actions`, t0 = Date.now();
+  UI.mmBusy = solo || 'tutti'; UI.mmPerm = false; refreshView();
+  const fine = msg => { UI.mmBusy = false; refreshView(); if (msg) toast(msg); };
+  try {
+    if (solo) await push(); // il titolo appena aggiunto deve essere già su GitHub
+    const r = await fetch(`${base}/workflows/mymovies.yml/dispatches`, {method:'POST', headers:Object.assign({'Content-Type':'application/json'}, ghH()), body:JSON.stringify({ref:'main', inputs:{solo}})});
+    if (r.status === 403 || r.status === 404){ UI.mmPerm = true; return fine('Alla chiave GitHub manca il permesso «Actions»'); }
+    if (!r.ok) return fine('GitHub non ha avviato la ricerca, riprova tra poco');
+    let run = null;
+    while (Date.now() - t0 < 8 * 60e3){
+      await new Promise(ok => setTimeout(ok, solo ? 6000 : 8000));
+      const q = await fetch(`${base}/workflows/mymovies.yml/runs?event=workflow_dispatch&per_page=3&t=${Date.now()}`, {headers:ghH(), cache:'no-store'});
+      if (!q.ok) continue;
+      run = ((await q.json()).workflow_runs || []).find(x => new Date(x.created_at) >= t0 - 60e3);
+      if (run && run.status === 'completed') break;
+    }
+    if (!run || run.status !== 'completed') return fine('La ricerca sta durando più del solito: il voto arriverà alla prossima apertura');
+    if (run.conclusion !== 'success') return fine('La ricerca non è andata a buon fine, riprova più tardi');
+    C.mmUlt = Date.now(); saveCfg(); UI.vn = 0;
+    await caricaMM(); UI.mmBusy = false;
+    if (solo){
+      const m = MM[solo], im = IMDB[solo];
+      refreshView();
+      toast(m?.voto ? `⭐ Voto MYmovies trovato: <b>${m.voto.toFixed(1).replace('.', ',')}</b>` : im?.v ? `MYmovies non ha il voto: c'è quello IMDb, <b>${im.v.toFixed(1).replace('.', ',')}</b>/10` : m?.url ? 'MYmovies ha la pagina ma non ancora il voto' : 'MYmovies non ha ancora questo titolo');
+      return;
+    }
+    render();
+    const n = D.news.find(x => x.id === `voti-${oggi()}`);
+    if (UI.vn && n){ n.read = true; save(); render(); votiModal(n); } else toast('Ricerca finita: nessun voto nuovo per ora');
+  } catch(e){ fine('Errore: ' + esc(e.message)); }
+}
 const stelleMM = v => { const p = Math.round(v * 2) / 2; let h = ''; for (let i = 1; i <= 5; i++) h += i <= p ? '★' : (i - .5 === p ? '<span class="half">★</span>' : '<span class="off">★</span>'); return h; };
 const voti = (mio, key) => { const mm = MM[key], im = IMDB[key];
   return `<div class="hvoti">${mio ? `<div class="hv"><span class="hl">Il mio voto</span><span class="stars">${stars(mio).replace(/^<span class="stars">|<\/span>$/g, '')}</span></div>` : ''}
     ${mm && mm.voto ? `<div class="hv"><span class="mmlogo">MYmovies</span><span class="stars">${stelleMM(mm.voto)}</span><b>${mm.voto.toFixed(1).replace('.', ',')}</b>${VNUOVI[key] ? '<em class="vnew">nuovo</em>' : ''}</div>`
-      : im && im.v ? `<div class="hv"><span class="imdblogo">IMDb</span><span class="stars">${stelleMM(im.v / 2)}</span><b>${im.v.toFixed(1).replace('.', ',')}</b><span class="vsub">/10</span>${VNUOVI[key] ? '<em class="vnew">nuovo</em>' : ''}</div>`
-      : `<div class="hv"><span class="mmlogo">MYmovies</span><span class="cap2">${mm && mm.at && !mm.url ? 'non trovato' : 'voto in arrivo'}</span></div>`}</div>`; };
+      : im && im.v ? `<div class="hv"><span class="imdblogo">IMDb</span><span class="stars">${stelleMM(im.v / 2)}</span><b>${im.v.toFixed(1).replace('.', ',')}</b><span class="vsub">/10</span>${VNUOVI[key] ? '<em class="vnew">nuovo</em>' : vBtn(key)}</div>`
+      : `<div class="hv"><span class="mmlogo">MYmovies</span><span class="cap2">${mm && mm.at && !mm.url ? 'non trovato' : 'voto in arrivo'}</span>${vBtn(key)}</div>`}</div>`; };
+const vBtn = key => UI.mmBusy === key ? `<span class="vcerca on"><i class="mmsp"></i>cerco…</span>` : `<button class="vcerca" data-act="cercaVoto" data-k="${key}">⭐ Cerca</button>`;
 const critica = (t, orig, y, voto, tipo, key) => { const mm = MM[key], im = IMDB[key]; return `<div class="box"><h4>${mm && mm.voto ? 'MYmovies' : 'Recensioni'}</h4>
   ${!(mm && mm.voto) && im && im.v ? `<p class="cap2" style="white-space:normal;margin:-4px 0 10px">MYmovies non ha un voto per questo titolo: sotto il titolo vedi quello di IMDb, il più grande archivio mondiale, dato da ${im.n.toLocaleString('it-IT')} spettatori.</p>` : ''}
   <div class="acts" style="margin-top:0">${im && im.id ? `<a class="btn ghost small" href="https://m.imdb.com/title/${esc(im.id)}/" target="_blank" rel="noopener">⭐ IMDb ›</a>` : ''}<a class="btn ghost small" href="${esc(mm && mm.url ? mm.url : mmLink(t, y, tipo))}" target="_blank" rel="noopener">🎬 ${im && im.id ? 'MYmovies' : 'Recensione su MYmovies'} ›</a>${!(mm && mm.url) && orig && orig !== t ? `<a class="btn ghost small" href="${esc(mmLink(orig, y, tipo))}" target="_blank" rel="noopener">Cerca col titolo originale</a>` : ''}</div></div>`; };
@@ -1095,7 +1133,7 @@ function renderIo(){
     <div class="set"><div class="l"><b>Modalità archivio</b><small>Attivala mentre inserisci serie e film visti in passato: non falseranno le statistiche di oggi</small></div><button class="sw ${C.archivio ? 'on' : ''}" data-act="toggleArch" aria-label="Archivio"></button></div>
     <div class="set"><div class="l"><b>Novità</b><small>${D.lastCheck ? 'Ultimo controllo ' + new Date(D.lastCheck).toLocaleString('it-IT', {weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Mai controllato'} · automatico ogni settimana</small></div><button class="btn small ghost" data-act="checkNews">Controlla</button></div>
     ${ioNews()}
-    <div class="set"><div class="l"><b>Voti MYmovies</b><small>${UI.mmBusy ? `<span class="mmrun">Cerco su MYmovies…</span> può servire qualche minuto` : UI.mmPerm ? '<span style="color:var(--a2)">La chiave GitHub non può avviare la ricerca: manca il permesso «Actions»</span>' : `Ogni notte alle 5:40${C.mmUlt ? ' · ultima ricerca ' + new Date(C.mmUlt).toLocaleString('it-IT', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : ''}`}</small></div><button class="btn small ghost ${UI.mmBusy ? 'mmb' : ''}" data-act="cercaVoti" ${UI.mmBusy ? 'disabled' : ''}>${UI.mmBusy ? '<i class="mmsp"></i>' : '⭐ Cerca adesso'}</button></div>
+    <div class="set"><div class="l"><b>Voti MYmovies</b><small>${UI.mmBusy ? `<span class="mmrun">Cerco su MYmovies…</span> ${UI.mmBusy === 'tutti' ? 'può servire qualche minuto' : 'un titolo solo'}` : UI.mmPerm ? '<span style="color:var(--a2)">La chiave GitHub non può avviare la ricerca: manca il permesso «Actions»</span>' : `Ogni notte alle 5:40${C.mmUlt ? ' · ultima ricerca ' + new Date(C.mmUlt).toLocaleString('it-IT', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : ''}`}</small></div><button class="btn small ghost ${UI.mmBusy ? 'mmb' : ''}" data-act="cercaVoti" ${UI.mmBusy ? 'disabled' : ''}>${UI.mmBusy ? '<i class="mmsp"></i>' : '⭐ Cerca adesso'}</button></div>
   </div>
   <div class="box"><h4>Chiave TMDB (film e trame in italiano)</h4>
     <input class="fld" id="tmdbKey" placeholder="Incolla qui la chiave" value="${esc(C.tmdb)}" autocomplete="off" autocapitalize="off" spellcheck="false">
@@ -2251,32 +2289,8 @@ const A = {
   dismiss(d){ const n = D.news.find(x => x.id === d.id); if (n) n.read = true; save(); render(); },
   readAll(){ D.news.forEach(n => n.read = true); save(); render(); },
   checkNews(){ checkNews(true); },
-  async cercaVoti(){ // avvia subito la ricerca dei voti (di solito parte da sola alle 5:40)
-    if (UI.mmBusy) return;
-    if (!C.ghToken || !C.ghUser) return toast('Prima collega GitHub in Sincronizzazione');
-    const base = `https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/actions`, t0 = Date.now();
-    UI.mmBusy = true; UI.mmPerm = false; render();
-    const fine = msg => { UI.mmBusy = false; render(); if (msg) toast(msg); };
-    try {
-      const r = await fetch(`${base}/workflows/mymovies.yml/dispatches`, {method:'POST', headers:Object.assign({'Content-Type':'application/json'}, ghH()), body:JSON.stringify({ref:'main'})});
-      if (r.status === 403 || r.status === 404){ UI.mmPerm = true; return fine('Alla chiave GitHub manca il permesso «Actions»'); }
-      if (!r.ok) return fine('GitHub non ha avviato la ricerca, riprova tra poco');
-      let run = null;
-      while (Date.now() - t0 < 8 * 60e3){
-        await new Promise(ok => setTimeout(ok, 8000));
-        const q = await fetch(`${base}/workflows/mymovies.yml/runs?event=workflow_dispatch&per_page=3&t=${Date.now()}`, {headers:ghH(), cache:'no-store'});
-        if (!q.ok) continue;
-        run = ((await q.json()).workflow_runs || []).find(x => new Date(x.created_at) >= t0 - 60e3);
-        if (run && run.status === 'completed') break;
-      }
-      if (!run || run.status !== 'completed') return fine('La ricerca sta durando più del solito: i voti arriveranno alla prossima apertura');
-      if (run.conclusion !== 'success') return fine('La ricerca non è andata a buon fine, riprova più tardi');
-      C.mmUlt = Date.now(); saveCfg(); UI.vn = 0;
-      await caricaMM(); UI.mmBusy = false; render();
-      const n = D.news.find(x => x.id === `voti-${oggi()}`);
-      if (UI.vn && n){ n.read = true; save(); render(); votiModal(n); } else toast('Ricerca finita: nessun voto nuovo per ora');
-    } catch(e){ fine('Errore: ' + esc(e.message)); }
-  },
+  cercaVoti(){ ricercaVoti(''); },
+  cercaVoto(d){ ricercaVoti(d.k); },
   push(){ attivaNotifiche(); },
   theme(d){ C.theme = d.v; saveCfg(); applyTheme(); render(); },
   toggleIntro(){ C.intro = !C.intro; saveCfg(); render(); },
