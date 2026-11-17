@@ -597,6 +597,11 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 .mcard2.ok>i{color:inherit;font-weight:400}
 .vnew{font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:3px 7px;border-radius:999px;background:var(--grad);color:#1a1020;animation:ckIn .5s cubic-bezier(.2,1.6,.4,1)}
 .mmlogo.sm,.imdblogo.sm{font-size:9px;padding:1px 5px;min-width:0;vertical-align:1px;margin-right:4px}
+.mmrun{color:var(--a2);font-weight:700}
+.btn.mmb{min-width:96px;display:grid;place-items:center}
+.mmsp{display:block;width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(255,154,77,.25);border-top-color:var(--a2);animation:mmsp .8s linear infinite}
+@keyframes mmsp{to{transform:rotate(360deg)}}
+.antl small b{display:inline;font:inherit;font-weight:800;color:var(--txt)}
 </style>
 </head>
 <body>
@@ -782,11 +787,11 @@ async function caricaMM(){
   try {
     const r = await fetch(`https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/contents/mymovies.json?t=${Date.now()}`, {headers:Object.assign({}, ghH(), {Accept:'application/vnd.github.raw+json'}), cache:'no-store'});
     if (!r.ok) return; const prima = MM, dopo = await r.json(); MM = dopo; try { localStorage.setItem('visto-mymovies', JSON.stringify(MM)); } catch(e){}
-    votiNuovi(prima, dopo, 'mm');
+    UI.vn = (UI.vn || 0) + votiNuovi(prima, dopo, 'mm');
   } catch(e){}
   try {
     const r = await fetch(`https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/contents/imdb.json?t=${Date.now()}`, {headers:Object.assign({}, ghH(), {Accept:'application/vnd.github.raw+json'}), cache:'no-store'});
-    if (r.ok){ const prima = IMDB; IMDB = await r.json(); try { localStorage.setItem('visto-imdb', JSON.stringify(IMDB)); } catch(e){} votiNuovi(prima, IMDB, 'imdb'); }
+    if (r.ok){ const prima = IMDB; IMDB = await r.json(); try { localStorage.setItem('visto-imdb', JSON.stringify(IMDB)); } catch(e){} UI.vn = (UI.vn || 0) + votiNuovi(prima, IMDB, 'imdb'); }
   } catch(e){}
 }
 // voti nuovi arrivati di notte: una novità in Io e il segno "nuovo" per una settimana
@@ -795,7 +800,7 @@ function votiNuovi(prima, dopo, fonte){
   if (!prima || !Object.keys(prima).length) return; // primo caricamento su questo dispositivo: niente festa
   const titolo = k => k[0] === 'm' ? D.movies[k.slice(1)] : D.series[k.slice(1)];
   const nuovi = Object.keys(dopo).filter(k => titolo(k) && (fonte === 'mm' ? dopo[k]?.voto && !prima[k]?.voto : dopo[k]?.v && !prima[k]?.v && !MM[k]?.voto));
-  if (!nuovi.length) return;
+  if (!nuovi.length) return 0;
   const ora = Date.now(); nuovi.forEach(k => VNUOVI[k] = {at:ora, f:fonte});
   Object.keys(VNUOVI).forEach(k => { if (ora - VNUOVI[k].at > 7 * 864e5) delete VNUOVI[k]; });
   try { localStorage.setItem('visto-votinuovi', JSON.stringify(VNUOVI)); } catch(e){}
@@ -804,13 +809,13 @@ function votiNuovi(prima, dopo, fonte){
   const n = {id, ref:'voti', kind:'new', keys:tutti, img, d:oggiK, k:'Nuovi voti', t:`${tutti.length} nuov${tutti.length === 1 ? 'o voto' : 'i voti'} ${fonte === 'mm' ? 'MYmovies' : ''}`.trim(),
     d2:tutti.slice(0, 3).map(nome).join(', ') + (tutti.length > 3 ? ` e altri ${tutti.length - 3}` : '')};
   if (ex) Object.assign(ex, n, {read:false}); else addNews(n);
-  save(); render();
+  save(); render(); return nuovi.length;
 }
 function votiModal(n){
   const righe = (n.keys || []).map(k => { const m = k[0] === 'm', it = m ? D.movies[k.slice(1)] : D.series[k.slice(1)]; if (!it) return '';
     const mm = MM[k], im = IMDB[k], v = mm?.voto ? `<span class="stars">${stelleMM(mm.voto)}</span> <b>${mm.voto.toFixed(1).replace('.', ',')}</b>` : im?.v ? `<span class="stars">${stelleMM(im.v / 2)}</span> <b>${im.v.toFixed(1).replace('.', ',')}</b>/10` : '';
     return `<button data-act="troGo" data-k="${m ? 'm' : 's'}" data-id="${it.id}">${poster(m ? movImg(it, 'w185') : showImg(it, 'w185'), m ? it.title : showName(it), 'pimg')}<div style="min-width:0"><b>${esc(m ? it.title : showName(it))}</b><small style="white-space:nowrap">${mm?.voto ? '<span class="mmlogo sm">MYmovies</span>' : '<span class="imdblogo sm">IMDb</span>'} ${v}</small></div></button>`; }).join('');
-  $('#mcard').innerHTML = `<div class="trdh"><i>⭐</i><div><div class="k">Arrivati stanotte</div><h4>Nuovi voti</h4><p>${fData(n.d)}</p></div></div>
+  $('#mcard').innerHTML = `<div class="trdh"><i>⭐</i><div><div class="k">Appena arrivati</div><h4>Nuovi voti</h4><p>${fData(n.d)}</p></div></div>
     <p class="trdt">Questi titoli hanno appena ricevuto il voto della critica e del pubblico:</p><div class="antl tr">${righe}</div>
     <div class="mrow"><button class="btn ghost" data-act="closeModal">Chiudi</button></div>`;
   $('#modal').classList.add('open');
@@ -1090,6 +1095,7 @@ function renderIo(){
     <div class="set"><div class="l"><b>Modalità archivio</b><small>Attivala mentre inserisci serie e film visti in passato: non falseranno le statistiche di oggi</small></div><button class="sw ${C.archivio ? 'on' : ''}" data-act="toggleArch" aria-label="Archivio"></button></div>
     <div class="set"><div class="l"><b>Novità</b><small>${D.lastCheck ? 'Ultimo controllo ' + new Date(D.lastCheck).toLocaleString('it-IT', {weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Mai controllato'} · automatico ogni settimana</small></div><button class="btn small ghost" data-act="checkNews">Controlla</button></div>
     ${ioNews()}
+    <div class="set"><div class="l"><b>Voti MYmovies</b><small>${UI.mmBusy ? `<span class="mmrun">Cerco su MYmovies…</span> può servire qualche minuto` : UI.mmPerm ? '<span style="color:var(--a2)">La chiave GitHub non può avviare la ricerca: manca il permesso «Actions»</span>' : `Ogni notte alle 5:40${C.mmUlt ? ' · ultima ricerca ' + new Date(C.mmUlt).toLocaleString('it-IT', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : ''}`}</small></div><button class="btn small ghost ${UI.mmBusy ? 'mmb' : ''}" data-act="cercaVoti" ${UI.mmBusy ? 'disabled' : ''}>${UI.mmBusy ? '<i class="mmsp"></i>' : '⭐ Cerca adesso'}</button></div>
   </div>
   <div class="box"><h4>Chiave TMDB (film e trame in italiano)</h4>
     <input class="fld" id="tmdbKey" placeholder="Incolla qui la chiave" value="${esc(C.tmdb)}" autocomplete="off" autocapitalize="off" spellcheck="false">
@@ -2245,6 +2251,32 @@ const A = {
   dismiss(d){ const n = D.news.find(x => x.id === d.id); if (n) n.read = true; save(); render(); },
   readAll(){ D.news.forEach(n => n.read = true); save(); render(); },
   checkNews(){ checkNews(true); },
+  async cercaVoti(){ // avvia subito la ricerca dei voti (di solito parte da sola alle 5:40)
+    if (UI.mmBusy) return;
+    if (!C.ghToken || !C.ghUser) return toast('Prima collega GitHub in Sincronizzazione');
+    const base = `https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/actions`, t0 = Date.now();
+    UI.mmBusy = true; UI.mmPerm = false; render();
+    const fine = msg => { UI.mmBusy = false; render(); if (msg) toast(msg); };
+    try {
+      const r = await fetch(`${base}/workflows/mymovies.yml/dispatches`, {method:'POST', headers:Object.assign({'Content-Type':'application/json'}, ghH()), body:JSON.stringify({ref:'main'})});
+      if (r.status === 403 || r.status === 404){ UI.mmPerm = true; return fine('Alla chiave GitHub manca il permesso «Actions»'); }
+      if (!r.ok) return fine('GitHub non ha avviato la ricerca, riprova tra poco');
+      let run = null;
+      while (Date.now() - t0 < 8 * 60e3){
+        await new Promise(ok => setTimeout(ok, 8000));
+        const q = await fetch(`${base}/workflows/mymovies.yml/runs?event=workflow_dispatch&per_page=3&t=${Date.now()}`, {headers:ghH(), cache:'no-store'});
+        if (!q.ok) continue;
+        run = ((await q.json()).workflow_runs || []).find(x => new Date(x.created_at) >= t0 - 60e3);
+        if (run && run.status === 'completed') break;
+      }
+      if (!run || run.status !== 'completed') return fine('La ricerca sta durando più del solito: i voti arriveranno alla prossima apertura');
+      if (run.conclusion !== 'success') return fine('La ricerca non è andata a buon fine, riprova più tardi');
+      C.mmUlt = Date.now(); saveCfg(); UI.vn = 0;
+      await caricaMM(); UI.mmBusy = false; render();
+      const n = D.news.find(x => x.id === `voti-${oggi()}`);
+      if (UI.vn && n){ n.read = true; save(); render(); votiModal(n); } else toast('Ricerca finita: nessun voto nuovo per ora');
+    } catch(e){ fine('Errore: ' + esc(e.message)); }
+  },
   push(){ attivaNotifiche(); },
   theme(d){ C.theme = d.v; saveCfg(); applyTheme(); render(); },
   toggleIntro(){ C.intro = !C.intro; saveCfg(); render(); },
