@@ -602,8 +602,8 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 .mmsp{display:block;width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(255,154,77,.25);border-top-color:var(--a2);animation:mmsp .8s linear infinite}
 @keyframes mmsp{to{transform:rotate(360deg)}}
 .antl small b{display:inline;font:inherit;font-weight:800;color:var(--txt)}
-.vcerca{display:inline-flex;align-items:center;gap:5px;margin-left:4px;padding:3px 9px;border-radius:999px;font:inherit;font-size:11.5px;font-weight:700;color:var(--a2);background:rgba(255,154,77,.12);border:1px solid rgba(255,154,77,.35);cursor:pointer;white-space:nowrap}
-.vcerca.on{cursor:default}.vcerca .mmsp{width:11px;height:11px;border-width:2px}
+.vcerca{flex:none;display:inline-grid;place-items:center;width:28px;height:28px;margin-left:2px;padding:0;border-radius:50%;color:var(--a2);background:rgba(255,154,77,.12);border:1px solid rgba(255,154,77,.4);cursor:pointer}
+.vcerca svg{width:15px;height:15px}.vcerca.on{cursor:default}.vcerca .mmsp{width:13px;height:13px;border-width:2px}
 .vcerca:active{transform:scale(.95)}
 </style>
 </head>
@@ -643,7 +643,7 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 
 <script>
 'use strict';
-const VERSIONE = '2.28';
+const VERSIONE = '2.28.1';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -863,7 +863,7 @@ const voti = (mio, key) => { const mm = MM[key], im = IMDB[key];
     ${mm && mm.voto ? `<div class="hv"><span class="mmlogo">MYmovies</span><span class="stars">${stelleMM(mm.voto)}</span><b>${mm.voto.toFixed(1).replace('.', ',')}</b>${VNUOVI[key] ? '<em class="vnew">nuovo</em>' : ''}</div>`
       : im && im.v ? `<div class="hv"><span class="imdblogo">IMDb</span><span class="stars">${stelleMM(im.v / 2)}</span><b>${im.v.toFixed(1).replace('.', ',')}</b><span class="vsub">/10</span>${VNUOVI[key] ? '<em class="vnew">nuovo</em>' : vBtn(key)}</div>`
       : `<div class="hv"><span class="mmlogo">MYmovies</span><span class="cap2">${mm && mm.at && !mm.url ? 'non trovato' : 'voto in arrivo'}</span>${vBtn(key)}</div>`}</div>`; };
-const vBtn = key => UI.mmBusy === key ? `<span class="vcerca on"><i class="mmsp"></i>cerco…</span>` : `<button class="vcerca" data-act="cercaVoto" data-k="${key}">⭐ Cerca</button>`;
+const vBtn = key => UI.mmBusy === key ? `<span class="vcerca on" aria-label="Cerco il voto"><i class="mmsp"></i></span>` : `<button class="vcerca" data-act="cercaVoto" data-k="${key}" aria-label="Cerca il voto MYmovies">${I.refresh}</button>`;
 const critica = (t, orig, y, voto, tipo, key) => { const mm = MM[key], im = IMDB[key]; return `<div class="box"><h4>${mm && mm.voto ? 'MYmovies' : 'Recensioni'}</h4>
   ${!(mm && mm.voto) && im && im.v ? `<p class="cap2" style="white-space:normal;margin:-4px 0 10px">MYmovies non ha un voto per questo titolo: sotto il titolo vedi quello di IMDb, il più grande archivio mondiale, dato da ${im.n.toLocaleString('it-IT')} spettatori.</p>` : ''}
   <div class="acts" style="margin-top:0">${im && im.id ? `<a class="btn ghost small" href="https://m.imdb.com/title/${esc(im.id)}/" target="_blank" rel="noopener">⭐ IMDb ›</a>` : ''}<a class="btn ghost small" href="${esc(mm && mm.url ? mm.url : mmLink(t, y, tipo))}" target="_blank" rel="noopener">🎬 ${im && im.id ? 'MYmovies' : 'Recensione su MYmovies'} ›</a>${!(mm && mm.url) && orig && orig !== t ? `<a class="btn ghost small" href="${esc(mmLink(orig, y, tipo))}" target="_blank" rel="noopener">Cerca col titolo originale</a>` : ''}</div></div>`; };
