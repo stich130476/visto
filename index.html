@@ -595,6 +595,8 @@ html[data-theme=light] .alm.m3 small{color:#a8740f}html[data-theme=light] .alm.m
 html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)}
 @keyframes ckIn{from{transform:scale(0)}to{transform:scale(1)}}
 .mcard2.ok>i{color:inherit;font-weight:400}
+.vnew{font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:3px 7px;border-radius:999px;background:var(--grad);color:#1a1020;animation:ckIn .5s cubic-bezier(.2,1.6,.4,1)}
+.mmlogo.sm,.imdblogo.sm{font-size:9px;padding:1px 5px;min-width:0;vertical-align:1px;margin-right:4px}
 </style>
 </head>
 <body>
@@ -633,7 +635,7 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 
 <script>
 'use strict';
-const VERSIONE = '2.26.4';
+const VERSIONE = '2.27';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -779,18 +781,45 @@ async function caricaMM(){
   if (!C.ghToken || !C.ghUser) return;
   try {
     const r = await fetch(`https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/contents/mymovies.json?t=${Date.now()}`, {headers:Object.assign({}, ghH(), {Accept:'application/vnd.github.raw+json'}), cache:'no-store'});
-    if (!r.ok) return; MM = await r.json(); try { localStorage.setItem('visto-mymovies', JSON.stringify(MM)); } catch(e){}
+    if (!r.ok) return; const prima = MM, dopo = await r.json(); MM = dopo; try { localStorage.setItem('visto-mymovies', JSON.stringify(MM)); } catch(e){}
+    votiNuovi(prima, dopo, 'mm');
   } catch(e){}
   try {
     const r = await fetch(`https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/contents/imdb.json?t=${Date.now()}`, {headers:Object.assign({}, ghH(), {Accept:'application/vnd.github.raw+json'}), cache:'no-store'});
-    if (r.ok){ IMDB = await r.json(); try { localStorage.setItem('visto-imdb', JSON.stringify(IMDB)); } catch(e){} }
+    if (r.ok){ const prima = IMDB; IMDB = await r.json(); try { localStorage.setItem('visto-imdb', JSON.stringify(IMDB)); } catch(e){} votiNuovi(prima, IMDB, 'imdb'); }
   } catch(e){}
+}
+// voti nuovi arrivati di notte: una novità in Io e il segno "nuovo" per una settimana
+let VNUOVI = load('visto-votinuovi') || {};
+function votiNuovi(prima, dopo, fonte){
+  if (!prima || !Object.keys(prima).length) return; // primo caricamento su questo dispositivo: niente festa
+  const titolo = k => k[0] === 'm' ? D.movies[k.slice(1)] : D.series[k.slice(1)];
+  const nuovi = Object.keys(dopo).filter(k => titolo(k) && (fonte === 'mm' ? dopo[k]?.voto && !prima[k]?.voto : dopo[k]?.v && !prima[k]?.v && !MM[k]?.voto));
+  if (!nuovi.length) return;
+  const ora = Date.now(); nuovi.forEach(k => VNUOVI[k] = {at:ora, f:fonte});
+  Object.keys(VNUOVI).forEach(k => { if (ora - VNUOVI[k].at > 7 * 864e5) delete VNUOVI[k]; });
+  try { localStorage.setItem('visto-votinuovi', JSON.stringify(VNUOVI)); } catch(e){}
+  const oggiK = oggi(), id = `voti-${oggiK}`, ex = D.news.find(n => n.id === id), tutti = [...new Set([...(ex?.keys || []), ...nuovi])];
+  const it = titolo(tutti[0]), img = tutti[0][0] === 'm' ? movImg(it) : showImg(it), nome = x => x[0] === 'm' ? titolo(x).title : showName(titolo(x));
+  const n = {id, ref:'voti', kind:'new', keys:tutti, img, d:oggiK, k:'Nuovi voti', t:`${tutti.length} nuov${tutti.length === 1 ? 'o voto' : 'i voti'} ${fonte === 'mm' ? 'MYmovies' : ''}`.trim(),
+    d2:tutti.slice(0, 3).map(nome).join(', ') + (tutti.length > 3 ? ` e altri ${tutti.length - 3}` : '')};
+  if (ex) Object.assign(ex, n, {read:false}); else addNews(n);
+  save(); render();
+}
+function votiModal(n){
+  const righe = (n.keys || []).map(k => { const m = k[0] === 'm', it = m ? D.movies[k.slice(1)] : D.series[k.slice(1)]; if (!it) return '';
+    const mm = MM[k], im = IMDB[k], v = mm?.voto ? `<span class="stars">${stelleMM(mm.voto)}</span> <b>${mm.voto.toFixed(1).replace('.', ',')}</b>` : im?.v ? `<span class="stars">${stelleMM(im.v / 2)}</span> <b>${im.v.toFixed(1).replace('.', ',')}</b>/10` : '';
+    return `<button data-act="troGo" data-k="${m ? 'm' : 's'}" data-id="${it.id}">${poster(m ? movImg(it, 'w185') : showImg(it, 'w185'), m ? it.title : showName(it), 'pimg')}<div style="min-width:0"><b>${esc(m ? it.title : showName(it))}</b><small style="white-space:nowrap">${mm?.voto ? '<span class="mmlogo sm">MYmovies</span>' : '<span class="imdblogo sm">IMDb</span>'} ${v}</small></div></button>`; }).join('');
+  $('#mcard').innerHTML = `<div class="trdh"><i>⭐</i><div><div class="k">Arrivati stanotte</div><h4>Nuovi voti</h4><p>${fData(n.d)}</p></div></div>
+    <p class="trdt">Questi titoli hanno appena ricevuto il voto della critica e del pubblico:</p><div class="antl tr">${righe}</div>
+    <div class="mrow"><button class="btn ghost" data-act="closeModal">Chiudi</button></div>`;
+  $('#modal').classList.add('open');
 }
 const stelleMM = v => { const p = Math.round(v * 2) / 2; let h = ''; for (let i = 1; i <= 5; i++) h += i <= p ? '★' : (i - .5 === p ? '<span class="half">★</span>' : '<span class="off">★</span>'); return h; };
 const voti = (mio, key) => { const mm = MM[key], im = IMDB[key];
   return `<div class="hvoti">${mio ? `<div class="hv"><span class="hl">Il mio voto</span><span class="stars">${stars(mio).replace(/^<span class="stars">|<\/span>$/g, '')}</span></div>` : ''}
-    ${mm && mm.voto ? `<div class="hv"><span class="mmlogo">MYmovies</span><span class="stars">${stelleMM(mm.voto)}</span><b>${mm.voto.toFixed(1).replace('.', ',')}</b></div>`
-      : im && im.v ? `<div class="hv"><span class="imdblogo">IMDb</span><span class="stars">${stelleMM(im.v / 2)}</span><b>${im.v.toFixed(1).replace('.', ',')}</b><span class="vsub">/10</span></div>`
+    ${mm && mm.voto ? `<div class="hv"><span class="mmlogo">MYmovies</span><span class="stars">${stelleMM(mm.voto)}</span><b>${mm.voto.toFixed(1).replace('.', ',')}</b>${VNUOVI[key] ? '<em class="vnew">nuovo</em>' : ''}</div>`
+      : im && im.v ? `<div class="hv"><span class="imdblogo">IMDb</span><span class="stars">${stelleMM(im.v / 2)}</span><b>${im.v.toFixed(1).replace('.', ',')}</b><span class="vsub">/10</span>${VNUOVI[key] ? '<em class="vnew">nuovo</em>' : ''}</div>`
       : `<div class="hv"><span class="mmlogo">MYmovies</span><span class="cap2">${mm && mm.at && !mm.url ? 'non trovato' : 'voto in arrivo'}</span></div>`}</div>`; };
 const critica = (t, orig, y, voto, tipo, key) => { const mm = MM[key], im = IMDB[key]; return `<div class="box"><h4>${mm && mm.voto ? 'MYmovies' : 'Recensioni'}</h4>
   ${!(mm && mm.voto) && im && im.v ? `<p class="cap2" style="white-space:normal;margin:-4px 0 10px">MYmovies non ha un voto per questo titolo: sotto il titolo vedi quello di IMDb, il più grande archivio mondiale, dato da ${im.n.toLocaleString('it-IT')} spettatori.</p>` : ''}
@@ -2210,6 +2239,7 @@ const A = {
     if (ev.target.closest('.x')) return;
     const n = D.news.find(x => x.id === d.id); if (!n) return;
     n.read = true; save();
+    if (n.ref === 'voti'){ render(); return votiModal(n); }
     if (n.ref === 'show' && D.series[n.rid]) showSheet(n.rid); else if (n.ref === 'movie' && D.movies[n.rid]) movieSheet(n.rid); else render();
   },
   dismiss(d){ const n = D.news.find(x => x.id === d.id); if (n) n.read = true; save(); render(); },
