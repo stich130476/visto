@@ -215,8 +215,10 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .box h4{font-size:13px;letter-spacing:.7px;text-transform:uppercase;color:var(--mut2);margin-bottom:10px}
 .plot{color:#ddd8e8;font-size:15px;line-height:1.55}
 .mline{margin-top:9px;font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);line-height:1.6}
+.mline{display:flex;flex-wrap:wrap;align-items:baseline}
 .mline span{white-space:nowrap}
-.mline i{font-style:normal;margin:0 7px;color:var(--a2);opacity:.8}
+.mline i{display:none}
+.mline span:not(:last-of-type)::after{content:'·';margin:0 7px;color:var(--a2);opacity:.8}
 .plats{display:flex;flex-wrap:wrap;gap:14px 12px}
 .plat{width:62px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
 .plat img{width:52px;height:52px;border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,.18)}
@@ -631,7 +633,7 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 
 <script>
 'use strict';
-const VERSIONE = '2.26.3';
+const VERSIONE = '2.26.4';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
