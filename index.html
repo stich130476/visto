@@ -51,7 +51,10 @@ img{display:block}
 .veil{position:absolute;inset:0;background:radial-gradient(70% 55% at 50% 48%,rgba(7,6,11,.35),rgba(7,6,11,.92) 80%),linear-gradient(180deg,rgba(7,6,11,.55),rgba(7,6,11,.1) 35%,rgba(7,6,11,.95) 88%)}
 .intro-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 28px calc(56px + var(--sb));text-align:center}
 .logo-big{width:96px;height:96px;margin-bottom:18px;filter:drop-shadow(0 18px 40px rgba(255,110,80,.45));animation:pop .9s .2s both cubic-bezier(.2,1.4,.4,1)}
-.logo-big .ck{stroke-dasharray:240;stroke-dashoffset:240;animation:draw .7s .8s forwards ease-out}
+.logo-big .ck{stroke-dasharray:240;stroke-dashoffset:240;animation:draw .7s 1.1s forwards ease-out}
+.logo-big .cl,.logo-big .cr{transform-box:view-box;transform-origin:50% 80%}
+.logo-big .cl{animation:ventL 1s .55s both cubic-bezier(.2,1.3,.4,1)}.logo-big .cr{animation:ventR 1s .55s both cubic-bezier(.2,1.3,.4,1)}
+@keyframes ventL{from{transform:rotate(0) translateX(19px)}to{transform:rotate(-16deg)}}@keyframes ventR{from{transform:rotate(0) translateX(-19px)}to{transform:rotate(16deg)}}
 @keyframes draw{to{stroke-dashoffset:0}}
 @keyframes pop{from{opacity:0;transform:scale(.4) rotate(-12deg)}to{opacity:1;transform:none}}
 .word{font:800 64px/1 var(--serif);letter-spacing:-1.5px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;animation:rise .9s .5s both}
@@ -81,6 +84,13 @@ img{display:block}
 .enter::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);animation:bagliore 4.5s 2.2s ease-in-out infinite}
 @keyframes bagliore{0%{left:-60%}35%,100%{left:130%}}
 .intro-over{font-size:11px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#e2b14b;margin-bottom:10px;animation:rise .9s .35s both}
+.palm{display:flex;align-items:center;gap:14px;margin-top:22px;padding:10px 18px;border-radius:20px;background:rgba(20,16,30,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px rgba(217,164,65,.3),0 10px 30px rgba(0,0,0,.35);animation:rise .9s 1.25s both}
+.palm:empty{display:none}
+.palm>div{display:flex;flex-direction:column;align-items:center;min-width:54px}
+.palm .med{width:26px;height:34px;margin-bottom:1px}
+.palm b{font:800 21px/1 var(--serif);color:#fff}.palm small{font-size:9.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#a39bb5;margin-top:4px;white-space:nowrap}
+.palm .mm small{color:#e2b14b}
+.palm .sep{width:1px;align-self:stretch;background:linear-gradient(180deg,transparent,rgba(217,164,65,.5),transparent)}
 /* di giorno: sala avorio e raggi di sole */
 html[data-theme=light] #intro{background:#f3ebe0}
 html[data-theme=light] .wp{background:#e9dccb;box-shadow:0 12px 28px rgba(90,55,30,.22)}
@@ -92,6 +102,8 @@ html[data-theme=light] .grain{opacity:.06;mix-blend-mode:multiply}
 html[data-theme=light] .word{background-image:linear-gradient(110deg,#d9433c 0%,#ec7a2c 30%,#d99a1e 45%,#fff6dc 50%,#d99a1e 55%,#ec7a2c 70%,#d9433c 100%)}
 html[data-theme=light] .tag{color:#4a3b35}
 html[data-theme=light] .intro-stats{color:#8a7a70}
+html[data-theme=light] .palm{background:rgba(255,252,246,.6);box-shadow:inset 0 0 0 1px rgba(176,122,18,.28),0 10px 30px rgba(90,55,30,.10)}
+html[data-theme=light] .palm b{color:#2a1c18}html[data-theme=light] .palm small{color:#8a7a70}html[data-theme=light] .palm .sep{background:linear-gradient(180deg,transparent,rgba(176,122,18,.45),transparent)}
 html[data-theme=light] .intro-over{color:#b07a12}
 html[data-theme=light] .logo-big{filter:drop-shadow(0 18px 34px rgba(230,110,60,.35))}
 @media (prefers-reduced-motion: reduce){.beam,.dust,.grain{animation:none}.word,.enter::after{animation:none}}
@@ -653,16 +665,21 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
   <div class="intro-c">
     <svg class="logo-big" viewBox="0 0 100 100">
       <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5e62"/><stop offset=".55" stop-color="#ff9a4d"/><stop offset="1" stop-color="#ffc857"/></linearGradient></defs>
-      <rect x="10" y="22" width="38" height="56" rx="7" fill="#5b4bd6" transform="rotate(-16 50 55)"/>
-      <rect x="52" y="22" width="38" height="56" rx="7" fill="#1fa99d" transform="rotate(16 50 55)"/>
-      <rect x="29" y="16" width="42" height="62" rx="8" fill="url(#lg)"/>
+      <defs><linearGradient id="lgv" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7a6bff"/><stop offset="1" stop-color="#4a3bc4"/></linearGradient>
+        <linearGradient id="lgt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2fc4b6"/><stop offset="1" stop-color="#148a80"/></linearGradient>
+        <linearGradient id="lgo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset="1" stop-color="#d9a441"/></linearGradient>
+        <linearGradient id="lgl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+      <g class="cl"><rect x="10" y="22" width="38" height="56" rx="7" fill="url(#lgv)" stroke="url(#lgo)" stroke-width="1.2"/></g>
+      <g class="cr"><rect x="52" y="22" width="38" height="56" rx="7" fill="url(#lgt)" stroke="url(#lgo)" stroke-width="1.2"/></g>
+      <rect x="29" y="16" width="42" height="62" rx="8" fill="url(#lg)" stroke="url(#lgo)" stroke-width="1.6"/>
+      <rect x="30" y="17" width="40" height="30" rx="7" fill="url(#lgl)"/>
       <path class="ck" d="M39 47 L47 55 L61 38" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
     <div class="intro-over">· Stasera in sala ·</div>
     <div class="word">Visto!</div>
     <div class="tag">Le tue serie e i tuoi film,<br>sempre al punto giusto.</div>
     <button class="enter" data-act="enter">Entra</button>
-    <div class="intro-stats" id="introStats"></div>
+    <div class="palm" id="introStats"></div>
   </div>
 </div>
 
@@ -2530,9 +2547,14 @@ function polvere(){ // granelli di polvere che danzano nel fascio di luce
     h += `<i style="left:${x}%;top:${y}%;width:${sz}px;height:${sz}px;--o:${(.35 + Math.random() * .6).toFixed(2)};--dx:${(Math.random() * 60 - 30).toFixed(0)}px;--dy:${(-30 - Math.random() * 90).toFixed(0)}px;animation-duration:${(7 + Math.random() * 9).toFixed(1)}s;animation-delay:${(Math.random() * 6).toFixed(1)}s"></i>`; }
   el.innerHTML = h;
 }
-function introStats(){
-  const ns = Object.keys(D.series).length, nm = Object.values(D.movies).filter(m => m.state === 'seen').length, nn = D.news.filter(n => !n.read).length;
-  $('#introStats').textContent = ns || nm ? `${ns} serie · ${nm} film visti${nn ? ` · ${nn} novità` : ''}` : '';
+function introStats(){ // il palmarès sotto "Entra": medaglia del mese, traguardi, serie e film
+  const ns = Object.keys(D.series).length, nm = Object.values(D.movies).filter(m => m.state === 'seen').length;
+  if (!ns && !nm) return;
+  let med = '';
+  try { const M = sfide().mese, n = M.sfide.filter(x => x.ok).length, m = new Date().getMonth();
+    med = `<div class="mm">${medaglia(n, m, 26, false)}<small>${MESI[m].slice(0, 3)}${n ? " · " + MET[n][0] : ""}</small></div><i class="sep"></i>`; } catch(e){}
+  const tr = (D.trofei || []).filter(t => !t.includes(' · ')).length;
+  $('#introStats').innerHTML = `${med}${tr ? `<div><b>${tr}</b><small>traguardi</small></div><i class="sep"></i>` : ''}<div><b>${ns}</b><small>serie</small></div><i class="sep"></i><div><b>${nm}</b><small>film visti</small></div>`;
 }
 
 /* ---------- MIGRAZIONE 1.7: tutto ciò che è stato inserito finora è storico ---------- */
