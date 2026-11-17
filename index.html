@@ -679,7 +679,7 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
     <div class="word">Visto!</div>
     <div class="tag">Le tue serie e i tuoi film,<br>sempre al punto giusto.</div>
     <button class="enter" data-act="enter">Entra</button>
-    <div class="palm" id="introStats"></div>
+    <div class="intro-stats" id="introStats"></div>
   </div>
 </div>
 
@@ -2547,14 +2547,9 @@ function polvere(){ // granelli di polvere che danzano nel fascio di luce
     h += `<i style="left:${x}%;top:${y}%;width:${sz}px;height:${sz}px;--o:${(.35 + Math.random() * .6).toFixed(2)};--dx:${(Math.random() * 60 - 30).toFixed(0)}px;--dy:${(-30 - Math.random() * 90).toFixed(0)}px;animation-duration:${(7 + Math.random() * 9).toFixed(1)}s;animation-delay:${(Math.random() * 6).toFixed(1)}s"></i>`; }
   el.innerHTML = h;
 }
-function introStats(){ // il palmarès sotto "Entra": medaglia del mese, traguardi, serie e film
-  const ns = Object.keys(D.series).length, nm = Object.values(D.movies).filter(m => m.state === 'seen').length;
-  if (!ns && !nm) return;
-  let med = '';
-  try { const M = sfide().mese, n = M.sfide.filter(x => x.ok).length, m = new Date().getMonth();
-    med = `<div class="mm">${medaglia(n, m, 26, false)}<small>${n ? MET[n][0] : MESI[m].slice(0, 3)}</small></div><i class="sep"></i>`; } catch(e){}
-  const tr = (D.trofei || []).filter(t => !t.includes(' · ')).length;
-  $('#introStats').innerHTML = `${med}${tr ? `<div><b>${tr}</b><small>traguardi</small></div><i class="sep"></i>` : ''}<div><b>${ns}</b><small>serie</small></div><i class="sep"></i><div><b>${nm}</b><small>film visti</small></div>`;
+function introStats(){
+  const ns = Object.keys(D.series).length, nm = Object.values(D.movies).filter(m => m.state === 'seen').length, nn = D.news.filter(n => !n.read).length;
+  $('#introStats').textContent = ns || nm ? `${ns} serie · ${nm} film visti${nn ? ` · ${nn} novità` : ''}` : '';
 }
 
 /* ---------- MIGRAZIONE 1.7: tutto ciò che è stato inserito finora è storico ---------- */
