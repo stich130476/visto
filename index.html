@@ -658,6 +658,7 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 .trasl b{display:block;font-size:14px}.trasl small{display:block;font-size:12.5px;color:var(--mut);line-height:1.45;margin-top:3px}
 
 /* barra in vetro, come WhatsApp: sempre presente, trasparente e sfocata, con un riflesso sul bordo */
+.sdate{display:flex;align-items:center;gap:8px;width:100%;margin:2px 0 10px;padding:10px 12px;border-radius:12px;border:1px dashed rgba(255,154,77,.35);background:rgba(255,154,77,.06);color:var(--txt);font:inherit;font-size:14px;text-align:left;white-space:normal;cursor:pointer}.sdate span{margin-left:auto;color:var(--a2);font-weight:700;font-size:13px;white-space:nowrap}
 .vult{display:inline-block;margin-top:4px;color:var(--a2);font-weight:700;cursor:pointer}
 .tabbar{background:rgba(30,26,40,.09);backdrop-filter:blur(8px) saturate(1.7) brightness(1.05);-webkit-backdrop-filter:blur(8px) saturate(1.7) brightness(1.05);
   border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.05),0 12px 34px rgba(0,0,0,.38)}
@@ -702,7 +703,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.40';
+const VERSIONE = '2.41';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -828,6 +829,29 @@ async function enrichShow(sh, tmdbId){
     sh.itEp = itEp;
     await bestPoster(sh);
   } catch(e){}
+}
+// date di una stagione: scelte a mano (sh.sd) oppure ricavate dagli episodi spuntati con la data
+function dateStag(sh, s){
+  const man = (sh.sd || {})[s] || {}, t = oggi();
+  const eps = sh.eps.filter(e => e.s === s && e.d && e.d <= t);
+  const ts = eps.map(e => sh.watched[e.i]).filter(v => v > 1e11), g = v => new Date(v).toLocaleDateString('sv');
+  const tutta = eps.length > 0 && eps.every(e => sh.watched[e.i]);
+  return {i:man.i || (ts.length ? g(Math.min(...ts)) : ''), f:man.f || (tutta && ts.length ? g(Math.max(...ts)) : ''), man:!!(man.i || man.f), tutta, vista:eps.some(e => sh.watched[e.i])};
+}
+// date della serie: inizio della prima stagione vista, fine dell'ultima (solo se l'hai finita)
+function dateSerie(sh){
+  const ss = [...new Set(sh.eps.map(e => e.s))].map(s => dateStag(sh, s)).filter(x => x.vista);
+  const fin = sh.stopped || showStats(sh).st === 'finite' || (showStats(sh).st === 'attesa' && ss.length && ss.every(x => x.tutta));
+  return {i:ss.map(x => x.i).filter(Boolean).sort()[0] || '', f:fin ? ss.map(x => x.f).filter(Boolean).sort().pop() || '' : ''};
+}
+// "dal 3 al 10 ott 2025", "dal 28 set al 4 ott 2025", "il 3 ott 2025"
+function fRange(a, b){
+  if (a && b){
+    if (a === b) return 'il ' + fData(a);
+    if (a.slice(0, 7) === b.slice(0, 7)) return `dal ${+a.slice(8, 10)} al ${fData(b)}`;
+    return `dal ${fData(a, a.slice(0, 4) !== b.slice(0, 4))} al ${fData(b)}`;
+  }
+  return a ? 'iniziata il ' + fData(a) : b ? 'finita il ' + fData(b) : '';
 }
 function showStats(sh){
   const t = oggi(), aired = sh.eps.filter(e => e.d && e.d <= t);
@@ -1288,6 +1312,7 @@ function showSheet(id, keep){
   <div class="pad">
     <div class="box"><div class="prog"><div class="ring"><svg viewBox="0 0 72 72"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5e62"/><stop offset="1" stop-color="#ffc857"/></linearGradient></defs><circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="7"/><circle cx="36" cy="36" r="30" fill="none" stroke="url(#rg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C2}" stroke-dashoffset="${C2 * (1 - x.pct / 100)}"/></svg><b>${x.pct}%</b></div>
       <div class="tx"><b>${stato}</b><p>${x.w} di ${plur(x.aired, 'episodio visto', 'episodi visti')}${x.left ? ` · ${x.left === 1 ? 'ne manca 1' : 'ne mancano ' + x.left} (circa ${ore(x.leftMin)})` : ''}</p>
+      ${(() => { const ds = dateSerie(sh); return ds.i || ds.f ? `<p>${ds.i ? 'Iniziata il ' + esc(fData(ds.i)) : ''}${ds.i && ds.f ? ' · ' : ''}${ds.f ? (ds.i ? 'finita il ' : 'Finita il ') + esc(fData(ds.f)) : ''}</p>` : ''; })()}
       ${x.next ? `<p>Prossimo: <b style="font-size:14px;color:var(--txt)">${epCode(x.next)}</b> · ${esc(epT(sh, x.next))}</p>` : ''}
       ${sh.next?.d ? `<p>Nuovo episodio ${epCode(sh.next)}: <b style="font-size:14px;color:var(--a2)">${esc(fGiorno(sh.next.d))}</b></p>` : (sh.status === 'Ended' || sh.closed ? '<p>Serie conclusa</p>' : (x.st === 'attesa' ? `<p class="cap2" style="white-space:normal;margin-top:4px">Nessun nuovo episodio annunciato. <button class="lnk" data-act="closeShow" data-id="${id}">È finita? Segnala come conclusa ›</button></p>` : ''))}</div></div>
       <div class="acts">${x.next && !sh.dropped ? `<button class="btn" data-act="quick" data-id="${id}">${I.check}Segna ${epCode(x.next)}</button>` : ''}
@@ -1301,6 +1326,8 @@ function showSheet(id, keep){
         return `<button class="schip ${s === cur ? 'on' : ''} ${se.length && w === se.length ? 'done' : ''}" data-act="season" data-id="${id}" data-s="${s}">Stagione ${s}<i style="width:${se.length ? w / se.length * 100 : 0}%"></i></button>`; }).join('')}</div>
       <div class="seasact"><span>${sW} di ${eps.length} visti${eps.length > sAired.length ? ` · ${eps.length - sAired.length} in arrivo` : ''}</span>
         ${sAired.length ? `<button class="lnk" data-act="seasonAll" data-id="${id}" data-s="${cur}">${sW === sAired.length ? 'Togli tutte le spunte' : 'Segna tutta la stagione'}</button>` : ''}</div>
+      ${(() => { const dz = dateStag(sh, cur); if (!dz.vista && !dz.man) return ''; const tx = dz.i && dz.f ? 'vista ' + fRange(dz.i, dz.f) : dz.i ? 'iniziata il ' + fData(dz.i) : dz.f ? 'finita il ' + fData(dz.f) : '';
+        return `<button class="sdate" data-act="sDate" data-id="${id}" data-s="${cur}">📅 ${tx ? 'Stagione ' + cur + ' ' + esc(tx) : 'Aggiungi quando hai visto la stagione ' + cur}<span>${tx ? 'modifica' : '›'}</span></button>`; })()}
       ${eps.map(e => { const fut = !e.d || e.d > t, on = !!sh.watched[e.i];
         return `<div class="ep ${fut ? 'fut' : ''}"><div class="n">E${String(e.n).padStart(2, '0')}</div><div class="nm" ${on ? `data-act="epWhen" data-id="${id}" data-e="${e.i}" role="button"` : ''}><b>${esc(epT(sh, e))}</b><small>${e.d ? (fut ? 'Esce ' + esc(fGiorno(e.d)) : esc(fData(e.d))) : 'Data da annunciare'}${e.r ? ' · ' + e.r + ' min' : ''}${on ? (sh.watched[e.i] > 1e11 ? ' · visto il ' + esc(fData(new Date(sh.watched[e.i]).toLocaleDateString('sv'), false)) : ' · <span style="color:var(--a2)">visto in passato ›</span>') : ''}</small></div>
         ${fut ? '' : `<button class="ck ${on ? 'on' : ''}" data-act="ep" data-id="${id}" data-e="${e.i}" aria-label="Visto">${I.check}</button>`}</div>`; }).join('')}
@@ -2238,6 +2265,24 @@ const A = {
   removeMovie(d){ const m = D.movies[d.id]; delete D.movies[d.id]; save(); closeSheet(); toast(`<b>${esc(m.title)}</b> rimosso`, 'Annulla', () => { D.movies[d.id] = m; save(); render(); }); },
   unsee(d){ const m = D.movies[d.id]; m.state = 'todo'; m.seenAt = ''; m.seenTs = 0; save(); movieSheet(d.id); },
   rate(d){ rateModal(d.id); },
+  sDate(d){
+    const sh = D.series[d.id], s = +d.s, dz = dateStag(sh, s);
+    UI.sdz = {id:d.id, s};
+    $('#mcard').innerHTML = `<h3>${esc(showName(sh))} · Stagione ${s}</h3><div class="s">Quando l'hai vista? Se non ricordi il giorno preciso va bene anche una data indicativa.</div>
+      <div class="lbl">Iniziata il</div><input class="fld" type="date" id="sdI" value="${esc(dz.i)}" max="${oggi()}">
+      <div class="lbl" style="margin-top:10px">Finita il</div><input class="fld" type="date" id="sdF" value="${esc(dz.f)}" max="${oggi()}">
+      ${dz.man ? '<p class="cap2" style="white-space:normal;margin-top:8px"><button class="lnk" data-act="sDateOff">Torna alle date degli episodi</button></p>' : ''}
+      <div class="mrow"><button class="btn ghost" data-act="closeModal">Annulla</button><button class="btn" data-act="sDateOk">Salva</button></div>`;
+    $('#modal').classList.add('open');
+  },
+  sDateOk(){
+    const {id, s} = UI.sdz, sh = D.series[id]; let i = $('#sdI').value, f = $('#sdF').value;
+    if (i && f && f < i) [i, f] = [f, i];
+    sh.sd = sh.sd || {};
+    if (i || f) sh.sd[s] = {i, f}; else delete sh.sd[s];
+    save(); $('#modal').classList.remove('open'); showSheet(id, true); toast('📅 Date della stagione salvate');
+  },
+  sDateOff(){ const {id, s} = UI.sdz, sh = D.series[id]; if (sh.sd) delete sh.sd[s]; save(); $('#modal').classList.remove('open'); showSheet(id, true); },
   epWhen(d){
     const sh = D.series[d.id], e = sh.eps.find(x => x.i == d.e), v = sh.watched[d.e];
     UI.ew = {id:d.id, e:d.e};
@@ -2470,7 +2515,7 @@ async function checkNews(force){
       const nu = await fetchShow(old.id);
       const oldMax = Math.max(0, ...old.eps.map(e => e.s)), newMax = Math.max(0, ...nu.eps.map(e => e.s));
       const fresh = nu.eps.filter(e => e.d && e.d > since && e.d <= t && !old.watched[e.i]);
-      const keep = {watched:old.watched, paused:old.paused, dropped:old.dropped, stopped:old.stopped, closed:old.closed, notes:old.notes, myRating:old.myRating, lastFull:old.lastFull, added:old.added, lastW:old.lastW, tmdb:old.tmdb, myGen:old.myGen, myPoster:old.myPoster, autoP:old.autoP, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
+      const keep = {sd:old.sd, watched:old.watched, paused:old.paused, dropped:old.dropped, stopped:old.stopped, closed:old.closed, notes:old.notes, myRating:old.myRating, lastFull:old.lastFull, added:old.added, lastW:old.lastW, tmdb:old.tmdb, myGen:old.myGen, myPoster:old.myPoster, autoP:old.autoP, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
       keep.tmg = old.tmg; keep.genres = normGen(nu.tvg, old.tmg || []);
       D.series[old.id] = Object.assign(nu, keep);
       const sh = D.series[old.id], name = showName(sh), img = showImg(sh, 'w185');
