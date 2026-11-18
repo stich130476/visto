@@ -701,7 +701,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.35';
+const VERSIONE = '2.36';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1993,7 +1993,7 @@ async function personSheet(pid, seg){
   openSheet(`<div class="phero"><div class="ph2">${fotoP(p.profile_path, p.name)}</div><div><h1>${esc(p.name)}</h1>
       <p>${regista ? 'Regista · ' : ''}${lista.length} titoli · <b style="color:var(--a2)">${nV} vist${nV === 1 ? 'o' : 'i'}</b>${nL ? ` · ${nL} da vedere` : ''}</p></div></div>
     <div class="pad"><div class="pseg">${[['tutti', 'Tutti'], ...(sug.length ? [['sug', '✨ Suggeriti']] : []), ['visti', 'Visti da me'], ['lista', 'In lista']].map(([k, l]) => `<button class="${UI.pseg === k ? 'on' : ''}" data-act="pSeg" data-s="${k}">${l}</button>`).join('')}</div>
-    ${UI.pseg === 'sug' ? `<p class="cap2" style="white-space:normal;margin:16px 2px 0">I suoi titoli migliori che non hai ancora visto, scelti anche in base ${(D.genPref || []).length ? 'ai generi preferiti che hai scelto' : 'ai generi che guardi di più'}.</p><div class="grid" style="margin-top:14px">${sug.map(card).join('')}</div>` : ''}
+    ${UI.pseg === 'sug' ? `<p class="cap2" style="white-space:normal;margin:16px 2px 0">I suoi 6 titoli migliori che non hai ancora visto, poi altri 6 scelti in base ${(D.genPref || []).length ? 'ai generi preferiti che hai scelto' : 'ai generi che guardi di più'}.</p><div class="grid" style="margin-top:14px">${sug.map(card).join('')}</div>` : ''}
     ${anni.map(g => `<h2 class="sec">${esc(g.y)} <small>${g.l.length}</small></h2><div class="grid">${g.l.map(card).join('')}</div>`).join('') || (UI.pseg === 'sug' ? '' : '<p class="hint">Nessun titolo qui.</p>')}</div>`, !!seg);
 }
 // Generi TMDB (id) -> i 10 generi di Visto!
@@ -2014,12 +2014,16 @@ function gusti(){
   return {quota:k => (tot ? Math.max(0, g[k] || 0) / tot : 0) + (pref.includes(k) ? .25 : 0), top};
 }
 function suggeriti(lista){
+  // prima i 6 migliori in assoluto (voto TMDB), poi 6 scelti in base ai tuoi generi
   const G = gusti();
-  return lista.filter(x => x.stato !== 'visto' && x.n >= (x.kind === 'tv' ? 60 : 150) && x.q >= 6)
-    .map(x => { const tuo = G.top.includes(x.gen);
-      return {...x, sc:x.q + 4 * G.quota(x.gen) + (x.kind === 'movie' ? (x.ord <= 2 ? .7 : x.ord <= 5 ? .3 : 0) : (x.ep >= 8 ? .5 : 0)),
-        why:tuo ? 'Il tuo genere' : x.q >= 7.5 ? 'Tra i suoi migliori' : 'Ben recensito', voto:x.q.toFixed(1).replace('.', ',')}; })
-    .sort((a, b) => b.sc - a.sc).slice(0, 12);
+  const ok = lista.filter(x => x.stato !== 'visto' && x.n >= (x.kind === 'tv' ? 60 : 150) && x.q >= 6)
+    .map(x => ({...x, tuo:G.top.includes(x.gen), voto:x.q.toFixed(1).replace('.', ',')}));
+  const best = [...ok].sort((a, b) => b.q - a.q || b.n - a.n).slice(0, 6).map(x => ({...x, why:'Tra i suoi migliori'}));
+  const resto = ok.filter(x => !best.some(y => y.kind === x.kind && y.id === x.id))
+    .map(x => ({...x, sc:x.q + 4 * G.quota(x.gen) + (x.tuo ? 1.5 : 0) + (x.kind === 'movie' ? (x.ord <= 2 ? .7 : x.ord <= 5 ? .3 : 0) : (x.ep >= 8 ? .5 : 0)),
+      why:x.tuo ? 'Il tuo genere' : 'Ben recensito'}))
+    .sort((a, b) => b.sc - a.sc).slice(0, 6);
+  return [...best, ...resto];
 }
 function pvModal(kind, id){
   const x = PERS[UI.open?.id]?._lista?.find(y => y.kind === kind && y.id == id); if (!x) return;
