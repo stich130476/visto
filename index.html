@@ -656,6 +656,9 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 .trasl b{display:block;font-size:14px}.trasl small{display:block;font-size:12.5px;color:var(--mut);line-height:1.45;margin-top:3px}
 
 /* barra in vetro, come WhatsApp: sempre presente, trasparente e sfocata, con un riflesso sul bordo */
+/* generi preferiti */
+.gpref{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:14px;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,182,72,.32);background:linear-gradient(135deg,rgba(255,182,72,.10),rgba(255,182,72,.02));cursor:pointer}
+.gpref b{color:var(--a2);font-family:var(--serif);font-size:16px}.gpref span{margin-left:auto;font-size:13px;font-weight:700;color:var(--a2)}.gpref small{flex:1 1 100%;color:var(--mut);font-size:13px;white-space:normal;line-height:1.35}
 .tabbar{background:rgba(30,26,40,.09);backdrop-filter:blur(8px) saturate(1.7) brightness(1.05);-webkit-backdrop-filter:blur(8px) saturate(1.7) brightness(1.05);
   border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.05),0 12px 34px rgba(0,0,0,.38)}
 .tabbar button.on{background:rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
@@ -699,7 +702,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.32';
+const VERSIONE = '2.33';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1158,8 +1161,9 @@ function renderIo(){
   </div>
   <button class="yearbtn fadein" data-act="year"><span style="font-size:34px">✨</span><span><b>Il mio ${y} in Visto!</b><small>Il riepilogo del tuo anno davanti allo schermo</small></span><span class="ar">›</span></button>
   <div class="iog">
-  ${top[0][1] ? `<div class="box"><h4>La classifica dei tuoi generi</h4>${top.map(([g, n], i) => `<div class="gbar" data-act="genre" data-g="${esc(g)}" role="button" style="cursor:pointer"><em style="width:18px;text-align:left;color:${i < 3 ? 'var(--a2)' : 'var(--mut2)'};font-weight:800">${i + 1}</em><span>${esc(g)}</span><div class="bar"><i style="width:${n / mx * 100}%;${n ? '' : 'opacity:0'}"></i></div><em>${n}</em><span style="width:24px;text-align:right">${move(g)}</span></div>`).join('')}
-    <p class="cap2" style="margin-top:8px;white-space:normal">Tocca un genere per vedere i titoli · le frecce mostrano come cambia la classifica rispetto alla settimana scorsa</p></div>` : ''}
+  ${top[0][1] ? `<div class="box"><h4>La classifica dei tuoi generi</h4>${top.map(([g, n], i) => `<div class="gbar" data-act="genre" data-g="${esc(g)}" role="button" style="cursor:pointer"><em style="width:18px;text-align:left;color:${i < 3 ? 'var(--a2)' : 'var(--mut2)'};font-weight:800">${i + 1}</em><span>${esc(g)}${(D.genPref || []).includes(g) ? ' <b style="color:var(--a2);font-size:12px">★</b>' : ''}</span><div class="bar"><i style="width:${n / mx * 100}%;${n ? '' : 'opacity:0'}"></i></div><em>${n}</em><span style="width:24px;text-align:right">${move(g)}</span></div>`).join('')}
+    <p class="cap2" style="margin-top:8px;white-space:normal">Tocca un genere per vedere i titoli · le frecce mostrano come cambia la classifica rispetto alla settimana scorsa</p>
+    <div class="gpref" data-act="genPrefOpen" role="button"><b>★ I miei generi preferiti</b><span>Scegli ›</span><small>${(D.genPref || []).length ? D.genPref.map(esc).join(' · ') : 'Non ancora scelti: per ora li deduco da quello che guardi'}</small></div></div>` : ''}
   ${recMin ? `<div class="box"><h4>Da recuperare</h4><div class="bigline">${dur(recMin)}</div><p class="cap2" style="white-space:normal;font-size:14px">il tempo per finire le serie in corso e vedere tutti i film in lista</p></div>` : ''}
   ${plTop.length ? `<div class="box"><h4>Le tue piattaforme</h4>${plTop.map(([n, v]) => `<div class="gbar" data-act="plat" data-p="${esc(n)}" role="button" style="cursor:pointer"><span>${esc(n)}</span><div class="bar"><i style="width:${v / plMx * 100}%"></i></div><em style="width:66px;white-space:nowrap;text-align:right">${ore(v)}</em></div>`).join('')}<p class="cap2" style="margin-top:8px;white-space:normal">Tocca una piattaforma per vedere i titoli</p></div>` : ''}
   <div class="box"><h4>Abitudini</h4>${dated >= 5 ? (() => {
@@ -1948,7 +1952,7 @@ async function personSheet(pid, seg){
       if (il.k === 'm') stato = il.it.state === 'seen' ? 'visto' : 'lista';
       else { const x = showStats(il.it); stato = x.w ? 'visto' : 'lista'; }
     }
-    lista.push({kind, id:c.id, t:c.title || c.name, d, y:d.slice(0, 4), ch, img:il ? (il.k === 'm' ? movImg(il.it) : showImg(il.it)) : (c.poster_path ? IMG + 'w342' + c.poster_path : ''), il, stato, plot:c.overview || '', pop:c.popularity || 0, q:c.vote_average || 0, n:c.vote_count || 0, gen:genDaTmdb(c.genre_ids), ord:c.order ?? c.episode_count ?? 99, ep:c.episode_count || 0});
+    lista.push({kind, id:c.id, t:c.title || c.name, d, y:d.slice(0, 4), ch, img:il ? (il.k === 'm' ? movImg(il.it) : showImg(il.it)) : (c.poster_path ? IMG + 'w342' + c.poster_path : ''), il, stato, plot:c.overview || '', pop:c.popularity || 0, q:c.vote_average || 0, n:c.vote_count || 0, gen:genPrinc(c.genre_ids), ord:c.order ?? c.episode_count ?? 99, ep:c.episode_count || 0});
   }
   // antologie: una sola locandina per tutta la serie (es. Monster)
   for (let i = 0; i < lista.length; i++){
@@ -1986,11 +1990,14 @@ async function personSheet(pid, seg){
   openSheet(`<div class="phero"><div class="ph2">${fotoP(p.profile_path, p.name)}</div><div><h1>${esc(p.name)}</h1>
       <p>${regista ? 'Regista · ' : ''}${lista.length} titoli · <b style="color:var(--a2)">${nV} vist${nV === 1 ? 'o' : 'i'}</b>${nL ? ` · ${nL} da vedere` : ''}</p></div></div>
     <div class="pad"><div class="pseg">${[['tutti', 'Tutti'], ...(sug.length ? [['sug', '✨ Suggeriti']] : []), ['visti', 'Visti da me'], ['lista', 'In lista']].map(([k, l]) => `<button class="${UI.pseg === k ? 'on' : ''}" data-act="pSeg" data-s="${k}">${l}</button>`).join('')}</div>
-    ${UI.pseg === 'sug' ? `<p class="cap2" style="white-space:normal;margin:16px 2px 0">I suoi titoli migliori che non hai ancora visto, scelti anche in base ai generi che guardi di più.</p><div class="grid" style="margin-top:14px">${sug.map(card).join('')}</div>` : ''}
+    ${UI.pseg === 'sug' ? `<p class="cap2" style="white-space:normal;margin:16px 2px 0">I suoi titoli migliori che non hai ancora visto, scelti anche in base ai tuoi generi preferiti.</p><div class="grid" style="margin-top:14px">${sug.map(card).join('')}</div>` : ''}
     ${anni.map(g => `<h2 class="sec">${esc(g.y)} <small>${g.l.length}</small></h2><div class="grid">${g.l.map(card).join('')}</div>`).join('') || (UI.pseg === 'sug' ? '' : '<p class="hint">Nessun titolo qui.</p>')}</div>`, !!seg);
 }
 // Generi TMDB (id) -> i 10 generi di Visto!
 const TMG = {28:'Azione',12:'Avventura',16:'Animazione',35:'Commedia',80:'Crime',18:'Dramma',14:'Fantasy',36:'Storia',27:'Horror',9648:'Mistero',10749:'Romance',878:'Fantascienza',53:'Thriller',10752:'Guerra',37:'Western',10759:'Azione',10765:'Fantascienza',10768:'Guerra'};
+// Se TMDB mette Drammatico per primo e non c'è un genere forte (horror, fantascienza, mistero, thriller, fantasy, animazione), è un dramma
+const FORTI = [27, 878, 9648, 53, 14, 16, 10765];
+const genPrinc = ids => (ids || [])[0] === 18 && !(ids || []).some(i => FORTI.includes(i)) ? 'Drammatico' : genDaTmdb(ids);
 const genDaTmdb = ids => { const m = macro((ids || []).map(i => TMG[i]).filter(Boolean)).filter(g => g !== 'Altro'); const r = PRIO.find(g => m.includes(g)) || 'Altro'; return r === '_mistero' ? 'Horror & Mistero' : r; };
 // Quanto ti piace ogni genere: quanti titoli hai visto, con un peso in più per quelli che hai votato bene
 function gusti(){
@@ -1998,8 +2005,9 @@ function gusti(){
   const add = (gen, v) => { g[gen] = (g[gen] || 0) + v; tot += v; };
   Object.values(D.movies).forEach(m => { if (m.state === 'seen') add(mainGen(m), 1 + (m.rating >= 4 ? 1.5 : m.rating && m.rating <= 2 ? -.7 : 0)); });
   Object.values(D.series).forEach(sh => { if (Object.keys(sh.watched || {}).length) add(mainGen(sh), 1.5 + (sh.myRating >= 4 ? 1.5 : sh.myRating && sh.myRating <= 2 ? -.7 : 0)); });
-  const top = Object.entries(g).filter(([k]) => k !== 'Altro').sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
-  return {quota:k => tot ? Math.max(0, g[k] || 0) / tot : 0, top};
+  const pref = (D.genPref || []).filter(Boolean);
+  const top = pref.length ? pref : Object.entries(g).filter(([k]) => k !== 'Altro').sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
+  return {quota:k => (tot ? Math.max(0, g[k] || 0) / tot : 0) + (pref.includes(k) ? .25 : 0), top};
 }
 function suggeriti(lista){
   const G = gusti();
@@ -2323,6 +2331,15 @@ const A = {
       <div class="mrow">${it.myGen ? '<button class="btn ghost" data-act="setGen" data-g="">Torna automatico</button>' : ''}<button class="btn ghost" data-act="closeModal">Chiudi</button></div>`;
     $('#modal').classList.add('open');
   },
+  genPrefOpen(){
+    UI.gp = [...(D.genPref || [])];
+    const draw = () => { $('#mcard').innerHTML = `<h3>I miei generi preferiti</h3><div class="s">Scegline quanti vuoi: i titoli suggeriti di attori e registi partiranno da questi.</div>
+      <div class="tchips" style="flex-wrap:wrap">${['Thriller & Crime','Horror & Mistero','Fantascienza','Commedia','Drammatico','Animazione','Avventura','Fantasy','Storico'].map(g => `<button style="flex:1 1 30%" class="${UI.gp.includes(g) ? 'on' : ''}" data-act="genPrefTog" data-g="${esc(g)}">${UI.gp.includes(g) ? '★ ' : ''}${esc(g)}</button>`).join('')}</div>
+      <div class="mrow"><button class="btn ghost" data-act="closeModal">Annulla</button><button class="btn" data-act="genPrefOk">Salva</button></div>`; };
+    UI.gpDraw = draw; draw(); $('#modal').classList.add('open');
+  },
+  genPrefTog(d){ const i = UI.gp.indexOf(d.g); i < 0 ? UI.gp.push(d.g) : UI.gp.splice(i, 1); UI.gpDraw(); },
+  genPrefOk(){ D.genPref = UI.gp.slice(); save(); $('#modal').classList.remove('open'); refreshView(); toast(D.genPref.length ? '★ Generi preferiti salvati' : 'Generi preferiti: li deduco da quello che guardi'); },
   setGen(d){ const it = UI.pg.k === 's' ? D.series[UI.pg.id] : D.movies[UI.pg.id]; it.myGen = d.g || null; save(); $('#modal').classList.remove('open'); refreshView(); toast('🏷️ Genere: ' + esc(mainGen(it))); },
   star(d){ UI.rate.r = UI.rate.r === +d.n ? 0 : +d.n; document.querySelectorAll('.rate button').forEach((b, i) => b.classList.toggle('on', i < UI.rate.r)); },
   rateShow(d){ rateShowModal(d.id); },
