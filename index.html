@@ -658,6 +658,7 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 .trasl b{display:block;font-size:14px}.trasl small{display:block;font-size:12.5px;color:var(--mut);line-height:1.45;margin-top:3px}
 
 /* barra in vetro, come WhatsApp: sempre presente, trasparente e sfocata, con un riflesso sul bordo */
+.vult{display:inline-block;margin-top:4px;color:var(--a2);font-weight:700;cursor:pointer}
 .tabbar{background:rgba(30,26,40,.09);backdrop-filter:blur(8px) saturate(1.7) brightness(1.05);-webkit-backdrop-filter:blur(8px) saturate(1.7) brightness(1.05);
   border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.05),0 12px 34px rgba(0,0,0,.38)}
 .tabbar button.on{background:rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
@@ -701,7 +702,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.39';
+const VERSIONE = '2.40';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1196,7 +1197,7 @@ function renderIo(){
     <div class="set"><div class="l"><b>Modalità archivio</b><small>Attivala mentre inserisci serie e film visti in passato: non falseranno le statistiche di oggi</small></div><button class="sw ${C.archivio ? 'on' : ''}" data-act="toggleArch" aria-label="Archivio"></button></div>
     <div class="set"><div class="l"><b>Novità</b><small>${D.lastCheck ? 'Ultimo controllo ' + new Date(D.lastCheck).toLocaleString('it-IT', {weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Mai controllato'} · automatico ogni settimana</small></div><button class="btn small ghost" data-act="checkNews">Controlla</button></div>
     ${ioNews()}
-    <div class="set"><div class="l"><b>Voti MYmovies</b><small>${UI.mmBusy ? `<span class="mmrun">Cerco su MYmovies…</span> ${UI.mmBusy === 'tutti' ? 'può servire qualche minuto' : 'un titolo solo'}` : UI.mmPerm ? '<span style="color:var(--a2)">La chiave GitHub non può avviare la ricerca: manca il permesso «Actions»</span>' : `Ogni notte alle 5:40${C.mmUlt ? ' · ultima ricerca ' + new Date(C.mmUlt).toLocaleString('it-IT', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : ''}`}</small></div><button class="btn small ghost ${UI.mmBusy ? 'mmb' : ''}" data-act="cercaVoti" ${UI.mmBusy ? 'disabled' : ''}>${UI.mmBusy ? '<i class="mmsp"></i>' : '⭐ Cerca adesso'}</button></div>
+    <div class="set"><div class="l"><b>Voti MYmovies</b><small>${UI.mmBusy ? `<span class="mmrun">Cerco su MYmovies…</span> ${UI.mmBusy === 'tutti' ? 'può servire qualche minuto' : 'un titolo solo'}` : UI.mmPerm ? '<span style="color:var(--a2)">La chiave GitHub non può avviare la ricerca: manca il permesso «Actions»</span>' : `Ogni notte alle 5:40${C.mmUlt ? ' · ultima ricerca ' + new Date(C.mmUlt).toLocaleString('it-IT', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : ''}`}${D.news.some(x => x.ref === 'voti') ? '<br><span class="vult" data-act="votiUlt" role="button">Rivedi gli ultimi voti arrivati ›</span>' : ''}</small></div><button class="btn small ghost ${UI.mmBusy ? 'mmb' : ''}" data-act="cercaVoti" ${UI.mmBusy ? 'disabled' : ''}>${UI.mmBusy ? '<i class="mmsp"></i>' : '⭐ Cerca adesso'}</button></div>
   </div>
   <div class="box"><h4>Chiave TMDB (film e trame in italiano)</h4>
     <input class="fld" id="tmdbKey" type="password" placeholder="Incolla qui la chiave" value="${esc(C.tmdb)}" autocomplete="off" autocapitalize="off" spellcheck="false">
@@ -2352,6 +2353,8 @@ const A = {
     UI.gpDraw = draw; draw(); $('#modal').classList.add('open');
   },
   genPrefTog(d){ const i = UI.gp.indexOf(d.g); i < 0 ? UI.gp.push(d.g) : UI.gp.splice(i, 1); UI.gpDraw(); },
+  // riapre l'ultima finestra dei voti arrivati (le notizie lette restano 30 giorni)
+  votiUlt(){ const n = D.news.filter(x => x.ref === 'voti').sort((a, b) => (b.d || '').localeCompare(a.d || '') || (b.at || 0) - (a.at || 0))[0]; if (n) votiModal(n); else toast('Nessun voto arrivato negli ultimi 30 giorni'); },
   genPrefOff(){ D.genPref = []; save(); refreshView(); toast('Generi preferiti: automatici'); },
   genPrefOk(){ D.genPref = UI.gp.slice(); save(); $('#modal').classList.remove('open'); refreshView(); toast(D.genPref.length ? '★ Generi preferiti salvati' : 'Generi preferiti: li deduco da quello che guardi'); },
   setGen(d){ const it = UI.pg.k === 's' ? D.series[UI.pg.id] : D.movies[UI.pg.id]; it.myGen = d.g || null; save(); $('#modal').classList.remove('open'); refreshView(); toast('🏷️ Genere: ' + esc(mainGen(it))); },
