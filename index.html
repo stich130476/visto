@@ -1279,7 +1279,7 @@ function showSheet(id, keep){
   <div class="hero"><div class="bk ${sh.back ? '' : 'blur'}" style="background-image:url('${esc(showBack(sh))}')"></div><button class="more" data-act="more" data-k="s" data-id="${id}" aria-label="Altre azioni"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button></div>
   <div class="hhead"><div data-act="posters" data-k="s" data-id="${id}" role="button" style="position:relative">${poster(showImg(sh), showName(sh), 'pimg')}</div><div style="min-width:0;padding-bottom:4px"><h2>${esc(showName(sh))}</h2>
     ${sh.itName && sh.itName !== sh.name ? `<div class="it">${esc(sh.name)}</div>` : ''}
-    <div class="mline">${[years, sh.net, genVis(sh)].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('<i>·</i>')}</div>${voti(sh.myRating, 's' + sh.id)}
+    <div class="mline">${[years, sh.net].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('<i>·</i>')}</div>${voti(sh.myRating, 's' + sh.id)}
     <button class="pill" style="margin-top:8px;background:rgba(255,154,77,.16);color:var(--a2)" data-act="pickGen" data-k="s" data-id="${id}">🏷️ ${esc(mainGen(sh))} ›</button></div></div>
   <div class="pad">
     <div class="box"><div class="prog"><div class="ring"><svg viewBox="0 0 72 72"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5e62"/><stop offset="1" stop-color="#ffc857"/></linearGradient></defs><circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="7"/><circle cx="36" cy="36" r="30" fill="none" stroke="url(#rg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C2}" stroke-dashoffset="${C2 * (1 - x.pct / 100)}"/></svg><b>${x.pct}%</b></div>
@@ -1321,7 +1321,7 @@ function movieSheet(id, keep){
   <div class="hero"><div class="bk ${m.back ? '' : 'blur'}" style="background-image:url('${esc(m.back ? IMG + 'w1280' + m.back : movImg(m))}')"></div><button class="more" data-act="more" data-k="m" data-id="${id}" aria-label="Altre azioni"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button></div>
   <div class="hhead"><div data-act="posters" data-k="m" data-id="${id}" role="button" style="position:relative">${poster(movImg(m), m.title, 'pimg')}</div><div style="min-width:0;padding-bottom:4px"><h2>${esc(m.title)}</h2>
     ${m.orig && m.orig !== m.title ? `<div class="it">${esc(m.orig)}</div>` : ''}
-    <div class="mline">${[m.year, runtime, genVis(m)].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('<i>·</i>')}</div>${voti(m.state === 'seen' ? m.rating : 0, 'm' + m.id)}
+    <div class="mline">${[m.year, runtime].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('<i>·</i>')}</div>${voti(m.state === 'seen' ? m.rating : 0, 'm' + m.id)}
     <button class="pill" style="margin-top:8px;background:rgba(255,154,77,.16);color:var(--a2)" data-act="pickGen" data-k="m" data-id="${id}">🏷️ ${esc(mainGen(m))} ›</button></div></div>
   <div class="pad">
     ${m.state === 'seen' ? `<div class="box"><h4>Il mio ricordo</h4><div style="font-size:22px">${stars(m.rating) || '<span class="cap2">Nessun voto</span>'}</div>
