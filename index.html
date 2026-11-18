@@ -1872,6 +1872,7 @@ function sfide(){
   while (bach.length && !bach.at(-1).sfide.some(x => x.ok)) bach.pop(); // il medagliere parte dalla prima medaglia
   return {fisse:out, mese:cur, gg, bach};
 }
+const NAVVETRO = true; // solo per il video di prova
 const PERS = {};
 // TMDB → TVmaze per le serie che TMDB registra con un altro id (es. le antologie come Monster)
 let TMAP = load('visto-tmap') || {};
