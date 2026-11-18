@@ -702,7 +702,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.41';
+const VERSIONE = '2.42';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -837,11 +837,13 @@ function dateStag(sh, s){
   const tutta = eps.length > 0 && eps.every(e => sh.watched[e.i]);
   return {i:ts.length ? g(Math.min(...ts)) : '', f:tutta && ts.length ? g(Math.max(...ts)) : '', tutta, vista:eps.some(e => sh.watched[e.i])};
 }
-// date della serie: inizio della prima stagione vista, fine dell'ultima (solo se l'hai finita)
+// date della serie: inizio della prima stagione vista, fine dell'ultima (solo se l'hai finita).
+// Se una parte è stata inserita in archivio (senza data) l'inizio vero non si conosce: resta solo la fine
 function dateSerie(sh){
   const ss = [...new Set(sh.eps.map(e => e.s))].map(s => dateStag(sh, s)).filter(x => x.vista);
   const fin = sh.stopped || showStats(sh).st === 'finite' || (showStats(sh).st === 'attesa' && ss.length && ss.every(x => x.tutta));
-  return {i:ss.map(x => x.i).filter(Boolean).sort()[0] || '', f:fin ? ss.map(x => x.f).filter(Boolean).sort().pop() || '' : ''};
+  const archivio = Object.values(sh.watched).some(v => v === 1);
+  return {i:archivio ? '' : ss.map(x => x.i).filter(Boolean).sort()[0] || '', f:fin ? ss.map(x => x.f).filter(Boolean).sort().pop() || '' : ''};
 }
 // "dal 3 al 10 ott 2025", "dal 28 set al 4 ott 2025", "il 3 ott 2025"
 function fRange(a, b){
