@@ -182,6 +182,8 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .pst{aspect-ratio:2/3;border-radius:14px;overflow:hidden;position:relative;background:linear-gradient(145deg,#2a2140,#15111f);box-shadow:0 8px 22px rgba(0,0,0,.4);transition:transform .2s}
 .pst img{width:100%;height:100%;object-fit:cover}
 .pst .ph{position:absolute;inset:0;display:flex;align-items:flex-end;padding:10px;font:700 14px/1.15 var(--serif);color:rgba(255,255,255,.9)}
+.pst .tipo{position:absolute;right:7px;bottom:7px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;background:rgba(10,9,16,.62);backdrop-filter:blur(10px) saturate(1.6);-webkit-backdrop-filter:blur(10px) saturate(1.6);border:1px solid rgba(255,255,255,.24);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.pst .tipo svg{width:14px;height:14px}
 .pst .bdg{position:absolute;top:7px;left:7px;max-width:calc(100% - 14px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(10,9,16,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .pst .bdg.hot{background:var(--grad);color:#2a0d05}
 .pst .bdg:not(.hot){color:#fff}
@@ -699,7 +701,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.33';
+const VERSIONE = '2.34';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1978,12 +1980,15 @@ async function personSheet(pid, seg){
   const filt = UI.pseg === 'visti' ? lista.filter(x => x.stato === 'visto') : UI.pseg === 'lista' ? lista.filter(x => x.stato) : UI.pseg === 'sug' ? [] : lista;
   const anni = [];
   for (const x of filt){ const y = x.y || 'Senza data'; let g = anni.find(a => a.y === y); if (!g) anni.push(g = {y, l:[]}); g.l.push(x); }
+  // in basso a destra: serie o film (icone come nella barra, su un dischetto scuro: si leggono anche sulle locandine bianche)
+  const TIPO = {tv:'<span class="tipo" aria-label="Serie TV"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M8 2.5 12 6l4-3.5"/></svg></span>',
+    movie:'<span class="tipo" aria-label="Film"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4M3 12h18"/></svg></span>'};
   const card = x => {
     const sub = x.il && x.il.k === 's' ? (() => { const s2 = showStats(x.il.it); return s2.pct ? s2.pct + '% visto' : 'in lista'; })() : '';
-    if (x.anto && x.antoN) return `<button class="pc-it fadein" data-act="antoOpen" data-n="${esc(x.anto)}">${poster(x.img, x.t, 'pst', `<span class="bdg hot">${x.antoV === x.antoN ? '✓ ' : ''}${x.antoV}/${x.antoN} storie</span>`)}<div class="cap">${esc(x.t)}</div><div class="cap2">Antologia${x.ch ? ' · ' + esc(x.ch) : ''}</div></button>`;
+    if (x.anto && x.antoN) return `<button class="pc-it fadein" data-act="antoOpen" data-n="${esc(x.anto)}">${poster(x.img, x.t, 'pst', `<span class="bdg hot">${x.antoV === x.antoN ? '✓ ' : ''}${x.antoV}/${x.antoN} storie</span>` + TIPO.tv)}<div class="cap">${esc(x.t)}</div><div class="cap2">Antologia${x.ch ? ' · ' + esc(x.ch) : ''}</div></button>`;
     const bdg = x.voto ? `<span class="bdg"><span class="st">★</span> ${x.voto}</span>${x.stato === 'lista' ? '<span class="bdg" style="left:auto;right:7px">In lista</span>' : ''}` : x.stato === 'visto' ? `<span class="bdg hot">✓ ${x.kind === 'tv' ? (sub === '100% visto' ? 'Vista' : sub) : 'Visto'}</span>` : x.stato === 'lista' ? '<span class="bdg">Da vedere</span>' : '';
     const sub2 = x.why || x.ch;
-    return `<button class="pc-it fadein ${x.stato || x.why ? '' : 'dim'}" data-act="pOpen" data-k="${x.kind}" data-id="${x.id}">${poster(x.img, x.t, 'pst', bdg)}<div class="cap">${esc(x.t)}</div>${sub2 ? `<div class="cap2">${esc(sub2)}</div>` : ''}</button>`;
+    return `<button class="pc-it fadein ${x.stato || x.why ? '' : 'dim'}" data-act="pOpen" data-k="${x.kind}" data-id="${x.id}">${poster(x.img, x.t, 'pst', bdg + (TIPO[x.kind] || ''))}<div class="cap">${esc(x.t)}</div>${sub2 ? `<div class="cap2">${esc(sub2)}</div>` : ''}</button>`;
   };
   openSheet(`<div class="phero"><div class="ph2">${fotoP(p.profile_path, p.name)}</div><div><h1>${esc(p.name)}</h1>
       <p>${regista ? 'Regista · ' : ''}${lista.length} titoli · <b style="color:var(--a2)">${nV} vist${nV === 1 ? 'o' : 'i'}</b>${nL ? ` · ${nL} da vedere` : ''}</p></div></div>
