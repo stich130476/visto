@@ -1200,7 +1200,7 @@ function renderIo(){
       <li>Come uso indica "personale", app "Visto", URL: il tuo indirizzo GitHub Pages.</li>
       <li>Copia la <b>Chiave API</b> (32 caratteri) e incollala qui sopra.</li></ol></details>
   </div>
-  <div class="box"><h4>Generi preferiti</h4><p class="plot" style="font-size:14px;margin-bottom:10px">${(D.genPref || []).length ? 'Scelti da te: <b>' + D.genPref.map(esc).join(' · ') + '</b>' : 'Automatici: Visto! usa i primi tre della classifica dei tuoi generi.'} Servono per i titoli suggeriti di attori e registi.</p>
+  <div class="box"><h4>Generi preferiti</h4><p class="plot" style="font-size:14px;margin-bottom:10px">${(D.genPref || []).length ? 'Scelti da te: <b>' + D.genPref.map(esc).join(' · ') + '</b>.' : 'Automatici: Visto! usa i primi tre della classifica dei tuoi generi.'} Servono per i titoli suggeriti di attori e registi.</p>
     <div class="acts" style="margin-top:0"><button class="btn small ghost" data-act="genPrefOpen">${(D.genPref || []).length ? 'Cambia' : 'Scegli i tuoi'}</button>${(D.genPref || []).length ? '<button class="btn small ghost" data-act="genPrefOff">Torna automatici</button>' : ''}</div></div>
   <div class="box"><h4>Sincronizzazione tra dispositivi</h4>
     <p class="plot" style="font-size:14px;margin-bottom:10px">Stato: ${sync}</p>
@@ -1988,7 +1988,7 @@ async function personSheet(pid, seg){
   openSheet(`<div class="phero"><div class="ph2">${fotoP(p.profile_path, p.name)}</div><div><h1>${esc(p.name)}</h1>
       <p>${regista ? 'Regista · ' : ''}${lista.length} titoli · <b style="color:var(--a2)">${nV} vist${nV === 1 ? 'o' : 'i'}</b>${nL ? ` · ${nL} da vedere` : ''}</p></div></div>
     <div class="pad"><div class="pseg">${[['tutti', 'Tutti'], ...(sug.length ? [['sug', '✨ Suggeriti']] : []), ['visti', 'Visti da me'], ['lista', 'In lista']].map(([k, l]) => `<button class="${UI.pseg === k ? 'on' : ''}" data-act="pSeg" data-s="${k}">${l}</button>`).join('')}</div>
-    ${UI.pseg === 'sug' ? `<p class="cap2" style="white-space:normal;margin:16px 2px 0">I suoi titoli migliori che non hai ancora visto, scelti anche in base ai tuoi generi preferiti.</p><div class="grid" style="margin-top:14px">${sug.map(card).join('')}</div>` : ''}
+    ${UI.pseg === 'sug' ? `<p class="cap2" style="white-space:normal;margin:16px 2px 0">I suoi titoli migliori che non hai ancora visto, scelti anche in base ${(D.genPref || []).length ? 'ai generi preferiti che hai scelto' : 'ai generi che guardi di più'}.</p><div class="grid" style="margin-top:14px">${sug.map(card).join('')}</div>` : ''}
     ${anni.map(g => `<h2 class="sec">${esc(g.y)} <small>${g.l.length}</small></h2><div class="grid">${g.l.map(card).join('')}</div>`).join('') || (UI.pseg === 'sug' ? '' : '<p class="hint">Nessun titolo qui.</p>')}</div>`, !!seg);
 }
 // Generi TMDB (id) -> i 10 generi di Visto!
