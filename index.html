@@ -701,7 +701,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.36';
+const VERSIONE = '2.37';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -2051,8 +2051,8 @@ async function doSearch(q){
   const pq = C.tmdb ? tmdb('/search/person', {query:q}).catch(() => null) : null;
   const persone = async () => {
     const r = pq && await pq; if (!r || $('#q')?.value.trim() !== q) return;
-    const nq = norm2(q);
-    const l = (r.results || []).filter(x => x.profile_path && (x.known_for_department === 'Acting' || x.known_for_department === 'Directing') && norm2(x.name).includes(nq)).slice(0, 6);
+    const nq = norm2(q).replace(/ /g, ''); // senza spazi: "Di Caprio" trova anche DiCaprio
+    const l = (r.results || []).filter(x => x.profile_path && (x.known_for_department === 'Acting' || x.known_for_department === 'Directing') && norm2(x.name).replace(/ /g, '').includes(nq)).slice(0, 6);
     if (!l.length || !$('#results')) return;
     const h0 = $('#results .hint'); if (h0 && /trovat/.test(h0.textContent)) h0.remove();
     $('#results').insertAdjacentHTML('afterbegin', `<div class="box" style="margin-top:4px"><h4>Persone</h4><div class="castrow">${l.map(a => `<button class="cast" data-act="person" data-id="${a.id}" data-from="search"><div class="ph2">${fotoP(a.profile_path, a.name)}</div><b>${esc(a.name)}</b><small>${esc((a.known_for || []).map(k => k.title || k.name).slice(0, 2).join(', '))}</small></button>`).join('')}</div></div>`);
