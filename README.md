@@ -33,7 +33,7 @@
   <tr>
     <td align="center"><img src="screenshot/10-consigliati.jpg" width="240" alt="Consigliati"><br><sub><b>Consigliati per te</b></sub></td>
     <td align="center"><img src="screenshot/11-sfide.jpg" width="240" alt="Sfide"><br><sub><b>Sfide</b> fisse e del mese</sub></td>
-    <td align="center"><img src="screenshot/12-impostazioni.jpg" width="240" alt="Impostazioni"><br><sub><b>Notifiche</b>, giorno e notte</sub></td>
+    <td align="center"><img src="screenshot/12-scheda-serie.jpg" width="240" alt="Scheda serie"><br><sub><b>La scheda della serie</b>: episodi e prossima uscita</sub></td>
   </tr>
 </table>
 
