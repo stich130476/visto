@@ -660,6 +660,10 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 body.navoff .tabbar{transform:translate(-50%,calc(100% + 30px));opacity:0}
 /* iPad in orizzontale e computer: barra laterale verticale a sinistra */
 .railtab{display:none}
+/* iPhone: quando la barra è nascosta resta una lineetta discreta in fondo: toccandola ricompare */
+.navtab{position:fixed;left:50%;bottom:calc(6px + var(--sb));z-index:19;width:120px;height:26px;margin-left:-60px;display:grid;place-items:center;background:none;border:0;opacity:0;pointer-events:none;transition:opacity .35s .15s}
+.navtab i{display:block;width:54px;height:5px;border-radius:3px;background:var(--grad);box-shadow:0 2px 10px rgba(255,120,80,.5)}
+body.navoff .navtab{opacity:1;pointer-events:auto}
 @media (orientation:landscape) and (min-width:1000px){
   .tabbar{left:max(16px,var(--sl,0px));top:50%;bottom:auto;transform:translateY(-50%);flex-direction:column;gap:6px;padding:8px;border-radius:24px}
   .tabbar button{width:68px;padding:10px 0 8px}
@@ -670,6 +674,7 @@ body.navoff .tabbar{transform:translate(-50%,calc(100% + 30px));opacity:0}
     background:rgba(28,24,38,.6);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);border-left:0;transform:translateX(-100%);transition:transform .4s cubic-bezier(.2,.9,.2,1)}
   html[data-theme=light] .railtab{background:rgba(255,252,247,.8);border-color:rgba(70,45,30,.10)}
   body.navoff .railtab{transform:none}
+  .navtab{display:none}
   .railtab svg{width:12px;height:12px}
 }
 </style>
@@ -693,6 +698,7 @@ body.navoff .tabbar{transform:translate(-50%,calc(100% + 30px));opacity:0}
 </div>
 
 <div class="app" id="app"></div>
+<button class="navtab" data-act="navOn" aria-label="Mostra il menu"><i></i></button>
 <button class="railtab" data-act="navOn" aria-label="Mostra il menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></button>
 
 <nav class="tabbar" id="tabbar">
