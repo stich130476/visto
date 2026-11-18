@@ -313,8 +313,8 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .ck svg{width:16px;height:16px;color:#2a0d05;opacity:0;transform:scale(.4);transition:.25s cubic-bezier(.2,1.6,.4,1)}
 .ck.on{background:var(--grad);border-color:transparent}
 .ck.on svg{opacity:1;transform:none}
-.seasact{display:flex;justify-content:space-between;align-items:center;margin:14px 0 4px}
-.seasact span{color:var(--mut);font-size:13px}
+.seasact{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:14px 0 4px}
+.seasact span{color:var(--mut);font-size:13px;flex:1;min-width:0;line-height:1.35}
 .lnk{color:var(--a2);font-weight:600;font-size:14px}
 textarea.notes,.fld{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:12px 14px;outline:none;resize:vertical}
 textarea.notes{min-height:110px;line-height:1.5}
@@ -702,7 +702,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.40';
+const VERSIONE = '2.41';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -828,6 +828,29 @@ async function enrichShow(sh, tmdbId){
     sh.itEp = itEp;
     await bestPoster(sh);
   } catch(e){}
+}
+// date di una stagione, ricavate dagli episodi spuntati con la data (quelli inseriti in modalità archivio non ne hanno)
+function dateStag(sh, s){
+  const t = oggi();
+  const eps = sh.eps.filter(e => e.s === s && e.d && e.d <= t);
+  const ts = eps.map(e => sh.watched[e.i]).filter(v => v > 1e11), g = v => new Date(v).toLocaleDateString('sv');
+  const tutta = eps.length > 0 && eps.every(e => sh.watched[e.i]);
+  return {i:ts.length ? g(Math.min(...ts)) : '', f:tutta && ts.length ? g(Math.max(...ts)) : '', tutta, vista:eps.some(e => sh.watched[e.i])};
+}
+// date della serie: inizio della prima stagione vista, fine dell'ultima (solo se l'hai finita)
+function dateSerie(sh){
+  const ss = [...new Set(sh.eps.map(e => e.s))].map(s => dateStag(sh, s)).filter(x => x.vista);
+  const fin = sh.stopped || showStats(sh).st === 'finite' || (showStats(sh).st === 'attesa' && ss.length && ss.every(x => x.tutta));
+  return {i:ss.map(x => x.i).filter(Boolean).sort()[0] || '', f:fin ? ss.map(x => x.f).filter(Boolean).sort().pop() || '' : ''};
+}
+// "dal 3 al 10 ott 2025", "dal 28 set al 4 ott 2025", "il 3 ott 2025"
+function fRange(a, b){
+  if (a && b){
+    if (a === b) return 'il ' + fData(a);
+    if (a.slice(0, 7) === b.slice(0, 7)) return `dal ${+a.slice(8, 10)} al ${fData(b)}`;
+    return `dal ${fData(a, a.slice(0, 4) !== b.slice(0, 4))} al ${fData(b)}`;
+  }
+  return a ? 'iniziata il ' + fData(a) : b ? 'finita il ' + fData(b) : '';
 }
 function showStats(sh){
   const t = oggi(), aired = sh.eps.filter(e => e.d && e.d <= t);
@@ -1288,6 +1311,7 @@ function showSheet(id, keep){
   <div class="pad">
     <div class="box"><div class="prog"><div class="ring"><svg viewBox="0 0 72 72"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5e62"/><stop offset="1" stop-color="#ffc857"/></linearGradient></defs><circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="7"/><circle cx="36" cy="36" r="30" fill="none" stroke="url(#rg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C2}" stroke-dashoffset="${C2 * (1 - x.pct / 100)}"/></svg><b>${x.pct}%</b></div>
       <div class="tx"><b>${stato}</b><p>${x.w} di ${plur(x.aired, 'episodio visto', 'episodi visti')}${x.left ? ` · ${x.left === 1 ? 'ne manca 1' : 'ne mancano ' + x.left} (circa ${ore(x.leftMin)})` : ''}</p>
+      ${(() => { const ds = dateSerie(sh); return ds.i || ds.f ? `<p>📅 ${ds.i && ds.f ? 'Vista ' + esc(fRange(ds.i, ds.f)) : ds.i ? 'Iniziata il ' + esc(fData(ds.i)) : 'Finita il ' + esc(fData(ds.f))}</p>` : ''; })()}
       ${x.next ? `<p>Prossimo: <b style="font-size:14px;color:var(--txt)">${epCode(x.next)}</b> · ${esc(epT(sh, x.next))}</p>` : ''}
       ${sh.next?.d ? `<p>Nuovo episodio ${epCode(sh.next)}: <b style="font-size:14px;color:var(--a2)">${esc(fGiorno(sh.next.d))}</b></p>` : (sh.status === 'Ended' || sh.closed ? '<p>Serie conclusa</p>' : (x.st === 'attesa' ? `<p class="cap2" style="white-space:normal;margin-top:4px">Nessun nuovo episodio annunciato. <button class="lnk" data-act="closeShow" data-id="${id}">È finita? Segnala come conclusa ›</button></p>` : ''))}</div></div>
       <div class="acts">${x.next && !sh.dropped ? `<button class="btn" data-act="quick" data-id="${id}">${I.check}Segna ${epCode(x.next)}</button>` : ''}
@@ -1299,7 +1323,7 @@ function showSheet(id, keep){
     <div class="box"><h4>Episodi</h4>
       <div class="schips">${seasons.map(s => { const se = sh.eps.filter(e => e.s === s && e.d && e.d <= t), w = se.filter(e => sh.watched[e.i]).length;
         return `<button class="schip ${s === cur ? 'on' : ''} ${se.length && w === se.length ? 'done' : ''}" data-act="season" data-id="${id}" data-s="${s}">Stagione ${s}<i style="width:${se.length ? w / se.length * 100 : 0}%"></i></button>`; }).join('')}</div>
-      <div class="seasact"><span>${sW} di ${eps.length} visti${eps.length > sAired.length ? ` · ${eps.length - sAired.length} in arrivo` : ''}</span>
+      <div class="seasact"><span>${sW} di ${eps.length} visti${eps.length > sAired.length ? ` · ${eps.length - sAired.length} in arrivo` : ''}${(() => { const dz = dateStag(sh, cur); return dz.i && dz.f ? '<br>📅 Vista ' + esc(fRange(dz.i, dz.f)) : dz.i ? '<br>📅 Iniziata il ' + esc(fData(dz.i)) : ''; })()}</span>
         ${sAired.length ? `<button class="lnk" data-act="seasonAll" data-id="${id}" data-s="${cur}">${sW === sAired.length ? 'Togli tutte le spunte' : 'Segna tutta la stagione'}</button>` : ''}</div>
       ${eps.map(e => { const fut = !e.d || e.d > t, on = !!sh.watched[e.i];
         return `<div class="ep ${fut ? 'fut' : ''}"><div class="n">E${String(e.n).padStart(2, '0')}</div><div class="nm" ${on ? `data-act="epWhen" data-id="${id}" data-e="${e.i}" role="button"` : ''}><b>${esc(epT(sh, e))}</b><small>${e.d ? (fut ? 'Esce ' + esc(fGiorno(e.d)) : esc(fData(e.d))) : 'Data da annunciare'}${e.r ? ' · ' + e.r + ' min' : ''}${on ? (sh.watched[e.i] > 1e11 ? ' · visto il ' + esc(fData(new Date(sh.watched[e.i]).toLocaleDateString('sv'), false)) : ' · <span style="color:var(--a2)">visto in passato ›</span>') : ''}</small></div>
