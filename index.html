@@ -182,7 +182,7 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .pst{aspect-ratio:2/3;border-radius:14px;overflow:hidden;position:relative;background:linear-gradient(145deg,#2a2140,#15111f);box-shadow:0 8px 22px rgba(0,0,0,.4);transition:transform .2s}
 .pst img{width:100%;height:100%;object-fit:cover}
 .pst .ph{position:absolute;inset:0;display:flex;align-items:flex-end;padding:10px;font:700 14px/1.15 var(--serif);color:rgba(255,255,255,.9)}
-.pst .tipo{position:absolute;right:7px;bottom:7px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;background:rgba(10,9,16,.62);backdrop-filter:blur(10px) saturate(1.6);-webkit-backdrop-filter:blur(10px) saturate(1.6);border:1px solid rgba(255,255,255,.24);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.pst .tipo{position:absolute;right:7px;bottom:7px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;background:rgba(10,9,16,.5);backdrop-filter:blur(10px) saturate(1.6);-webkit-backdrop-filter:blur(10px) saturate(1.6);border:1px solid rgba(255,255,255,.24);box-shadow:0 2px 8px rgba(0,0,0,.35)}
 .pst .tipo svg{width:14px;height:14px}
 .pst .bdg{position:absolute;top:7px;left:7px;max-width:calc(100% - 14px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(10,9,16,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .pst .bdg.hot{background:var(--grad);color:#2a0d05}
@@ -701,7 +701,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.34';
+const VERSIONE = '2.35';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1980,7 +1980,7 @@ async function personSheet(pid, seg){
   const filt = UI.pseg === 'visti' ? lista.filter(x => x.stato === 'visto') : UI.pseg === 'lista' ? lista.filter(x => x.stato) : UI.pseg === 'sug' ? [] : lista;
   const anni = [];
   for (const x of filt){ const y = x.y || 'Senza data'; let g = anni.find(a => a.y === y); if (!g) anni.push(g = {y, l:[]}); g.l.push(x); }
-  // in basso a destra: serie o film (icone come nella barra, su un dischetto scuro: si leggono anche sulle locandine bianche)
+  // in basso a destra: serie o film (icone come nella barra, su un dischetto in vetro scuro)
   const TIPO = {tv:'<span class="tipo" aria-label="Serie TV"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M8 2.5 12 6l4-3.5"/></svg></span>',
     movie:'<span class="tipo" aria-label="Film"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4M3 12h18"/></svg></span>'};
   const card = x => {
