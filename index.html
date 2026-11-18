@@ -654,6 +654,24 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 .vcerca:active{transform:scale(.95)}
 .trasl{margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--card2);border:1px dashed rgba(255,154,77,.45)}
 .trasl b{display:block;font-size:14px}.trasl small{display:block;font-size:12.5px;color:var(--mut);line-height:1.45;margin-top:3px}
+
+/* barra a scomparsa: scorrendo in giù si toglie di mezzo, scorrendo in su ricompare */
+.tabbar{transition:transform .45s cubic-bezier(.2,.9,.2,1),opacity .35s}
+body.navoff .tabbar{transform:translate(-50%,calc(100% + 30px));opacity:0}
+/* iPad in orizzontale e computer: barra laterale verticale a sinistra */
+.railtab{display:none}
+@media (orientation:landscape) and (min-width:1000px){
+  .tabbar{left:max(16px,var(--sl,0px));top:50%;bottom:auto;transform:translateY(-50%);flex-direction:column;gap:6px;padding:8px;border-radius:24px}
+  .tabbar button{width:68px;padding:10px 0 8px}
+  .tabbar .plus{order:-1;width:68px;height:56px;margin-bottom:6px}
+  body.navoff .tabbar{transform:translate(calc(-100% - 40px),-50%);opacity:0}
+  .app{padding-left:max(28px,calc(var(--sl,0px) + 112px));padding-bottom:calc(40px + var(--sb))}
+  .railtab{display:grid;place-items:center;position:fixed;left:0;top:50%;z-index:19;width:20px;height:76px;margin-top:-38px;border-radius:0 14px 14px 0;color:var(--mut);
+    background:rgba(28,24,38,.6);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);border-left:0;transform:translateX(-100%);transition:transform .4s cubic-bezier(.2,.9,.2,1)}
+  html[data-theme=light] .railtab{background:rgba(255,252,247,.8);border-color:rgba(70,45,30,.10)}
+  body.navoff .railtab{transform:none}
+  .railtab svg{width:12px;height:12px}
+}
 </style>
 </head>
 <body>
@@ -675,6 +693,7 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 </div>
 
 <div class="app" id="app"></div>
+<button class="railtab" data-act="navOn" aria-label="Mostra il menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></button>
 
 <nav class="tabbar" id="tabbar">
   <button data-act="tab" data-t="serie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M8 2.5 12 6l4-3.5"/></svg>Serie</button>
@@ -1863,6 +1882,14 @@ function sfide(){
   while (bach.length && !bach.at(-1).sfide.some(x => x.ok)) bach.pop(); // il medagliere parte dalla prima medaglia
   return {fisse:out, mese:cur, gg, bach};
 }
+// barra a scomparsa: si nasconde scorrendo verso il basso, ricompare scorrendo verso l'alto
+(() => { let y0 = 0, acc = 0;
+  addEventListener('scroll', () => { const y = scrollY, d = y - y0; y0 = y;
+    if (y < 120){ document.body.classList.remove('navoff'); acc = 0; return; }
+    acc = (d > 0) === (acc > 0) ? acc + d : d;
+    if (acc > 40) document.body.classList.add('navoff'); else if (acc < -30) document.body.classList.remove('navoff');
+  }, {passive:true});
+})();
 const PERS = {};
 // TMDB → TVmaze per le serie che TMDB registra con un altro id (es. le antologie come Monster)
 let TMAP = load('visto-tmap') || {};
@@ -2084,6 +2111,7 @@ const A = {
   filmSeg(d){ UI.filmSeg = d.s; render(); },
   serSeg(d){ UI.serSeg = d.s; render(); },
   antoOpen(d){ antoModal(d.n); },
+  navOn(){ document.body.classList.remove('navoff'); },
   album(){ $('#modal').classList.remove('open'); UI.back = null; albumSheet(); },
   troDet(d){ troModal(d); },
   troGo(d){ $('#modal').classList.remove('open'); if (d.k === 's') showSheet(+d.id); else movieSheet(isNaN(+d.id) ? d.id : +d.id); },
