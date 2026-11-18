@@ -21,14 +21,32 @@
     <td align="center"><img src="screenshot/03-film.jpg" width="240" alt="Film"><br><sub><b>Film</b>: da vedere e dove trovarli</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="screenshot/04-scheda-film.jpg" width="240" alt="Scheda film"><br><sub><b>La scheda</b>: voto, ricordo, piattaforme</sub></td>
-    <td align="center"><img src="screenshot/05-regia-attori.jpg" width="240" alt="Regia e attori"><br><sub><b>Trama, regia e attori</b></sub></td>
-    <td align="center"><img src="screenshot/06-regista.jpg" width="240" alt="Regista"><br><sub><b>Registi e attori</b>: tutta la filmografia</sub></td>
+    <td align="center"><img src="screenshot/04-scheda-film.jpg" width="240" alt="Scheda film"><br><sub><b>La scheda</b>: voti e piattaforme</sub></td>
+    <td align="center"><img src="screenshot/05-attore.jpg" width="240" alt="Attori e registi"><br><sub><b>Attori e registi</b>: i loro titoli migliori per te</sub></td>
+    <td align="center"><img src="screenshot/06-ricerca.jpg" width="240" alt="Ricerca"><br><sub><b>Cerca</b> serie, film e persone</sub></td>
   </tr>
   <tr>
     <td align="center"><img src="screenshot/07-statistiche.jpg" width="240" alt="Statistiche"><br><sub><b>Io</b>: il tuo divano, in numeri</sub></td>
-    <td align="center"><img src="screenshot/08-abitudini.jpg" width="240" alt="Abitudini"><br><sub><b>Piattaforme e abitudini</b></sub></td>
+    <td align="center"><img src="screenshot/08-generi.jpg" width="240" alt="Generi e piattaforme"><br><sub><b>I tuoi generi</b> e le tue piattaforme</sub></td>
     <td align="center"><img src="screenshot/09-traguardi.jpg" width="240" alt="Traguardi"><br><sub><b>Traguardi</b> da sbloccare</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshot/10-consigliati.jpg" width="240" alt="Consigliati"><br><sub><b>Consigliati per te</b></sub></td>
+    <td align="center"><img src="screenshot/11-sfide.jpg" width="240" alt="Sfide"><br><sub><b>Sfide</b> fisse e del mese</sub></td>
+    <td align="center"><img src="screenshot/12-impostazioni.jpg" width="240" alt="Impostazioni"><br><sub><b>Notifiche</b>, giorno e notte</sub></td>
+  </tr>
+</table>
+
+<h3 align="center">Su iPad, di notte</h3>
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="screenshot/ipad-1-serie.jpg" width="420" alt="iPad Serie"><br><sub><b>Serie</b></sub></td>
+    <td align="center"><img src="screenshot/ipad-2-film.jpg" width="420" alt="iPad Film"><br><sub><b>Film</b></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshot/ipad-3-statistiche.jpg" width="420" alt="iPad statistiche"><br><sub><b>Generi, piattaforme e abitudini</b></sub></td>
+    <td align="center"><img src="screenshot/ipad-4-traguardi.jpg" width="420" alt="iPad traguardi"><br><sub><b>Traguardi</b></sub></td>
   </tr>
 </table>
 
@@ -51,9 +69,9 @@ Si apre dal browser e si installa sulla schermata Home di iPhone e iPad come una
   - esce al cinema o in streaming un **film della tua lista**.
 - 🍿 **Stasera cosa guardo?**: un suggerimento al volo tra le piattaforme di streaming.
 - ✨ **Consigliati per te**: proposte basate sui tuoi gusti.
-- 🏆 **Traguardi** e **Il mio anno in Visto!**: le tue statistiche e i tuoi generi preferiti.
+- 🏆 **Traguardi**, **sfide del mese** e **medaglie**, più **Il mio anno in Visto!** con le tue statistiche.
 - 📥 **Importa da Netflix**: porti dentro la tua cronologia in pochi passaggi.
-- 🎭 **Registi e attori**: tocchi un nome e vedi tutta la sua filmografia, con quello che hai già visto.
+- 🎭 **Registi e attori**: tocchi un nome e vedi tutta la sua filmografia, con quello che hai già visto e un'icona che distingue serie e film. Nei **Suggeriti** trovi prima i suoi titoli migliori, poi quelli più vicini ai tuoi generi.
 - 📊 **Statistiche**: generi preferiti, piattaforme più usate, giorni della settimana davanti allo schermo.
 - 🌙 **Modalità notte e giorno**, con locandine scelte in automatico.
 
