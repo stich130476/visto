@@ -656,11 +656,13 @@ html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)
 .trasl b{display:block;font-size:14px}.trasl small{display:block;font-size:12.5px;color:var(--mut);line-height:1.45;margin-top:3px}
 
 /* barra in vetro, come le app di iOS: trasparente, sfocata, con un riflesso sul bordo */
-.tabbar{background:rgba(30,26,40,.38);backdrop-filter:blur(22px) saturate(1.9) brightness(1.08);-webkit-backdrop-filter:blur(22px) saturate(1.9) brightness(1.08);
+.tabbar{background:rgba(30,26,40,.22);backdrop-filter:blur(18px) saturate(2) brightness(1.1);-webkit-backdrop-filter:blur(18px) saturate(2) brightness(1.1);
   border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.05),0 12px 34px rgba(0,0,0,.38);
   transition:transform .38s cubic-bezier(.2,.9,.2,1),opacity .3s ease}
 .tabbar button.on{background:rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
-html[data-theme=light] .tabbar{background:rgba(255,255,255,.42);border-color:rgba(255,255,255,.75);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 10px 30px rgba(70,40,20,.14)}
+.tabbar button{text-shadow:0 1px 3px rgba(0,0,0,.55)}
+html[data-theme=light] .tabbar button{text-shadow:0 1px 2px rgba(255,255,255,.85)}
+html[data-theme=light] .tabbar{background:rgba(255,255,255,.26);border-color:rgba(255,255,255,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 10px 30px rgba(70,40,20,.14)}
 html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-shadow:0 2px 8px rgba(70,40,20,.08)}
 /* mentre scorri sparisce, appena ti fermi ritorna */
 body.navoff .tabbar{transform:translate(-50%,24px) scale(.94);opacity:0;pointer-events:none;transition:transform .22s ease-in,opacity .18s ease-in}
