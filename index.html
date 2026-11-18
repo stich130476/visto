@@ -701,7 +701,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.37';
+const VERSIONE = '2.38';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -719,6 +719,8 @@ const epCode = e => `S${e.s}E${String(e.n).padStart(2, '0')}`;
 
 const GENERI = {Drama:'Dramma',Comedy:'Commedia','Science-Fiction':'Fantascienza',Horror:'Horror',Thriller:'Thriller',Crime:'Crime',Mystery:'Mistero',Fantasy:'Fantasy',Action:'Azione',Adventure:'Avventura',Romance:'Sentimentale',Family:'Famiglia',Supernatural:'Soprannaturale',History:'Storico',War:'Guerra',Western:'Western',Anime:'Anime',Music:'Musica',Sports:'Sport',Medical:'Medico',Legal:'Legale',Espionage:'Spionaggio',Children:'Ragazzi',Food:'Cucina',Travel:'Viaggi',Nature:'Natura'};
 const genIt = g => GENERI[g] || g;
+// il genere da mostrare: quello di Visto! (classifica, sfide); se è "Altro" resta il primo di TMDB/TVmaze
+const genVis = it => { try { const g = mainGen(Object.assign({}, it)); return g && g !== 'Altro' ? g : (it.genres || [])[0] || ''; } catch(e){ return (it.genres || [])[0] || ''; } };
 const SPLIT = {'Sci-Fi & Fantasy':['Fantascienza','Fantasy'],'Action & Adventure':['Azione','Avventura'],'War & Politics':['Guerra','Politica'],'Kids':['Ragazzi'],'Talk':['Talk show'],'Soap':['Soap opera'],'Science Fiction':['Fantascienza'],'Animation':['Animazione'],'Documentary':['Documentario'],'Mystery':['Mistero'],'Drama':['Dramma']};
 const MACRO = {Horror:'Horror & Mistero', Soprannaturale:'Horror & Mistero', Commedia:'Commedia', Thriller:'Thriller & Crime', Crime:'Thriller & Crime', Spionaggio:'Thriller & Crime', Legale:'Thriller & Crime',
   Dramma:'Drammatico', Medico:'Drammatico', Sentimentale:'Drammatico', Storico:'Storico', Storia:'Storico', Politica:'Storico', Romance:'Drammatico', 'Soap opera':'Drammatico', Animazione:'Animazione', Anime:'Animazione',
@@ -1050,7 +1052,7 @@ function renderFilm(){
     const t = oggi();
     return h + `<div class="grid">${todo.map(m => {
       const b = m.rel && m.rel > t ? `<span class="bdg hot">Esce ${esc(fData(m.rel, false))}</span>` : m.gone ? `<span class="bdg" style="color:#ff9a7a">Tolto da ${esc(nomeP(m.gone.n))}</span>` : (m.prov?.length ? `<span class="bdg">${esc(platOf(m))}</span>` : '');
-      return `<button class="pc-it fadein" data-act="openMovie" data-id="${m.id}">${poster(movImg(m), m.title, 'pst', b)}<div class="cap">${esc(m.title)}</div><div class="cap2">${esc([m.year, m.genres?.[0]].filter(Boolean).join(' · '))}</div></button>`;
+      return `<button class="pc-it fadein" data-act="openMovie" data-id="${m.id}">${poster(movImg(m), m.title, 'pst', b)}<div class="cap">${esc(m.title)}</div><div class="cap2">${esc([m.year, genVis(m)].filter(Boolean).join(' · '))}</div></button>`;
     }).join('')}</div>` + recRow('movies');
   }
   if (UI.filmSeg === 'boc'){
@@ -1277,7 +1279,7 @@ function showSheet(id, keep){
   <div class="hero"><div class="bk ${sh.back ? '' : 'blur'}" style="background-image:url('${esc(showBack(sh))}')"></div><button class="more" data-act="more" data-k="s" data-id="${id}" aria-label="Altre azioni"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button></div>
   <div class="hhead"><div data-act="posters" data-k="s" data-id="${id}" role="button" style="position:relative">${poster(showImg(sh), showName(sh), 'pimg')}</div><div style="min-width:0;padding-bottom:4px"><h2>${esc(showName(sh))}</h2>
     ${sh.itName && sh.itName !== sh.name ? `<div class="it">${esc(sh.name)}</div>` : ''}
-    <div class="mline">${[years, sh.net, (sh.genres || [])[0]].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('<i>·</i>')}</div>${voti(sh.myRating, 's' + sh.id)}
+    <div class="mline">${[years, sh.net].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('<i>·</i>')}</div>${voti(sh.myRating, 's' + sh.id)}
     <button class="pill" style="margin-top:8px;background:rgba(255,154,77,.16);color:var(--a2)" data-act="pickGen" data-k="s" data-id="${id}">🏷️ ${esc(mainGen(sh))} ›</button></div></div>
   <div class="pad">
     <div class="box"><div class="prog"><div class="ring"><svg viewBox="0 0 72 72"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5e62"/><stop offset="1" stop-color="#ffc857"/></linearGradient></defs><circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="7"/><circle cx="36" cy="36" r="30" fill="none" stroke="url(#rg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C2}" stroke-dashoffset="${C2 * (1 - x.pct / 100)}"/></svg><b>${x.pct}%</b></div>
@@ -1319,7 +1321,7 @@ function movieSheet(id, keep){
   <div class="hero"><div class="bk ${m.back ? '' : 'blur'}" style="background-image:url('${esc(m.back ? IMG + 'w1280' + m.back : movImg(m))}')"></div><button class="more" data-act="more" data-k="m" data-id="${id}" aria-label="Altre azioni"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button></div>
   <div class="hhead"><div data-act="posters" data-k="m" data-id="${id}" role="button" style="position:relative">${poster(movImg(m), m.title, 'pimg')}</div><div style="min-width:0;padding-bottom:4px"><h2>${esc(m.title)}</h2>
     ${m.orig && m.orig !== m.title ? `<div class="it">${esc(m.orig)}</div>` : ''}
-    <div class="mline">${[m.year, runtime, (m.genres || [])[0]].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('<i>·</i>')}</div>${voti(m.state === 'seen' ? m.rating : 0, 'm' + m.id)}
+    <div class="mline">${[m.year, runtime].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('<i>·</i>')}</div>${voti(m.state === 'seen' ? m.rating : 0, 'm' + m.id)}
     <button class="pill" style="margin-top:8px;background:rgba(255,154,77,.16);color:var(--a2)" data-act="pickGen" data-k="m" data-id="${id}">🏷️ ${esc(mainGen(m))} ›</button></div></div>
   <div class="pad">
     ${m.state === 'seen' ? `<div class="box"><h4>Il mio ricordo</h4><div style="font-size:22px">${stars(m.rating) || '<span class="cap2">Nessun voto</span>'}</div>
@@ -1565,7 +1567,7 @@ async function anteprima(k, id, keep){
   <div class="hero"><div class="bk ${x.back ? '' : 'blur'}" style="background-image:url('${esc(x.back ? IMG + 'w1280' + x.back : img)}')"></div></div>
   <div class="hhead"><div>${poster(img, x.title, 'pimg')}</div><div style="min-width:0;padding-bottom:4px"><h2>${esc(x.title)}</h2>
     ${x.orig && x.orig !== x.title ? `<div class="it">${esc(x.orig)}</div>` : ''}
-    <div class="mline">${[anni, dur, film ? '' : x.net, (x.genres || [])[0]].filter(Boolean).map(v => `<span>${esc(v)}</span>`).join('<i>·</i>')}</div>
+    <div class="mline">${[anni, dur, film ? '' : x.net, genVis(x)].filter(Boolean).map(v => `<span>${esc(v)}</span>`).join('<i>·</i>')}</div>
     ${x.vote ? `<div class="hvoti"><div class="hv"><span class="hl" style="background:var(--card2);color:var(--txt)">Spettatori</span><span class="stars">${stelleMM(x.vote / 2)}</span><b>${x.vote.toFixed(1).replace('.', ',')}</b><span class="vsub">/10</span></div></div>` : ''}</div></div>
   <div class="pad">
     <div class="box"><h4>Ti interessa?</h4>${film && x.rel && x.rel > oggi() ? `<p class="cap2" style="margin:-4px 0 4px">Esce ${esc(fData(x.rel))}</p>` : ''}
