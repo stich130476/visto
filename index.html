@@ -1999,9 +1999,9 @@ async function personSheet(pid, seg){
 // Generi TMDB (id) -> i 10 generi di Visto!
 const TMG = {28:'Azione',12:'Avventura',16:'Animazione',35:'Commedia',80:'Crime',18:'Dramma',14:'Fantasy',36:'Storia',27:'Horror',9648:'Mistero',10749:'Romance',878:'Fantascienza',53:'Thriller',10752:'Guerra',37:'Western',10759:'Azione',10765:'Fantascienza',10768:'Guerra'};
 // Nei suggeriti un titolo con Drammatico resta un dramma, a meno che abbia un genere "forte" (horror, fantascienza, mistero, fantasy, animazione)
-// o sia un vero thriller o una commedia crime (crime insieme a thriller o commedia, es. The Wolf of Wall Street): così Papillon o Il ponte delle spie non passano per "il tuo genere"
+// o sia un vero thriller (thriller insieme a crime): così Papillon o Il ponte delle spie non passano per "il tuo genere"
 const FORTI = [27, 878, 9648, 14, 16, 10765];
-const genPrinc = ids => { ids = ids || []; return ids.includes(18) && !ids.some(i => FORTI.includes(i)) && !(ids.includes(80) && (ids.includes(53) || ids.includes(35))) ? 'Drammatico' : genDaTmdb(ids); };
+const genPrinc = ids => { ids = ids || []; return ids.includes(18) && !ids.some(i => FORTI.includes(i)) && !(ids.includes(53) && ids.includes(80)) ? 'Drammatico' : genDaTmdb(ids); };
 const genDaTmdb = ids => { const m = macro((ids || []).map(i => TMG[i]).filter(Boolean)).filter(g => g !== 'Altro'); const r = PRIO.find(g => m.includes(g)) || 'Altro'; return r === '_mistero' ? 'Horror & Mistero' : r; };
 // Quanto ti piace ogni genere: quanti titoli hai visto, con un peso in più per quelli che hai votato bene
 function gusti(){
