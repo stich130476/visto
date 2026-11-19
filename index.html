@@ -2884,7 +2884,15 @@ function ostHtml(k, c){
     ${a.tr.length > 12 && !tutti ? `<button class="lnk" data-act="ostTutti" data-k="${k}">Mostra tutti i ${a.tr.length} brani</button>` : ''}
     <p class="cap2" style="margin-top:8px">Dati da MusicBrainz</p>`;
 }
-async function mbJson(u){ const r = await fetch('https://musicbrainz.org/ws/2/' + u + (u.includes('?') ? '&' : '?') + 'fmt=json'); if (!r.ok) throw new Error('MusicBrainz ' + r.status); return r.json(); }
+// MusicBrainz chiede al massimo una richiesta al secondo: se risponde "troppe richieste" (503) aspetto e riprovo
+async function mbJson(u){
+  for (let i = 0; ; i++){
+    const r = await fetch('https://musicbrainz.org/ws/2/' + u + (u.includes('?') ? '&' : '?') + 'fmt=json');
+    if (r.ok) return r.json();
+    if ((r.status !== 503 && r.status !== 429) || i >= 5) throw new Error('MusicBrainz ' + r.status);
+    await new Promise(z => setTimeout(z, 1500 * (i + 1)));
+  }
+}
 async function cercaOst(titoli, anno){
   const y = +anno || 0, cand = new Map();
   for (const t of titoli){
