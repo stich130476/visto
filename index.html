@@ -721,7 +721,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.48';
+const VERSIONE = '2.49';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -2869,7 +2869,7 @@ async function importaLista(imp){
 }
 
 /* ---------- COLONNE SONORE (MusicBrainz, solo i titoli dei brani) ---------- */
-const OST = 'visto-ost';
+const OST = 'visto-ost2'; // v2: ricerche rifatte con gli abbinamenti più precisi
 const normT = t => (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 function ostBox(k, titoli, anno){
   const c = (load(OST) || {})[k];
