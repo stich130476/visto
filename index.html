@@ -702,7 +702,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.43';
+const VERSIONE = '2.44';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1408,13 +1408,19 @@ function tonightList(mins, g){
     const dur = m.runtime ? `${Math.floor(m.runtime / 60)} h ${m.runtime % 60} min` : '';
     out.push({type:'movie', id:m.id, g:mainGen(m), sc:sc + Math.random() * 3, img:movImg(m), title:m.title, k:'Un film dalla tua lista', d:[dur, m.prov?.[0] ? 'su ' + platOf(m) : '', m.genres?.[0]].filter(Boolean).join(' · ')});
   });
-  return out.filter(o => !g || o.g === g).sort((a, b) => b.sc - a.sc);
+  const l = out.filter(o => !g || o.g === g).sort((a, b) => b.sc - a.sc);
+  if (mins < 90) return l;
+  // con più tempo film e serie si alternano (prima le serie vincevano sempre); "Tutta la sera" parte da un film
+  const fm = l.filter(o => o.type === 'movie'), sr = l.filter(o => o.type === 'show'), mix = [];
+  const [a, b] = mins >= 150 ? [fm, sr] : [sr, fm];
+  for (let i = 0; i < Math.max(a.length, b.length); i++){ if (a[i]) mix.push(a[i]); if (b[i]) mix.push(b[i]); }
+  return mix;
 }
 function tonightModal(mins, g = ''){
   UI.tn = UI.tn && UI.tn.mins === mins && UI.tn.g === g ? UI.tn : {mins, g, list:tonightList(mins, g), i:0};
   const p = UI.tn.list[UI.tn.i % Math.max(1, UI.tn.list.length)];
   const gc = {}; tonightList(mins).forEach(o => gc[o.g] = (gc[o.g] || 0) + 1);
-  const gens = Object.entries(gc).sort((a, b) => b[1] - a[1]).slice(0, 5).map(x => x[0]);
+  const gens = Object.entries(gc).sort((a, b) => b[1] - a[1]).map(x => x[0]);
   if (g && !gens.includes(g)) gens.push(g);
   $('#mcard').innerHTML = `<h3>Stasera cosa guardo?</h3><div class="s">Quanto tempo hai?</div>
     <div class="tchips">${[[30, '½ ora'], [60, 'Un\'ora'], [150, 'Tutta la sera']].map(([m, l]) => `<button class="${m === mins ? 'on' : ''}" data-act="tonightT" data-m="${m}">${l}</button>`).join('')}</div>
