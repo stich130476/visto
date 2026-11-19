@@ -721,7 +721,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.47';
+const VERSIONE = '2.48';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -2334,8 +2334,8 @@ const A = {
     } catch(e){ el.disabled = false; el.innerHTML = '🎵 Riprova<span>›</span>'; toast('Non riesco a raggiungere MusicBrainz, riprova tra poco'); }
     UI.ostBusy = false;
   },
-  ostAlt(d){ const all = load(OST) || {}, c = all[d.k]; if (!c) return; c.i = +d.i; try { localStorage.setItem(OST, JSON.stringify(all)); } catch(e){} $('#ost-' + d.k).innerHTML = '<h4>Colonna sonora</h4>' + ostHtml(d.k, c); },
-  ostTutti(d){ (UI.ostAll = UI.ostAll || {})[d.k] = true; const c = (load(OST) || {})[d.k]; if (c) $('#ost-' + d.k).innerHTML = '<h4>Colonna sonora</h4>' + ostHtml(d.k, c); },
+  ostAlt(d){ const all = load(OST) || {}, c = all[d.k]; if (!c) return; c.i = +d.i; try { localStorage.setItem(OST, JSON.stringify(all)); } catch(e){} ostRender(d.k, c); },
+  ostTutti(d){ (UI.ostAll = UI.ostAll || {})[d.k] = true; const c = (load(OST) || {})[d.k]; if (c) ostRender(d.k, c); },
   moreText(d, el){ el.classList.toggle('clamp'); },
   person(d){
     const o = UI.open;
@@ -2877,6 +2877,14 @@ function ostBox(k, titoli, anno){
   return `<div class="box" id="ost-${k}"><h4>Colonna sonora</h4>${c && c.ok ? ostHtml(k, c) : `<button class="ostbtn" data-act="ost" data-k="${k}" data-t="${esc(JSON.stringify([...new Set(titoli.filter(Boolean))]))}" data-y="${esc(anno || '')}">🎵 Mostra i brani<span>›</span></button>`}</div>`;
 }
 const mmss = ms => ms ? `${Math.floor(ms / 60000)}:${String(Math.round(ms / 1000) % 60).padStart(2, '0')}` : '';
+// ridisegna il riquadro tenendo in vista l'album scelto (prima la fila tornava al primo album)
+function ostRender(k, c){
+  const box = $('#ost-' + k); if (!box) return;
+  const prima = box.querySelector('.ostalt')?.scrollLeft || 0;
+  box.innerHTML = '<h4>Colonna sonora</h4>' + ostHtml(k, c);
+  const sc = box.querySelector('.ostalt'), on = sc && sc.querySelector('.on');
+  if (on){ sc.scrollLeft = prima; sc.scrollTo({left:on.offsetLeft - sc.offsetLeft - (sc.clientWidth - on.offsetWidth) / 2, behavior:'smooth'}); }
+}
 function ostHtml(k, c){
   const a = c.alb[c.i || 0]; if (!a) return '<p class="cap2">Non ho trovato la colonna sonora.</p>';
   const tot = a.tr.reduce((x, t) => x + (t.l || 0), 0), tutti = UI.ostAll?.[k];
@@ -2901,7 +2909,7 @@ async function cercaOst(titoli, anno){
     const j = await mbJson('release-group/?limit=15&query=' + encodeURIComponent(`releasegroup:"${t.replace(/"/g, '')}" AND secondarytype:soundtrack`));
     for (const g of j['release-groups'] || []){
       const gt = normT(g.title), ft = normT(t), gy = +(g['first-release-date'] || '').slice(0, 4) || 0;
-      if (!gt.startsWith(ft) && !gt.includes(ft + ' ')) continue;
+      if (!gt.startsWith(ft)) continue; // "Project Interstellar OST" non è la colonna sonora di Interstellar
       const dy = y && gy ? Math.abs(gy - y) : 1;
       if (dy > 2) continue;
       const sc = (gt === ft ? 3 : 0) + (/(original|score|soundtrack|music from)/.test(gt) ? 2 : 0) - dy * 2 + (g['primary-type'] === 'Album' ? 1 : 0) + (g.score || 0) / 50;
