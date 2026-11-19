@@ -55,14 +55,14 @@
 ## Cos'è
 
 **Visto!** è un'app per ricordarti sempre dove sei arrivato con le serie TV e quali film hai visto o vuoi vedere.
-Si apre dal browser e si installa sulla schermata Home di iPhone e iPad come una vera app. Non serve nessun App Store, non costa niente e non ha pubblicità.
+Si apre dal browser e si installa sulla schermata Home di iPhone, iPad e Android come una vera app. Non serve nessun App Store, non costa niente e non ha pubblicità.
 
 ## Cosa sa fare
 
 - 📺 **Serie TV**: spunti gli episodi visti stagione per stagione e sai subito qual è il prossimo.
 - 🎬 **Film**: una lista "da vedere" e un diario dei film visti, con voto e commento personale per ricordarti com'erano.
 - 🆕 **Novità**: nuove stagioni e nuovi episodi delle tue serie compaiono in cima, anche se riapri l'app dopo mesi.
-- 🔔 **Notifiche**, anche ad app chiusa, su iPhone e Apple Watch:
+- 🔔 **Notifiche**, anche ad app chiusa, su iPhone, Apple Watch e Android:
   - è uscito un **nuovo episodio** di una serie che segui;
   - arriva una **nuova stagione**;
   - **torna** una serie che avevi finito o messo in pausa;
@@ -82,6 +82,12 @@ Si apre dal browser e si installa sulla schermata Home di iPhone e iPad come una
 3. Scegli **Aggiungi alla schermata Home** e conferma.
 
 Fatto: Visto! è sulla Home con la sua icona e si apre a tutto schermo.
+
+## Su Android
+
+1. Apri **[stich130476.github.io/visto](https://stich130476.github.io/visto/)** con **Chrome**.
+2. Tocca il menu **⋮** in alto a destra.
+3. Scegli **Aggiungi a schermata Home** (o **Installa app**) e conferma.
 
 > Funziona anche dal computer: basta aprire lo stesso indirizzo in qualsiasi browser.
 
