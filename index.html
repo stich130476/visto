@@ -2909,7 +2909,7 @@ async function cercaOst(titoli, anno){
     const j = await mbJson('release-group/?limit=15&query=' + encodeURIComponent(`releasegroup:"${t.replace(/"/g, '')}" AND secondarytype:soundtrack`));
     for (const g of j['release-groups'] || []){
       const gt = normT(g.title), ft = normT(t), gy = +(g['first-release-date'] || '').slice(0, 4) || 0;
-      if (!gt.startsWith(ft) && !gt.includes(ft + ' ')) continue;
+      if (!gt.startsWith(ft)) continue; // "Project Interstellar OST" non è la colonna sonora di Interstellar
       const dy = y && gy ? Math.abs(gy - y) : 1;
       if (dy > 2) continue;
       const sc = (gt === ft ? 3 : 0) + (/(original|score|soundtrack|music from)/.test(gt) ? 2 : 0) - dy * 2 + (g['primary-type'] === 'Album' ? 1 : 0) + (g.score || 0) / 50;
