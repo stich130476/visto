@@ -670,6 +670,9 @@ html[data-theme=light] .tier.next>i{opacity:.82;filter:grayscale(1) contrast(1.1
 .mcard2:not(.ok)>i{filter:grayscale(1);opacity:.65}
 .ostbtn{display:flex;align-items:center;width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.ostbtn span{margin-left:auto;color:var(--a2)}
 .tflink{display:flex;align-items:center;gap:8px;margin-top:10px;padding:11px 14px;border-radius:12px;border:1px dashed rgba(255,154,77,.4);color:var(--txt);text-decoration:none;font-size:14.5px;font-weight:600}.tflink span{margin-left:auto;color:var(--a2);font-weight:700;font-size:13px}
+.mopen{display:inline-block;margin-top:8px;color:var(--a2);font-weight:700;font-size:13.5px;text-decoration:none}
+.ostl.link li{padding:0}.ostl li a{display:flex;align-items:baseline;gap:10px;flex:1;min-width:0;padding:8px 0;color:inherit;text-decoration:none}.ostl li a:active{opacity:.6}
+.ostl.link li em::after{content:'  ▶︎';color:var(--a2);font-size:10px}
 .osth b{display:block;font:700 17px/1.25 var(--serif)}.osth small{display:block;color:var(--mut);font-size:13px;margin-top:3px}
 .ostalt{display:flex;gap:6px;overflow-x:auto;margin:10px -2px 2px;padding:2px;scrollbar-width:none}.ostalt::-webkit-scrollbar{display:none}
 .ostalt button{flex:none;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--mut);font:inherit;font-size:12.5px;cursor:pointer}.ostalt button.on{color:var(--txt);border-color:rgba(255,154,77,.6);background:rgba(255,154,77,.10)}
@@ -722,7 +725,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.50';
+const VERSIONE = '2.51';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1238,6 +1241,7 @@ function renderIo(){
   <div class="box">
     <div class="set"><div class="l"><b>Aspetto</b><small>Giorno, notte o automatico come il dispositivo</small></div><div class="theme3">${[['auto','Auto'],['light','☀︎ Giorno'],['dark','☾ Notte']].map(([v, l]) => `<button class="${(C.theme || 'auto') === v ? 'on' : ''}" data-act="theme" data-v="${v}">${l}</button>`).join('')}</div></div>
     <div class="set"><div class="l"><b>Notifiche</b><small>${esc(statoNotifiche().t)}</small></div><button class="btn small ${statoNotifiche().ok ? 'ghost' : ''}" data-act="push">${statoNotifiche().ok ? 'Riattiva' : '🔔 Attiva'}</button></div>
+    <div class="set"><div class="l"><b>App di musica</b><small>Dove si aprono i brani delle colonne sonore</small></div><button class="btn small ghost" data-act="musicaApri">${esc(musica()[0])} ›</button></div>
     <div class="set"><div class="l"><b>Intro all'avvio</b><small>Il collage di locandine quando apri l'app</small></div><button class="sw ${C.intro ? 'on' : ''}" data-act="toggleIntro" aria-label="Intro"></button></div>
     <div class="set"><div class="l"><b>Modalità archivio</b><small>Attivala mentre inserisci serie e film visti in passato: non falseranno le statistiche di oggi</small></div><button class="sw ${C.archivio ? 'on' : ''}" data-act="toggleArch" aria-label="Archivio"></button></div>
     <div class="set"><div class="l"><b>Novità</b><small>${D.lastCheck ? 'Ultimo controllo ' + new Date(D.lastCheck).toLocaleString('it-IT', {weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Mai controllato'} · automatico ogni settimana</small></div><button class="btn small ghost" data-act="checkNews">Controlla</button></div>
@@ -2431,6 +2435,13 @@ const A = {
   genPrefTog(d){ const i = UI.gp.indexOf(d.g); i < 0 ? UI.gp.push(d.g) : UI.gp.splice(i, 1); UI.gpDraw(); },
   // riapre l'ultima finestra dei voti arrivati (le notizie lette restano 30 giorni)
   votiUlt(){ const n = D.news.filter(x => x.ref === 'voti').sort((a, b) => (b.d || '').localeCompare(a.d || '') || (b.at || 0) - (a.at || 0))[0]; if (n) votiModal(n); else toast('Nessun voto arrivato negli ultimi 30 giorni'); },
+  musicaApri(){
+    $('#mcard').innerHTML = `<h3>App di musica</h3><div class="s">Toccando un brano della colonna sonora si apre qui. Vale su tutti i tuoi dispositivi.</div>
+      <div class="tchips" style="flex-wrap:wrap">${Object.entries(MUSICA).map(([k, [n]]) => `<button style="flex:1 1 45%" class="${(D.musica || 'spotify') === k ? 'on' : ''}" data-act="musicaSet" data-k="${k}">${esc(n)}</button>`).join('')}</div>
+      <div class="mrow"><button class="btn" data-act="closeModal">Fatto</button></div>`;
+    $('#modal').classList.add('open');
+  },
+  musicaSet(d){ D.musica = d.k; save(); A.musicaApri(); refreshView(); },
   genPrefOff(){ D.genPref = []; save(); refreshView(); toast('Generi preferiti: automatici'); },
   genPrefOk(){ D.genPref = UI.gp.slice(); save(); $('#modal').classList.remove('open'); refreshView(); toast(D.genPref.length ? '★ Generi preferiti salvati' : 'Generi preferiti: li deduco da quello che guardi'); },
   setGen(d){ const it = UI.pg.k === 's' ? D.series[UI.pg.id] : D.movies[UI.pg.id]; it.myGen = d.g || null; save(); $('#modal').classList.remove('open'); refreshView(); toast('🏷️ Genere: ' + esc(mainGen(it))); },
@@ -2870,6 +2881,15 @@ async function importaLista(imp){
 }
 
 /* ---------- COLONNE SONORE (MusicBrainz, solo i titoli dei brani) ---------- */
+// App di musica scelta in Impostazioni (sincronizzata): i brani della colonna sonora si aprono lì
+const MUSICA = {spotify:['Spotify', q => 'https://open.spotify.com/search/' + encodeURIComponent(q)],
+  apple:['Apple Music', q => 'https://music.apple.com/it/search?term=' + encodeURIComponent(q)],
+  youtube:['YouTube Music', q => 'https://music.youtube.com/search?q=' + encodeURIComponent(q)],
+  amazon:['Amazon Music', q => 'https://music.amazon.it/search/' + encodeURIComponent(q)],
+  deezer:['Deezer', q => 'https://www.deezer.com/search/' + encodeURIComponent(q)],
+  nessuna:['Nessuna', null]};
+const musica = () => MUSICA[D.musica] || MUSICA.spotify;
+const mLink = q => musica()[1] ? musica()[1](q) : '';
 const OST = 'visto-ost2'; // v2: ricerche rifatte con gli abbinamenti più precisi
 const normT = t => (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 // Tunefind elenca tutte le canzoni usate nelle scene (anche episodio per episodio).
@@ -2892,9 +2912,11 @@ function ostRender(k, c){
 function ostHtml(k, c){
   const a = c.alb[c.i || 0]; if (!a) return '<p class="cap2">Non ho trovato la colonna sonora.</p>';
   const tot = a.tr.reduce((x, t) => x + (t.l || 0), 0), tutti = UI.ostAll?.[k];
-  return `<div class="osth"><b>${esc(a.t)}</b><small>${[a.ar, a.y, plur(a.tr.length, 'brano', 'brani'), tot ? ore(tot / 60000) : ''].filter(Boolean).map(esc).join(' · ')}</small></div>
+  const ml = musica();
+  return `<div class="osth"><b>${esc(a.t)}</b><small>${[a.ar, a.y, plur(a.tr.length, 'brano', 'brani'), tot ? ore(tot / 60000) : ''].filter(Boolean).map(esc).join(' · ')}</small>${ml[1] ? `<a class="mopen" href="${esc(mLink(a.t + ' ' + (a.ar || '')))}" target="_blank" rel="noopener">▶︎ Apri l'album su ${esc(ml[0])}</a>` : ''}</div>
     ${c.alb.length > 1 ? `<div class="ostalt">${c.alb.map((x, i) => `<button class="${i === (c.i || 0) ? 'on' : ''}" data-act="ostAlt" data-k="${k}" data-i="${i}">${esc(x.t.length > 34 ? x.t.slice(0, 32) + '…' : x.t)}</button>`).join('')}</div>` : ''}
-    <ol class="ostl">${(tutti ? a.tr : a.tr.slice(0, 12)).map(t => `<li><span>${esc(t.t)}${t.ar && t.ar !== a.ar ? `<small>${esc(t.ar)}</small>` : ''}</span><em>${mmss(t.l)}</em></li>`).join('')}</ol>
+    <ol class="ostl ${ml[1] ? 'link' : ''}">${(tutti ? a.tr : a.tr.slice(0, 12)).map(t => { const inn = `<span>${esc(t.t)}${t.ar && t.ar !== a.ar ? `<small>${esc(t.ar)}</small>` : ''}</span><em>${mmss(t.l)}</em>`;
+      return `<li>${ml[1] ? `<a href="${esc(mLink(t.t + ' ' + (t.ar || a.ar || '')))}" target="_blank" rel="noopener">${inn}</a>` : inn}</li>`; }).join('')}</ol>
     ${a.tr.length > 12 && !tutti ? `<button class="lnk" data-act="ostTutti" data-k="${k}">Mostra tutti i ${a.tr.length} brani</button>` : ''}
     ${tfLink(k, UI.ostT?.[k])}
     <p class="cap2" style="margin-top:8px">Album da MusicBrainz</p>`;
