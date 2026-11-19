@@ -2329,7 +2329,8 @@ const A = {
       const alb = await cercaOst(JSON.parse(d.t), d.y), c = {ok:true, i:0, alb, at:Date.now()};
       const all = load(OST) || {}; all[d.k] = c; for (const [k, v] of Object.entries(all)) if (Date.now() - v.at > 30 * 864e5) delete all[k];
       try { localStorage.setItem(OST, JSON.stringify(all)); } catch(e){}
-      box.innerHTML = '<h4>Colonna sonora</h4>' + (alb.length ? ostHtml(d.k, c) : '<p class="plot" style="font-size:14px">Su MusicBrainz non c\'è la colonna sonora di questo titolo.</p>');
+      if (alb.length) box.innerHTML = '<h4>Colonna sonora</h4>' + ostHtml(d.k, c);
+      else { box.style.transition = 'opacity .35s'; box.style.opacity = 0; setTimeout(() => box.remove(), 380); toast('🎵 Colonna sonora non disponibile per questo titolo'); }
     } catch(e){ el.disabled = false; el.innerHTML = '🎵 Riprova<span>›</span>'; toast('Non riesco a raggiungere MusicBrainz, riprova tra poco'); }
     UI.ostBusy = false;
   },
@@ -2872,6 +2873,7 @@ const OST = 'visto-ost';
 const normT = t => (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 function ostBox(k, titoli, anno){
   const c = (load(OST) || {})[k];
+  if (c && c.ok && !c.alb.length && Date.now() - c.at < 30 * 864e5) return ''; // cercata da poco e non trovata: niente riquadro
   return `<div class="box" id="ost-${k}"><h4>Colonna sonora</h4>${c && c.ok ? ostHtml(k, c) : `<button class="ostbtn" data-act="ost" data-k="${k}" data-t="${esc(JSON.stringify([...new Set(titoli.filter(Boolean))]))}" data-y="${esc(anno || '')}">🎵 Mostra i brani<span>›</span></button>`}</div>`;
 }
 const mmss = ms => ms ? `${Math.floor(ms / 60000)}:${String(Math.round(ms / 1000) % 60).padStart(2, '0')}` : '';
