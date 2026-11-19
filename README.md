@@ -73,6 +73,8 @@ Si apre dal browser e si installa sulla schermata Home di iPhone, iPad e Android
 - 📥 **Importa da Netflix**: porti dentro la tua cronologia in pochi passaggi.
 - 🎭 **Registi e attori**: tocchi un nome e vedi tutta la sua filmografia, con quello che hai già visto e un'icona che distingue serie e film. Nei **Suggeriti** trovi prima i suoi titoli migliori, poi quelli più vicini ai tuoi generi.
 - 📊 **Statistiche**: generi preferiti, piattaforme più usate, giorni della settimana davanti allo schermo.
+- 🎵 **Colonne sonore**: nella scheda di ogni film e serie trovi l'album ufficiale con tutti i brani (da MusicBrainz). Tocchi un brano e si apre nella tua **app di musica** — Spotify, Apple Music, YouTube Music, Amazon Music o Deezer, la scegli in Impostazioni. E con **Tutte le canzoni del film** vai su Tunefind, dove ci sono anche i brani scelti per le singole scene.
+- 📅 **Date delle serie**: quando hai iniziato e finito ogni stagione e la serie intera, calcolate da sole dagli episodi che spunti.
 - 🌙 **Modalità notte e giorno**, con locandine scelte in automatico.
 
 ## Come installarla sull'iPhone o sull'iPad
