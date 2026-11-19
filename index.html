@@ -702,7 +702,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.44';
+const VERSIONE = '2.45';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1241,6 +1241,8 @@ function renderIo(){
     <div class="lbl">Repository privato dei dati</div><input class="fld" id="ghRepo" value="${esc(C.ghRepo)}" autocapitalize="off" spellcheck="false">
     <div class="lbl">Token</div><input class="fld" id="ghToken" type="password" value="${esc(C.ghToken)}" placeholder="github_pat_…" autocapitalize="off" spellcheck="false">
     <div class="acts"><button class="btn small" data-act="saveGh">Salva e sincronizza</button></div>
+    ${C.ghToken && (C.autoNo || UI.autoBusy) ? `<div class="trasl"><b>⚙️ Automatismi su GitHub</b><small>${UI.autoBusy ? `<span class="mmrun">${esc(UI.autoBusy)}</span>` : 'Per avere notifiche, voti MYmovies ogni notte e backup settimanale, Visto! copia nel tuo repository i file che servono. Basta farlo una volta.'}</small>
+      ${UI.autoBusy ? '' : '<div class="acts" style="margin-top:8px"><button class="btn small" data-act="preparaAuto">Prepara</button></div>'}</div>` : ''}
     <div class="trasl"><b>🚚 Trasloco delle chiavi</b><small>Prima di togliere Visto! dalla Home (per esempio per avere l'icona nuova) copia le chiavi; nella nuova installazione incollale qui e ritrovi tutto.</small>
       <div class="acts" style="margin-top:8px">${C.ghToken ? '<button class="btn small ghost" data-act="copiaChiavi">📋 Copia le chiavi</button>' : ''}<button class="btn small ${C.ghToken ? 'ghost' : ''}" data-act="incollaChiavi">📥 Incolla le chiavi</button></div></div>
   </div>
@@ -2442,10 +2444,11 @@ const A = {
     toast(C.syncErr ? 'Errore: ' + esc(C.syncErr) : '✅ Bentornato! Hai ritrovato tutto');
     try { await navigator.clipboard.writeText(''); } catch(e){}
   },
+  preparaAuto(){ preparaAuto(); },
   async saveGh(){
     C.ghUser = $('#ghUser').value.trim(); C.ghRepo = $('#ghRepo').value.trim() || 'visto-dati'; C.ghToken = $('#ghToken').value.trim(); C.sha = ''; saveCfg();
     if (!C.ghToken) return toast('Sincronizzazione disattivata');
-    toast('Sincronizzo…'); await pull(true); render();
+    toast('Sincronizzo…'); await pull(true); render(); controllaAuto();
     toast(C.syncErr ? 'Errore: ' + esc(C.syncErr) : '✓ Sincronizzazione attiva');
   },
   async export(){
@@ -2829,16 +2832,53 @@ async function importaLista(imp){
     ${ko.length ? `<div class="box"><h4>Non riconosciuti (${ko.length})</h4><p class="plot" style="font-size:14px">${ko.map(esc).join(' · ')}</p></div>` : ''}</div>`);
 }
 
+/* ---------- AUTOMATISMI SU GITHUB (notifiche, voti, backup) ---------- */
+// I file stanno in modello-dati/ accanto all'app: il pulsante "Prepara" li copia nel repository privato di chi usa Visto!
+const MODELLO = ['workflows/prepara.yml', 'workflows/notifiche.yml', 'workflows/mymovies.yml', 'workflows/backup.yml', 'scripts/notifiche.mjs', 'scripts/mymovies.mjs', 'scripts/imdb.mjs'];
+const ghRepoUrl = p => `https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/${p}`;
+async function controllaAuto(){
+  if (!C.ghToken || !C.ghUser) return;
+  try { const r = await fetch(ghRepoUrl('contents/.github/workflows/notifiche.yml'), {headers:ghH(), cache:'no-store'});
+    const prima = C.autoNo; C.autoNo = r.status === 404; if (r.ok || r.status === 404){ saveCfg(); if (prima !== C.autoNo && UI.tab === 'io') render(); } } catch(e){}
+}
+async function preparaAuto(){
+  if (UI.autoBusy) return; UI.autoBusy = 'Copio i file nel tuo repository…'; render();
+  const fine = (msg, ok) => { UI.autoBusy = false; if (ok){ C.autoNo = false; saveCfg(); } render(); toast(msg, null, null, 7000); };
+  try {
+    for (const f of MODELLO){
+      const txt = await (await fetch('./modello-dati/' + f + '?v=' + VERSIONE, {cache:'no-store'})).text();
+      const path = '.github/' + f, g = await fetch(ghRepoUrl('contents/' + path), {headers:ghH(), cache:'no-store'});
+      const body = {message:'Visto!: ' + f.split('/').pop(), content:b64e(txt)};
+      if (g.ok) body.sha = (await g.json()).sha;
+      const r = await fetch(ghRepoUrl('contents/' + path), {method:'PUT', headers:Object.assign({'Content-Type':'application/json'}, ghH()), body:JSON.stringify(body)});
+      if (r.status === 403 || r.status === 404) return fine(f.startsWith('workflows') ? 'Alla chiave GitHub manca il permesso «Workflows» (lettura e scrittura)' : 'La chiave GitHub non può scrivere nel repository');
+      if (!r.ok) return fine('GitHub ha risposto ' + r.status + ', riprova tra poco');
+    }
+    UI.autoBusy = 'Creo le chiavi per le notifiche…'; render();
+    await new Promise(r => setTimeout(r, 4000));
+    const d = await fetch(ghRepoUrl('actions/workflows/prepara.yml/dispatches'), {method:'POST', headers:Object.assign({'Content-Type':'application/json'}, ghH()), body:JSON.stringify({ref:'main'})});
+    if (d.status === 403 || d.status === 404) return fine('File copiati. Alla chiave manca il permesso «Actions»: avvia "Prepara le notifiche" da GitHub', true);
+    for (let i = 0; i < 24; i++){
+      await new Promise(r => setTimeout(r, 10000));
+      const v = await fetch(ghRepoUrl('contents/vapid-pubblica.json?t=' + Date.now()), {headers:ghH(), cache:'no-store'});
+      if (v.ok) return fine('✓ Automatismi pronti: ora puoi attivare le notifiche qui sopra', true);
+    }
+    fine('File copiati: le chiavi arriveranno tra qualche minuto, poi attiva le notifiche', true);
+  } catch(e){ fine('Non riesco: ' + esc(e.message)); }
+}
+
 /* ---------- NOTIFICHE PUSH ---------- */
 const VAPID = 'BFSSzAkBuNgcHx48tOhbXcqYcAL6EgBl46za0Il00uk9vKRlJRfW1OzNPjNiijyngPOSZ17wbTQubKnl-Ah5yB0';
 const isIpad = () => /iPad/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+const isAndroid = () => /Android/i.test(navigator.userAgent);
+const nomeDisp = () => isIpad() ? 'iPad' : /iPhone/.test(navigator.userAgent) ? 'iPhone' : isAndroid() ? 'Android' : 'computer';
 const pushPossibile = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
 function statoNotifiche(){
   if (!pushPossibile()) return {ok:false, t:'Apri Visto! dall\'icona sulla schermata Home (non da Safari) per poterle attivare'};
   if (!C.ghToken || !C.ghUser) return {ok:false, t:'Prima attiva la sincronizzazione qui sotto'};
-  if (Notification.permission === 'denied') return {ok:false, t:'Bloccate: riattivale in Impostazioni iPhone → Notifiche → Visto!'};
-  if (C.pushOn && Notification.permission === 'granted') return {ok:true, t:`Attive su questo ${isIpad() ? 'iPad' : 'iPhone'} ✓ · nuove stagioni, ritorni e film in uscita`};
+  if (Notification.permission === 'denied') return {ok:false, t:isAndroid() ? 'Bloccate: riattivale nelle impostazioni del telefono → App → Visto! → Notifiche' : /iPhone|iPad|Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 0 ? `Bloccate: riattivale in Impostazioni ${nomeDisp()} → Notifiche → Visto!` : 'Bloccate: riattivale nelle impostazioni del browser'};
+  if (C.pushOn && Notification.permission === 'granted') return {ok:true, t:`Attive su questo ${nomeDisp()} ✓ · nuove stagioni, ritorni e film in uscita`};
   return {ok:false, t:'Nuove stagioni, ritorni delle serie e film in uscita, anche ad app chiusa'};
 }
 async function attivaNotifiche(){
@@ -2848,15 +2888,18 @@ async function attivaNotifiche(){
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') return toast('Permesso non concesso');
     const reg = await navigator.serviceWorker.ready;
-    const key = Uint8Array.from(atob(VAPID.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - VAPID.length % 4) % 4)), c => c.charCodeAt(0));
+    let pub = VAPID;
+    try { const v = await fetch(`https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/contents/vapid-pubblica.json?t=${Date.now()}`, {headers:ghH(), cache:'no-store'});
+      if (v.ok){ const k = JSON.parse(b64d((await v.json()).content)).publicKey; if (k) pub = k; } } catch(e){}
+    const key = Uint8Array.from(atob(pub.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - pub.length % 4) % 4)), c => c.charCodeAt(0));
     const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:key});
-    C.devId = C.devId || (isIpad() ? 'ipad-' : 'iphone-') + Math.random().toString(36).slice(2, 8); saveCfg();
+    C.devId = C.devId || nomeDisp().toLowerCase() + '-' + Math.random().toString(36).slice(2, 8); saveCfg();
     const url = `https://api.github.com/repos/${encodeURIComponent(C.ghUser)}/${encodeURIComponent(C.ghRepo)}/contents/push.json`;
     let sha, cur = {subs:{}};
     const g = await fetch(url + '?t=' + Date.now(), {headers:ghH(), cache:'no-store'});
     if (g.ok){ const j = await g.json(); sha = j.sha; try { cur = JSON.parse(b64d(j.content)); } catch(e){} }
     cur.subs = cur.subs || {};
-    cur.subs[C.devId] = {name:isIpad() ? 'iPad' : 'iPhone', at:Date.now(), sub:sub.toJSON()};
+    cur.subs[C.devId] = {name:nomeDisp(), at:Date.now(), sub:sub.toJSON()};
     const body = {message:'Visto!: notifiche attivate su ' + cur.subs[C.devId].name, content:b64e(JSON.stringify(cur, null, 1))};
     if (sha) body.sha = sha;
     const r = await fetch(url, {method:'PUT', headers:Object.assign({'Content-Type':'application/json'}, ghH()), body:JSON.stringify(body)});
@@ -2889,6 +2932,7 @@ document.addEventListener('wheel', e => {
 (async function init(){
   render();
   checkUpdate();
+  if (C.ghToken && C.autoNo === undefined) setTimeout(controllaAuto, 4000); // una volta: nel repository ci sono gli automatismi?
   let upd = null; try { upd = sessionStorage.getItem('vistoUpd'); sessionStorage.removeItem('vistoUpd'); } catch(e){}
   if (upd){ $('#intro').remove(); setTimeout(() => toast(`✨ Visto! aggiornata alla versione <b>${VERSIONE}</b>`), 400); }
   else if (C.intro){
