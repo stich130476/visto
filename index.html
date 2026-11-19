@@ -640,8 +640,8 @@ html[data-theme=light] .alm.m3 small{color:#a8740f}html[data-theme=light] .alm.m
 .antl .sfv{font-size:13px;color:var(--mut2);margin:0 0 4px 50px;font-style:italic}
 .antl.tr .sfh~button{margin-left:18px;width:calc(100% - 18px)}
 .mcard2>i,.sfh>i{position:relative}
-.ck{position:absolute;right:-5px;bottom:-4px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:10.5px;font-weight:900;line-height:1;color:#ffd27a;background:#1a1020;box-shadow:0 0 0 2px var(--card),0 3px 8px rgba(0,0,0,.35);animation:ckIn .5s cubic-bezier(.2,1.6,.4,1)}
-html[data-theme=light] .ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)}
+em.ck{position:absolute;right:-5px;bottom:-4px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:10.5px;font-weight:900;line-height:1;color:#ffd27a;background:#1a1020;box-shadow:0 0 0 2px var(--card),0 3px 8px rgba(0,0,0,.35);animation:ckIn .5s cubic-bezier(.2,1.6,.4,1)}
+html[data-theme=light] em.ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.2)}
 @keyframes ckIn{from{transform:scale(0)}to{transform:scale(1)}}
 .mcard2.ok>i{color:inherit;font-weight:400}
 .vnew{font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:3px 7px;border-radius:999px;background:var(--grad);color:#1a1020;animation:ckIn .5s cubic-bezier(.2,1.6,.4,1)}
@@ -702,7 +702,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.42';
+const VERSIONE = '2.43';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1325,7 +1325,7 @@ function showSheet(id, keep){
     <div class="box"><h4>Episodi</h4>
       <div class="schips">${seasons.map(s => { const se = sh.eps.filter(e => e.s === s && e.d && e.d <= t), w = se.filter(e => sh.watched[e.i]).length;
         return `<button class="schip ${s === cur ? 'on' : ''} ${se.length && w === se.length ? 'done' : ''}" data-act="season" data-id="${id}" data-s="${s}">Stagione ${s}<i style="width:${se.length ? w / se.length * 100 : 0}%"></i></button>`; }).join('')}</div>
-      <div class="seasact"><span>${sW} di ${eps.length} visti${eps.length > sAired.length ? ` · ${eps.length - sAired.length} in arrivo` : ''}${(() => { const dz = dateStag(sh, cur); return dz.i && dz.f ? '<br>📅 Vista ' + esc(fRange(dz.i, dz.f)) : dz.i ? '<br>📅 Iniziata il ' + esc(fData(dz.i)) : ''; })()}</span>
+      <div class="seasact"><span><b style="color:var(--txt)">Stagione ${cur}</b> · ${sW} di ${eps.length} visti${eps.length > sAired.length ? ` · ${eps.length - sAired.length} in arrivo` : ''}${(() => { const dz = dateStag(sh, cur); return dz.i && dz.f ? '<br>📅 Vista ' + esc(fRange(dz.i, dz.f)) : dz.i ? '<br>📅 Iniziata il ' + esc(fData(dz.i)) : ''; })()}</span>
         ${sAired.length ? `<button class="lnk" data-act="seasonAll" data-id="${id}" data-s="${cur}">${sW === sAired.length ? 'Togli tutte le spunte' : 'Segna tutta la stagione'}</button>` : ''}</div>
       ${eps.map(e => { const fut = !e.d || e.d > t, on = !!sh.watched[e.i];
         return `<div class="ep ${fut ? 'fut' : ''}"><div class="n">E${String(e.n).padStart(2, '0')}</div><div class="nm" ${on ? `data-act="epWhen" data-id="${id}" data-e="${e.i}" role="button"` : ''}><b>${esc(epT(sh, e))}</b><small>${e.d ? (fut ? 'Esce ' + esc(fGiorno(e.d)) : esc(fData(e.d))) : 'Data da annunciare'}${e.r ? ' · ' + e.r + ' min' : ''}${on ? (sh.watched[e.i] > 1e11 ? ' · visto il ' + esc(fData(new Date(sh.watched[e.i]).toLocaleDateString('sv'), false)) : ' · <span style="color:var(--a2)">visto in passato ›</span>') : ''}</small></div>
@@ -1339,6 +1339,11 @@ function showSheet(id, keep){
       ${sh.notes ? `<p class="plot" style="font-style:italic">“${esc(sh.notes)}”</p>` : '<p class="cap2" style="font-size:14px">Ancora nessun voto né commento: com\'è questa serie? Di cosa parla, cosa ti ha colpito?</p>'}
       <div class="acts"><button class="btn ghost" data-act="rateShow" data-id="${id}">${sh.myRating || sh.notes ? 'Modifica voto e commento' : '★ Vota e commenta'}</button></div></div>
   </div>`, keep);
+  // la fila delle stagioni resta sulla stagione scelta (prima tornava all'inizio e la 13ª spariva)
+  const sc = $('#sheetIn .schips'), on = sc && sc.querySelector('.schip.on');
+  if (on && sc.scrollWidth > sc.clientWidth){ const prima = UI.schL?.[id]; if (prima != null) sc.scrollLeft = prima;
+    const dx = on.offsetLeft - sc.offsetLeft - (sc.clientWidth - on.offsetWidth) / 2; sc.scrollTo({left:dx, behavior:prima != null ? 'smooth' : 'auto'}); }
+  if (sc) sc.onscroll = () => { (UI.schL = UI.schL || {})[id] = sc.scrollLeft; };
 }
 
 /* ---------- SCHEDA FILM ---------- */
