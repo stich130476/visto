@@ -669,6 +669,7 @@ html[data-theme=light] .tier.next>i{opacity:.82;filter:grayscale(1) contrast(1.1
 .tier.lock{opacity:.32}
 .mcard2:not(.ok)>i{filter:grayscale(1);opacity:.65}
 .ostbtn{display:flex;align-items:center;width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.ostbtn span{margin-left:auto;color:var(--a2)}
+.tflink{display:flex;align-items:center;gap:8px;margin-top:10px;padding:11px 14px;border-radius:12px;border:1px dashed rgba(255,154,77,.4);color:var(--txt);text-decoration:none;font-size:14.5px;font-weight:600}.tflink span{margin-left:auto;color:var(--a2);font-weight:700;font-size:13px}
 .osth b{display:block;font:700 17px/1.25 var(--serif)}.osth small{display:block;color:var(--mut);font-size:13px;margin-top:3px}
 .ostalt{display:flex;gap:6px;overflow-x:auto;margin:10px -2px 2px;padding:2px;scrollbar-width:none}.ostalt::-webkit-scrollbar{display:none}
 .ostalt button{flex:none;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--mut);font:inherit;font-size:12.5px;cursor:pointer}.ostalt button.on{color:var(--txt);border-color:rgba(255,154,77,.6);background:rgba(255,154,77,.10)}
@@ -721,7 +722,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.49';
+const VERSIONE = '2.50';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -2330,7 +2331,7 @@ const A = {
       const all = load(OST) || {}; all[d.k] = c; for (const [k, v] of Object.entries(all)) if (Date.now() - v.at > 30 * 864e5) delete all[k];
       try { localStorage.setItem(OST, JSON.stringify(all)); } catch(e){}
       if (alb.length) box.innerHTML = '<h4>Colonna sonora</h4>' + ostHtml(d.k, c);
-      else { box.style.transition = 'opacity .35s'; box.style.opacity = 0; setTimeout(() => box.remove(), 380); toast('🎵 Colonna sonora non disponibile per questo titolo'); }
+      else { box.innerHTML = '<h4>Colonna sonora</h4>' + tfLink(d.k, UI.ostT?.[d.k]); toast('🎵 Album ufficiale non disponibile: trovi le canzoni su Tunefind'); }
     } catch(e){ el.disabled = false; el.innerHTML = '🎵 Riprova<span>›</span>'; toast('Non riesco a raggiungere MusicBrainz, riprova tra poco'); }
     UI.ostBusy = false;
   },
@@ -2871,10 +2872,12 @@ async function importaLista(imp){
 /* ---------- COLONNE SONORE (MusicBrainz, solo i titoli dei brani) ---------- */
 const OST = 'visto-ost2'; // v2: ricerche rifatte con gli abbinamenti più precisi
 const normT = t => (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+// Tunefind elenca tutte le canzoni usate nelle scene (anche episodio per episodio): si apre la sua ricerca
+const tfLink = (k, titolo) => `<a class="tflink" href="https://www.tunefind.com/search/site?q=${encodeURIComponent(titolo || '')}" target="_blank" rel="noopener">🎶 Tutte le canzoni ${k[0] === 's' ? 'della serie' : 'del film'}<span>Tunefind ›</span></a>`;
 function ostBox(k, titoli, anno){
-  const c = (load(OST) || {})[k];
-  if (c && c.ok && !c.alb.length && Date.now() - c.at < 30 * 864e5) return ''; // cercata da poco e non trovata: niente riquadro
-  return `<div class="box" id="ost-${k}"><h4>Colonna sonora</h4>${c && c.ok ? ostHtml(k, c) : `<button class="ostbtn" data-act="ost" data-k="${k}" data-t="${esc(JSON.stringify([...new Set(titoli.filter(Boolean))]))}" data-y="${esc(anno || '')}">🎵 Mostra i brani<span>›</span></button>`}</div>`;
+  const c = (load(OST) || {})[k]; UI.ostT = UI.ostT || {}; UI.ostT[k] = titoli.filter(Boolean)[0];
+  if (c && c.ok && !c.alb.length && Date.now() - c.at < 30 * 864e5) return `<div class="box" id="ost-${k}"><h4>Colonna sonora</h4>${tfLink(k, UI.ostT[k])}</div>`; // l'album ufficiale non c'è: resta solo Tunefind
+  return `<div class="box" id="ost-${k}"><h4>Colonna sonora</h4>${c && c.ok ? ostHtml(k, c) : `<button class="ostbtn" data-act="ost" data-k="${k}" data-t="${esc(JSON.stringify([...new Set(titoli.filter(Boolean))]))}" data-y="${esc(anno || '')}">🎵 Mostra i brani<span>›</span></button>${tfLink(k, UI.ostT[k])}`}</div>`;
 }
 const mmss = ms => ms ? `${Math.floor(ms / 60000)}:${String(Math.round(ms / 1000) % 60).padStart(2, '0')}` : '';
 // ridisegna il riquadro tenendo in vista l'album scelto (prima la fila tornava al primo album)
@@ -2892,7 +2895,8 @@ function ostHtml(k, c){
     ${c.alb.length > 1 ? `<div class="ostalt">${c.alb.map((x, i) => `<button class="${i === (c.i || 0) ? 'on' : ''}" data-act="ostAlt" data-k="${k}" data-i="${i}">${esc(x.t.length > 34 ? x.t.slice(0, 32) + '…' : x.t)}</button>`).join('')}</div>` : ''}
     <ol class="ostl">${(tutti ? a.tr : a.tr.slice(0, 12)).map(t => `<li><span>${esc(t.t)}${t.ar && t.ar !== a.ar ? `<small>${esc(t.ar)}</small>` : ''}</span><em>${mmss(t.l)}</em></li>`).join('')}</ol>
     ${a.tr.length > 12 && !tutti ? `<button class="lnk" data-act="ostTutti" data-k="${k}">Mostra tutti i ${a.tr.length} brani</button>` : ''}
-    <p class="cap2" style="margin-top:8px">Dati da MusicBrainz</p>`;
+    ${tfLink(k, UI.ostT?.[k])}
+    <p class="cap2" style="margin-top:8px">Album da MusicBrainz</p>`;
 }
 // MusicBrainz chiede al massimo una richiesta al secondo: se risponde "troppe richieste" (503) aspetto e riprovo
 async function mbJson(u){
