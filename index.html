@@ -658,6 +658,16 @@ html[data-theme=light] em.ck{box-shadow:0 0 0 2px #fbf3e9,0 3px 8px rgba(0,0,0,.
 .trasl b{display:block;font-size:14px}.trasl small{display:block;font-size:12.5px;color:var(--mut);line-height:1.45;margin-top:3px}
 
 /* barra in vetro, come WhatsApp: sempre presente, trasparente e sfocata, con un riflesso sul bordo */
+/* traguardi raggiunti: l'icona sta in un sigillo scuro con anello d'oro (non si perde più sull'arancione);
+   il prossimo resta "da scoprire": icona in bianco e nero, si colora solo quando lo raggiungi */
+:root{--sigillo:radial-gradient(circle at 35% 28%,#3b2c2f 0%,#1d1519 70%);--anello:#e8b45c}
+html[data-theme=light]{--sigillo:radial-gradient(circle at 35% 28%,#ffffff 0%,#fbf1e2 75%);--anello:#d9a24a}
+.tier.done>i,.badge:not(.off) i,.mcard2.ok>i,.sfh.ok>i{background:var(--sigillo);box-shadow:0 0 0 2px var(--anello),0 0 0 5px rgba(232,180,92,.16),0 6px 16px rgba(255,130,70,.28)}
+.badge:not(.off) i{border-radius:50%}
+.tier.next>i{filter:grayscale(1);opacity:.6;background:var(--card);box-shadow:inset 0 0 0 1px rgba(255,154,77,.45)}
+html[data-theme=light] .tier.next>i{opacity:.82;filter:grayscale(1) contrast(1.15)}
+.tier.lock{opacity:.32}
+.mcard2:not(.ok)>i{filter:grayscale(1);opacity:.65}
 .vult{display:inline-block;margin-top:4px;color:var(--a2);font-weight:700;cursor:pointer}
 .tabbar{background:rgba(30,26,40,.09);backdrop-filter:blur(8px) saturate(1.7) brightness(1.05);-webkit-backdrop-filter:blur(8px) saturate(1.7) brightness(1.05);
   border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.05),0 12px 34px rgba(0,0,0,.38)}
@@ -702,7 +712,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.45';
+const VERSIONE = '2.46';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
