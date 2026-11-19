@@ -1,0 +1,32 @@
+name: Prepara le notifiche
+
+# Si avvia una volta sola, dall'app (Io → Impostazioni → Automatismi su GitHub) oppure da qui con "Run workflow".
+# Crea le chiavi per le notifiche push di QUESTO repository: la privata resta qui, la pubblica la legge l'app.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  chiavi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-save --no-audit --no-fund web-push@3
+      - name: Crea le chiavi (solo se non ci sono già)
+        run: |
+          if [ ! -s .github/scripts/vapid.json ]; then
+            node -e "const w=require('web-push'),fs=require('fs'),k=w.generateVAPIDKeys();fs.writeFileSync('.github/scripts/vapid.json',JSON.stringify(k));fs.writeFileSync('vapid-pubblica.json',JSON.stringify({publicKey:k.publicKey}))"
+          fi
+          [ -f push.json ] || echo '{"subs":{}}' > push.json
+          git config user.name "Visto! preparazione"
+          git config user.email "actions@users.noreply.github.com"
+          git add .github/scripts/vapid.json vapid-pubblica.json push.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Chiavi per le notifiche"
+            for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
+          fi

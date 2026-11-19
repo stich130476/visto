@@ -99,7 +99,36 @@ Fatto: Visto! è sulla Home con la sua icona e si apre a tutto schermo.
 ## I tuoi dati sono tuoi
 
 Tutto quello che inserisci resta **nel tuo dispositivo**. Visto! non ha un server, non raccoglie dati e non ti chiede nessun account.
-Chi vuole può anche sincronizzare iPhone, iPad e computer e attivare le notifiche, usando un proprio repository privato su GitHub. È facoltativo e pensato per utenti un po' esperti: l'app funziona benissimo anche senza.
+Chi vuole può anche sincronizzare tutti i suoi dispositivi, ricevere le notifiche e avere i voti MYmovies ogni notte, usando un proprio **repository privato su GitHub** (gratuito). È facoltativo: l'app funziona benissimo anche senza. Come fare è spiegato qui sotto.
+
+## Sincronizzazione, notifiche e voti: passo passo
+
+Serve un account gratuito su [GitHub](https://github.com). Si fa una volta sola, in una decina di minuti.
+
+**1. Crea il repository dei dati**
+Vai su [github.com/new](https://github.com/new), scrivi come nome `visto-dati`, scegli **Private**, spunta **Add a README file** e premi **Create repository**.
+
+**2. Crea la chiave**
+Vai su [github.com/settings/personal-access-tokens/new](https://github.com/settings/personal-access-tokens/new):
+- *Token name*: `Visto`; *Expiration*: la durata più lunga che ti propone;
+- *Repository access*: **Only select repositories** → `visto-dati`;
+- *Permissions → Repository permissions*: **Contents**, **Actions** e **Workflows** su **Read and write**.
+
+Premi **Generate token** e copia la chiave (comincia con `github_pat_`). GitHub te la mostra una volta sola.
+
+**3. Collega Visto!**
+In **Visto! → Io → Impostazioni → Sincronizzazione tra dispositivi** scrivi il tuo nome utente GitHub, `visto-dati` e la chiave, poi premi **Salva e sincronizza**.
+
+**4. Prepara gli automatismi**
+Subito sotto compare **⚙️ Automatismi su GitHub**: premi **Prepara**. Visto! copia nel tuo repository i file per notifiche, voti e backup (li trovi in [`modello-dati`](modello-dati/)) e crea le chiavi delle notifiche. Ci vogliono un paio di minuti.
+
+**5. Attiva le notifiche**
+Apri Visto! **dall'icona sulla schermata Home** e in **Impostazioni → Notifiche** premi **Attiva**. Dopo un paio di minuti arriva la notifica di benvenuto.
+
+**6. Gli altri dispositivi**
+Sul primo dispositivo premi **📋 Copia le chiavi** (in Sincronizzazione), mandatele (per esempio con un messaggio a te stesso) e sull'altro premi **📥 Incolla le chiavi**. Poi attiva le notifiche anche lì.
+
+> La chiave resta solo sui tuoi dispositivi e nel tuo repository: Visto! non ha un server e nessun altro la vede. Gli automatismi usano i minuti gratuiti di GitHub Actions, più che sufficienti.
 
 ## Ringraziamenti
 

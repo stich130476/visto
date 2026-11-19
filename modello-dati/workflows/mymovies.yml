@@ -1,0 +1,41 @@
+name: Voti MYmovies
+
+on:
+  schedule:
+    - cron: '41 4 * * *'
+  push:
+    paths: ['.github/scripts/mymovies.mjs', '.github/scripts/imdb.mjs']
+  workflow_dispatch:
+    inputs:
+      solo:
+        description: 'Cerca solo questo titolo (es. m1083381 o s59344)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mymovies
+  cancel-in-progress: false
+
+jobs:
+  voti:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node .github/scripts/mymovies.mjs
+        env:
+          SOLO: ${{ inputs.solo }}
+      - run: node .github/scripts/imdb.mjs
+      - run: |
+          git config user.name "Visto! MYmovies"
+          git config user.email "actions@users.noreply.github.com"
+          git add mymovies.json mymovies-log.txt imdb.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Voti MYmovies e IMDb aggiornati"
+            for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
+          fi

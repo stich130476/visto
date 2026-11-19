@@ -1,0 +1,37 @@
+name: Notifiche Visto!
+
+on:
+  schedule:
+    - cron: '17 17 * * *'   # ogni giorno verso le 18:17 (ora italiana d'inverno)
+  push:
+    paths: ['push.json']    # quando attivi le notifiche su un dispositivo: notifica di benvenuto
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: notifiche
+  cancel-in-progress: false
+
+jobs:
+  notifica:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Prepara
+        run: npm install --no-save --no-audit --no-fund web-push@3
+      - name: Controlla novità e invia notifiche
+        run: node .github/scripts/notifiche.mjs
+      - name: Salva lo stato
+        run: |
+          git config user.name "Visto! notifiche"
+          git config user.email "actions@users.noreply.github.com"
+          git add notifiche-stato.json push.json 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Notifiche: stato aggiornato"
+            for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
+          fi

@@ -1,0 +1,27 @@
+name: Backup Visto!
+
+on:
+  schedule:
+    - cron: '23 2 * * 0'   # ogni domenica notte
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Un solo backup, sovrascritto ogni volta
+        run: |
+          git rm -rq --ignore-unmatch backup
+          mkdir -p backup
+          cp visto.json backup/visto-backup.json
+          git config user.name "Visto! backup"
+          git config user.email "actions@users.noreply.github.com"
+          git add backup
+          if ! git diff --cached --quiet; then
+            git commit -q -m "Backup settimanale $(date -u +%F)"
+            for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
+          fi
