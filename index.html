@@ -668,6 +668,15 @@ html[data-theme=light]{--sigillo:radial-gradient(circle at 35% 28%,#ffffff 0%,#f
 html[data-theme=light] .tier.next>i{opacity:.82;filter:grayscale(1) contrast(1.15)}
 .tier.lock{opacity:.32}
 .mcard2:not(.ok)>i{filter:grayscale(1);opacity:.65}
+.ostbtn{display:flex;align-items:center;width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.ostbtn span{margin-left:auto;color:var(--a2)}
+.osth b{display:block;font:700 17px/1.25 var(--serif)}.osth small{display:block;color:var(--mut);font-size:13px;margin-top:3px}
+.ostalt{display:flex;gap:6px;overflow-x:auto;margin:10px -2px 2px;padding:2px;scrollbar-width:none}.ostalt::-webkit-scrollbar{display:none}
+.ostalt button{flex:none;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--mut);font:inherit;font-size:12.5px;cursor:pointer}.ostalt button.on{color:var(--txt);border-color:rgba(255,154,77,.6);background:rgba(255,154,77,.10)}
+.ostl{list-style:none;counter-reset:ost;margin:12px 0 4px;padding:0}
+.ostl li{counter-increment:ost;display:flex;align-items:baseline;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14.5px;line-height:1.3}
+.ostl li::before{content:counter(ost);flex:none;width:20px;text-align:right;color:var(--a2);font-weight:700;font-size:12.5px;font-variant-numeric:tabular-nums}
+.ostl li span{flex:1;min-width:0;overflow-wrap:break-word}.ostl li small{display:block;color:var(--mut);font-size:12px}
+.ostl li em{font-style:normal;color:var(--mut);font-size:12.5px;font-variant-numeric:tabular-nums}
 .vult{display:inline-block;margin-top:4px;color:var(--a2);font-weight:700;cursor:pointer}
 .tabbar{background:rgba(30,26,40,.09);backdrop-filter:blur(8px) saturate(1.7) brightness(1.05);-webkit-backdrop-filter:blur(8px) saturate(1.7) brightness(1.05);
   border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.05),0 12px 34px rgba(0,0,0,.38)}
@@ -712,7 +721,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.46';
+const VERSIONE = '2.47';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1344,6 +1353,7 @@ function showSheet(id, keep){
         ${fut ? '' : `<button class="ck ${on ? 'on' : ''}" data-act="ep" data-id="${id}" data-e="${e.i}" aria-label="Visto">${I.check}</button>`}</div>`; }).join('')}
     </div>
     ${(sh.itPlot || sh.summary) ? `<div class="box"><h4>Trama</h4><p class="plot clamp" data-act="moreText" role="button">${esc(antoTrama(sh, sh.itPlot || sh.summary))}</p></div>` : ''}
+    ${ostBox('s' + sh.id, [sh.name, sh.itName, showName(sh)], (sh.premiered || '').slice(0, 4))}
     ${sh.tmdb ? castSlot('s' + sh.id) : ''}
     ${critica(showName(sh), sh.name, (sh.premiered || '').slice(0, 4), sh.rating, 'serie tv', 's' + sh.id)}
     ${(() => { const a = antoDi(sh), l = a ? antoSerie(a).filter(z => z !== sh) : []; return l.length ? `<div class="box"><h4>Della stessa antologia</h4><div class="recrow" style="margin:0">${l.map(z => { const s2 = showStats(z); return `<button class="pc-it" data-act="antoGo" data-id="${z.id}">${poster(showImg(z), showName(z), 'pst', s2.st === 'finite' ? '<span class="bdg hot">✓ Vista</span>' : '')}<div class="cap">${esc(showName(z).replace(/^(DAHMER - )?(Mostr[oi]|Monsters?):\s*/i, '').replace(/^La storia di /i, '').replace(/^./, c => c.toUpperCase()))}</div><div class="cap2">${esc((z.premiered || '').slice(0, 4))}</div></button>`; }).join('')}</div></div>` : ''; })()}
@@ -1379,6 +1389,7 @@ function movieSheet(id, keep){
       <div class="acts" style="margin-top:0"><button class="btn" data-act="rate" data-id="${id}">${I.check}L'ho visto</button></div></div>`}
     ${dove(m.prov, m.rent, 'Dove vederlo')}
     ${m.plot ? `<div class="box"><h4>Trama</h4><p class="plot clamp" data-act="moreText" role="button">${esc(m.plot)}</p></div>` : ''}
+    ${ostBox('m' + m.id, [m.orig, m.title], m.year)}
     ${typeof m.id === 'number' ? castSlot('m' + m.id) : ''}
     ${critica(m.title, m.orig, m.year, m.vote, 'film', 'm' + m.id)}
     <div class="acts" style="margin-top:14px">${m.dropped ? `<button class="btn ghost" data-act="dropM" data-id="${id}">↩︎ Dai un'altra possibilità</button>` : ''}<button class="btn ghost" data-act="more" data-k="m" data-id="${id}">Altre azioni</button></div>
@@ -1628,6 +1639,7 @@ async function anteprima(k, id, keep){
         : `<button class="btn" data-act="pvAdd">Aggiungi alle mie serie</button>`}</div></div>
     ${dove(x.prov, x.rent || [], film ? 'Dove vederlo' : 'Dove vederla')}
     ${x.plot ? `<div class="box"><h4>Trama</h4><p class="plot clamp" data-act="moreText" role="button">${esc(x.plot)}</p></div>` : ''}
+    ${ostBox((film ? 'm' : 's') + x.id, [x.orig, x.title], x.year)}
     ${castSlot((film ? 'm' : 't') + id)}
     ${critica(x.title, x.orig, x.year, x.vote, film ? 'film' : 'serie tv', 'p' + id)}
   </div>`, keep);
@@ -2310,6 +2322,20 @@ const A = {
   tonightNext(){ UI.tn.i++; tonightModal(UI.tn.mins, UI.tn.g); },
   tonightGo(){ const p = UI.tn.list[UI.tn.i % UI.tn.list.length]; $('#modal').classList.remove('open'); p.type === 'show' ? showSheet(p.id) : movieSheet(p.id); },
   recOpen(d){ UI.back = null; anteprima(d.k === 'movies' ? 'movie' : 'tv', +d.id); },
+  async ost(d, el){
+    const box = $('#ost-' + d.k); if (!box || UI.ostBusy) return; UI.ostBusy = true;
+    el.innerHTML = '<span class="mmrun">Cerco la colonna sonora…</span>'; el.disabled = true;
+    try {
+      const alb = await cercaOst(JSON.parse(d.t), d.y), c = {ok:true, i:0, alb, at:Date.now()};
+      const all = load(OST) || {}; all[d.k] = c; for (const [k, v] of Object.entries(all)) if (Date.now() - v.at > 30 * 864e5) delete all[k];
+      try { localStorage.setItem(OST, JSON.stringify(all)); } catch(e){}
+      if (alb.length) box.innerHTML = '<h4>Colonna sonora</h4>' + ostHtml(d.k, c);
+      else { box.style.transition = 'opacity .35s'; box.style.opacity = 0; setTimeout(() => box.remove(), 380); toast('🎵 Colonna sonora non disponibile per questo titolo'); }
+    } catch(e){ el.disabled = false; el.innerHTML = '🎵 Riprova<span>›</span>'; toast('Non riesco a raggiungere MusicBrainz, riprova tra poco'); }
+    UI.ostBusy = false;
+  },
+  ostAlt(d){ const all = load(OST) || {}, c = all[d.k]; if (!c) return; c.i = +d.i; try { localStorage.setItem(OST, JSON.stringify(all)); } catch(e){} $('#ost-' + d.k).innerHTML = '<h4>Colonna sonora</h4>' + ostHtml(d.k, c); },
+  ostTutti(d){ (UI.ostAll = UI.ostAll || {})[d.k] = true; const c = (load(OST) || {})[d.k]; if (c) $('#ost-' + d.k).innerHTML = '<h4>Colonna sonora</h4>' + ostHtml(d.k, c); },
   moreText(d, el){ el.classList.toggle('clamp'); },
   person(d){
     const o = UI.open;
@@ -2840,6 +2866,61 @@ async function importaLista(imp){
     <div class="pad"><div class="box"><h4>Serie</h4>${ok.serie.map(x => `<div class="set" data-act="openShow" data-id="${x.id}" role="button"><div class="l"><b>${esc(x.nome)}</b><small>${x.segnati} episodi segnati${x.nota ? ' · ' + esc(x.nota) : ''}</small></div><span class="lnk">›</span></div>`).join('') || '<p class="cap2">Nessuna</p>'}</div>
     <div class="box"><h4>Film</h4><p class="plot" style="font-size:14px">${ok.film.map(x => esc(x.nome)).join(' · ') || 'Nessuno'}</p></div>
     ${ko.length ? `<div class="box"><h4>Non riconosciuti (${ko.length})</h4><p class="plot" style="font-size:14px">${ko.map(esc).join(' · ')}</p></div>` : ''}</div>`);
+}
+
+/* ---------- COLONNE SONORE (MusicBrainz, solo i titoli dei brani) ---------- */
+const OST = 'visto-ost';
+const normT = t => (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+function ostBox(k, titoli, anno){
+  const c = (load(OST) || {})[k];
+  if (c && c.ok && !c.alb.length && Date.now() - c.at < 30 * 864e5) return ''; // cercata da poco e non trovata: niente riquadro
+  return `<div class="box" id="ost-${k}"><h4>Colonna sonora</h4>${c && c.ok ? ostHtml(k, c) : `<button class="ostbtn" data-act="ost" data-k="${k}" data-t="${esc(JSON.stringify([...new Set(titoli.filter(Boolean))]))}" data-y="${esc(anno || '')}">🎵 Mostra i brani<span>›</span></button>`}</div>`;
+}
+const mmss = ms => ms ? `${Math.floor(ms / 60000)}:${String(Math.round(ms / 1000) % 60).padStart(2, '0')}` : '';
+function ostHtml(k, c){
+  const a = c.alb[c.i || 0]; if (!a) return '<p class="cap2">Non ho trovato la colonna sonora.</p>';
+  const tot = a.tr.reduce((x, t) => x + (t.l || 0), 0), tutti = UI.ostAll?.[k];
+  return `<div class="osth"><b>${esc(a.t)}</b><small>${[a.ar, a.y, plur(a.tr.length, 'brano', 'brani'), tot ? ore(tot / 60000) : ''].filter(Boolean).map(esc).join(' · ')}</small></div>
+    ${c.alb.length > 1 ? `<div class="ostalt">${c.alb.map((x, i) => `<button class="${i === (c.i || 0) ? 'on' : ''}" data-act="ostAlt" data-k="${k}" data-i="${i}">${esc(x.t.length > 34 ? x.t.slice(0, 32) + '…' : x.t)}</button>`).join('')}</div>` : ''}
+    <ol class="ostl">${(tutti ? a.tr : a.tr.slice(0, 12)).map(t => `<li><span>${esc(t.t)}${t.ar && t.ar !== a.ar ? `<small>${esc(t.ar)}</small>` : ''}</span><em>${mmss(t.l)}</em></li>`).join('')}</ol>
+    ${a.tr.length > 12 && !tutti ? `<button class="lnk" data-act="ostTutti" data-k="${k}">Mostra tutti i ${a.tr.length} brani</button>` : ''}
+    <p class="cap2" style="margin-top:8px">Dati da MusicBrainz</p>`;
+}
+// MusicBrainz chiede al massimo una richiesta al secondo: se risponde "troppe richieste" (503) aspetto e riprovo
+async function mbJson(u){
+  for (let i = 0; ; i++){
+    const r = await fetch('https://musicbrainz.org/ws/2/' + u + (u.includes('?') ? '&' : '?') + 'fmt=json');
+    if (r.ok) return r.json();
+    if ((r.status !== 503 && r.status !== 429) || i >= 5) throw new Error('MusicBrainz ' + r.status);
+    await new Promise(z => setTimeout(z, 1500 * (i + 1)));
+  }
+}
+async function cercaOst(titoli, anno){
+  const y = +anno || 0, cand = new Map();
+  for (const t of titoli){
+    const j = await mbJson('release-group/?limit=15&query=' + encodeURIComponent(`releasegroup:"${t.replace(/"/g, '')}" AND secondarytype:soundtrack`));
+    for (const g of j['release-groups'] || []){
+      const gt = normT(g.title), ft = normT(t), gy = +(g['first-release-date'] || '').slice(0, 4) || 0;
+      if (!gt.startsWith(ft) && !gt.includes(ft + ' ')) continue;
+      const dy = y && gy ? Math.abs(gy - y) : 1;
+      if (dy > 2) continue;
+      const sc = (gt === ft ? 3 : 0) + (/(original|score|soundtrack|music from)/.test(gt) ? 2 : 0) - dy * 2 + (g['primary-type'] === 'Album' ? 1 : 0) + (g.score || 0) / 50;
+      if (!cand.has(g.id) || cand.get(g.id).sc < sc) cand.set(g.id, {id:g.id, t:g.title, y:gy || '', ar:(g['artist-credit'] || []).map(a => a.name + (a.joinphrase || '')).join('').trim(), sc});
+    }
+    if (cand.size) break;
+    await new Promise(r => setTimeout(r, 1100));
+  }
+  const top = [...cand.values()].sort((a, b) => b.sc - a.sc).slice(0, 3), alb = [];
+  for (const g of top){
+    await new Promise(r => setTimeout(r, 1100));
+    const j = await mbJson(`release?release-group=${g.id}&inc=recordings+artist-credits&limit=8`);
+    const rels = (j.releases || []).filter(r => (r.media || []).some(m => (m.tracks || []).length));
+    const rel = rels.find(r => r.status === 'Official' && /XW|US|GB/.test(r.country || '')) || rels.find(r => r.status === 'Official') || rels[0];
+    if (!rel) continue;
+    const cr = c => (c || []).map(a => a.name + (a.joinphrase || '')).join('').trim();
+    alb.push({t:g.t, y:g.y, ar:g.ar, tr:rel.media.flatMap(m => m.tracks || []).map(t => ({t:t.title, l:t.length || t.recording?.length || 0, ar:cr(t['artist-credit'])}))});
+  }
+  return alb;
 }
 
 /* ---------- AUTOMATISMI SU GITHUB (notifiche, voti, backup) ---------- */
