@@ -2872,10 +2872,11 @@ async function importaLista(imp){
 /* ---------- COLONNE SONORE (MusicBrainz, solo i titoli dei brani) ---------- */
 const OST = 'visto-ost2'; // v2: ricerche rifatte con gli abbinamenti più precisi
 const normT = t => (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
-// Tunefind elenca tutte le canzoni usate nelle scene (anche episodio per episodio): si apre la sua ricerca
-const tfLink = (k, titolo) => `<a class="tflink" href="https://www.tunefind.com/search/site?q=${encodeURIComponent(titolo || '')}" target="_blank" rel="noopener">🎶 Tutte le canzoni ${k[0] === 's' ? 'della serie' : 'del film'}<span>Tunefind ›</span></a>`;
+// Tunefind elenca tutte le canzoni usate nelle scene (anche episodio per episodio).
+// Il collegamento apre direttamente la sua pagina del titolo (primo risultato di DuckDuckGo su tunefind.com), anche se Tunefind cambia il suo sito
+const tfLink = (k, titolo) => `<a class="tflink" href="https://duckduckgo.com/?q=${encodeURIComponent('\\ site:tunefind.com ' + (titolo || '') + ' ' + (UI.ostY?.[k] || '') + (k[0] === 's' ? ' tv' : ' movie'))}" target="_blank" rel="noopener">🎶 Tutte le canzoni ${k[0] === 's' ? 'della serie' : 'del film'}<span>Tunefind ›</span></a>`;
 function ostBox(k, titoli, anno){
-  const c = (load(OST) || {})[k]; UI.ostT = UI.ostT || {}; UI.ostT[k] = titoli.filter(Boolean)[0];
+  const c = (load(OST) || {})[k]; UI.ostT = UI.ostT || {}; UI.ostT[k] = titoli.filter(Boolean)[0]; (UI.ostY = UI.ostY || {})[k] = anno;
   if (c && c.ok && !c.alb.length && Date.now() - c.at < 30 * 864e5) return `<div class="box" id="ost-${k}"><h4>Colonna sonora</h4>${tfLink(k, UI.ostT[k])}</div>`; // l'album ufficiale non c'è: resta solo Tunefind
   return `<div class="box" id="ost-${k}"><h4>Colonna sonora</h4>${c && c.ok ? ostHtml(k, c) : `<button class="ostbtn" data-act="ost" data-k="${k}" data-t="${esc(JSON.stringify([...new Set(titoli.filter(Boolean))]))}" data-y="${esc(anno || '')}">🎵 Mostra i brani<span>›</span></button>${tfLink(k, UI.ostT[k])}`}</div>`;
 }
