@@ -681,7 +681,7 @@ html[data-theme=light] .tier.next>i{opacity:.82;filter:grayscale(1) contrast(1.1
 .ostl li::before{content:counter(ost);flex:none;width:20px;text-align:right;color:var(--a2);font-weight:700;font-size:12.5px;font-variant-numeric:tabular-nums}
 .ostl li span{flex:1;min-width:0;overflow-wrap:break-word}.ostl li small{display:block;color:var(--mut);font-size:12px}
 .ostl li em{font-style:normal;color:var(--mut);font-size:12.5px;font-variant-numeric:tabular-nums}
-.vsrow{display:flex;align-items:center;gap:6px;width:100%;margin:0 0 14px;padding:12px 16px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--mut);font:inherit;font-size:14.5px;text-align:left;cursor:pointer}.vsrow b{color:var(--txt)}.vsrow span{margin-left:auto;color:var(--a2);font-weight:700;font-size:13px}
+.vsrow{display:flex;align-items:center;gap:6px;width:100%;margin:14px 0;padding:12px 16px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--mut);font:inherit;font-size:14.5px;text-align:left;cursor:pointer}.vsrow b{color:var(--txt)}.vsrow span{margin-left:auto;color:var(--a2);font-weight:700;font-size:13px}
 .vult{display:inline-block;margin-top:4px;color:var(--a2);font-weight:700;cursor:pointer}
 .tabbar{background:rgba(30,26,40,.09);backdrop-filter:blur(8px) saturate(1.7) brightness(1.05);-webkit-backdrop-filter:blur(8px) saturate(1.7) brightness(1.05);
   border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.05),0 12px 34px rgba(0,0,0,.38)}
@@ -2450,7 +2450,8 @@ const A = {
   votiUlt(){ const n = D.news.filter(x => x.ref === 'voti').sort((a, b) => (b.d || '').localeCompare(a.d || '') || (b.at || 0) - (a.at || 0))[0]; if (n) votiModal(n); else toast('Nessun voto arrivato negli ultimi 30 giorni'); },
   vsApri(d){
     const it = d.k === 's' ? D.series[d.id] : D.movies[d.id]; UI.vsIt = {k:d.k, id:d.id};
-    const tutte = [...new Set([...Object.values(D.series), ...Object.values(D.movies)].flatMap(x => [x.vs, platOf(x)]).filter(Boolean)
+    // prima dove è disponibile adesso questo titolo, poi le piattaforme principali
+    const tutte = [...new Set([it.vs, platOf(it), ...piatt(it.prov).map(p => p.n), nomeP(it.net)].filter(Boolean)
       .concat(['Netflix', 'Prime Video', 'Disney+', 'Sky Go', 'Now TV', 'Paramount+', 'Apple TV+', 'HBO Max', 'RaiPlay', 'Mediaset Infinity', 'Al cinema', 'In TV', 'Altro']))];
     $('#mcard').innerHTML = `<h3>Dove l'hai ${d.k === 's' ? 'vista' : 'visto'}?</h3><div class="s">Resta così anche se un giorno ${d.k === 's' ? 'la serie passa' : 'il film passa'} su un'altra piattaforma: le statistiche contano dove l'hai guardato davvero.</div>
       <div class="tchips" style="flex-wrap:wrap">${tutte.map(p => `<button style="flex:1 1 30%" class="${platVisto(it) === p ? 'on' : ''}" data-act="vsSet" data-p="${esc(p)}">${esc(p)}</button>`).join('')}</div>
@@ -2913,7 +2914,7 @@ const MUSICA = {spotify:['Spotify', q => 'https://open.spotify.com/search/' + en
   nessuna:['Nessuna', null]};
 const musica = () => MUSICA[D.musica] || MUSICA.spotify;
 const mLink = q => musica()[1] ? musica()[1](q) : '';
-const OST = 'visto-ost2'; // v2: ricerche rifatte con gli abbinamenti più precisi
+const OST = 'visto-ost3'; // v2: ricerche rifatte con gli abbinamenti più precisi
 const normT = t => (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 // Tunefind elenca tutte le canzoni usate nelle scene (anche episodio per episodio).
 // Il collegamento apre direttamente la sua pagina del titolo (primo risultato di DuckDuckGo su tunefind.com), anche se Tunefind cambia il suo sito
@@ -2960,6 +2961,8 @@ async function cercaOst(titoli, anno){
     for (const g of j['release-groups'] || []){
       const gt = normT(g.title), ft = normT(t), gy = +(g['first-release-date'] || '').slice(0, 4) || 0;
       if (!gt.startsWith(ft)) continue; // "Project Interstellar OST" non è la colonna sonora di Interstellar
+      const resto = gt.slice(ft.length).trim(); // dopo il titolo: solo parole da colonna sonora ("Interstellar Marines" è un videogioco)
+      if (resto && !/^(original|music|motion|soundtrack|score|ost|the (original|complete|music|score)|complete|expanded|deluxe|songs|theme|season|stagione|vol|volume|series|tv|film|movie|\d)/.test(resto)) continue;
       const dy = y && gy ? Math.abs(gy - y) : 1;
       if (dy > 2) continue;
       const sc = (gt === ft ? 3 : 0) + (/(original|score|soundtrack|music from)/.test(gt) ? 2 : 0) - dy * 2 + (g['primary-type'] === 'Album' ? 1 : 0) + (g.score || 0) / 50;
