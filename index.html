@@ -681,6 +681,7 @@ html[data-theme=light] .tier.next>i{opacity:.82;filter:grayscale(1) contrast(1.1
 .ostl li::before{content:counter(ost);flex:none;width:20px;text-align:right;color:var(--a2);font-weight:700;font-size:12.5px;font-variant-numeric:tabular-nums}
 .ostl li span{flex:1;min-width:0;overflow-wrap:break-word}.ostl li small{display:block;color:var(--mut);font-size:12px}
 .ostl li em{font-style:normal;color:var(--mut);font-size:12.5px;font-variant-numeric:tabular-nums}
+.vsrow{display:flex;align-items:center;gap:6px;width:100%;margin:0 0 14px;padding:12px 16px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--mut);font:inherit;font-size:14.5px;text-align:left;cursor:pointer}.vsrow b{color:var(--txt)}.vsrow span{margin-left:auto;color:var(--a2);font-weight:700;font-size:13px}
 .vult{display:inline-block;margin-top:4px;color:var(--a2);font-weight:700;cursor:pointer}
 .tabbar{background:rgba(30,26,40,.09);backdrop-filter:blur(8px) saturate(1.7) brightness(1.05);-webkit-backdrop-filter:blur(8px) saturate(1.7) brightness(1.05);
   border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.05),0 12px 34px rgba(0,0,0,.38)}
@@ -725,7 +726,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.51';
+const VERSIONE = '2.52';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -770,7 +771,7 @@ MQ.addEventListener?.('change', () => applyTheme());
 applyTheme();
 function load(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
 function saveCfg(){ try { localStorage.setItem(CFG, JSON.stringify(C)); } catch(e){} }
-function save(sync = true){ clearTimeout(UI.trT); UI.trT = setTimeout(controllaTraguardi, 1200); D.upd = Date.now(); if (C.tmdb) D.tmdbKey = C.tmdb; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){} if (sync) pushLater(); }
+function save(sync = true){ fissaPiatt(); clearTimeout(UI.trT); UI.trT = setTimeout(controllaTraguardi, 1200); D.upd = Date.now(); if (C.tmdb) D.tmdbKey = C.tmdb; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){} if (sync) pushLater(); }
 
 /* ---------- API ---------- */
 async function tvm(path){
@@ -1149,8 +1150,8 @@ function renderIo(){
   const dur = min => { const h = Math.round(min / 60), g = Math.floor(h / 24); return g ? (h % 24 ? `${plur(g, 'giorno', 'giorni')} e ${plur(h % 24, 'ora', 'ore')}` : plur(g, 'giorno', 'giorni')) : h ? plur(h, 'ora', 'ore') : 'meno di un\'ora'; };
   // piattaforme
   const pl = {};
-  ss.forEach(sh => { const n = platOf(sh); if (!n) return; const byId = Object.fromEntries(sh.eps.map(e => [e.i, e])); Object.keys(sh.watched).forEach(id => pl[n] = (pl[n] || 0) + (byId[id]?.r || sh.runtime || 45)); });
-  seen.forEach(m => { const n = platOf(m); if (n) pl[n] = (pl[n] || 0) + (m.runtime || 110); });
+  ss.forEach(sh => { const n = platVisto(sh); if (!n) return; const byId = Object.fromEntries(sh.eps.map(e => [e.i, e])); Object.keys(sh.watched).forEach(id => pl[n] = (pl[n] || 0) + (byId[id]?.r || sh.runtime || 45)); });
+  seen.forEach(m => { const n = platVisto(m); if (n) pl[n] = (pl[n] || 0) + (m.runtime || 110); });
   const plTop = Object.entries(pl).sort((a, b) => b[1] - a[1]).slice(0, 6), plMx = plTop[0]?.[1] || 1;
   // abitudini e maratone (solo visioni con data vera)
   const perDay = {}, wd = Array(7).fill(0);
@@ -1347,6 +1348,7 @@ function showSheet(id, keep){
         ${sh.stopped ? `<button class="btn ghost" data-act="stopShow" data-id="${id}">↩︎ Riprendila</button>` : ''}
         ${sh.dropped ? `<button class="btn ghost" data-act="drop" data-id="${id}">↩︎ Dai un'altra possibilità</button>` : ''}
         <button class="btn ghost" data-act="more" data-k="s" data-id="${id}">Altre azioni</button></div></div>
+    ${visto(sh) ? vsRiga('s', id, sh) : ''}
     ${dove(sh.prov, [], 'Dove vederla')}
     <div class="box"><h4>Episodi</h4>
       <div class="schips">${seasons.map(s => { const se = sh.eps.filter(e => e.s === s && e.d && e.d <= t), w = se.filter(e => sh.watched[e.i]).length;
@@ -1392,6 +1394,7 @@ function movieSheet(id, keep){
       <div class="acts"><button class="btn ghost" data-act="rate" data-id="${id}">Modifica voto e commento</button></div></div>`
     : `<div class="box">${m.gone ? `<p class="plot" style="margin-bottom:12px;color:#ff9a7a">Non è più su ${esc(nomeP(m.gone.n))} dal ${esc(fData(m.gone.d))}${m.prov?.length ? '' : ' e per ora non è su nessuna piattaforma in abbonamento'}.</p>` : ''}${m.rel && m.rel > t ? `<p class="plot" style="margin-bottom:12px">Esce in Italia <b style="color:var(--a2)">${esc(fGiorno(m.rel))}${fGiorno(m.rel) !== fData(m.rel) ? ' (' + esc(fData(m.rel)) + ')' : ''}</b>. Ti avviso tra le novità.</p>` : ''}
       <div class="acts" style="margin-top:0"><button class="btn" data-act="rate" data-id="${id}">${I.check}L'ho visto</button></div></div>`}
+    ${visto(m) ? vsRiga('m', m.id, m) : ''}
     ${dove(m.prov, m.rent, 'Dove vederlo')}
     ${m.plot ? `<div class="box"><h4>Trama</h4><p class="plot clamp" data-act="moreText" role="button">${esc(m.plot)}</p></div>` : ''}
     ${ostBox('m' + m.id, [m.orig, m.title], m.year)}
@@ -1508,7 +1511,7 @@ function yearSheet(yy){
   UI.open = {type:'year', y:yy};
   const y = String(yy || new Date().getFullYear()), M = ['G','F','M','A','M','G','L','A','S','O','N','D'];
   const months = Array(12).fill(0), minM = Array(12).fill(0), plY = {}; let eps = 0, min = 0; const perShow = {}; const imgs = [];
-  const addP = (it, v) => { const n = platOf(it); if (n) plY[n] = (plY[n] || 0) + v; };
+  const addP = (it, v) => { const n = platVisto(it); if (n) plY[n] = (plY[n] || 0) + v; };
   Object.values(D.series).forEach(sh => { const byId = Object.fromEntries(sh.eps.map(e => [e.i, e]));
     Object.entries(sh.watched).forEach(([id, ts]) => { const d = new Date(ts); if (String(d.getFullYear()) !== y) return;
       const r = byId[id]?.r || sh.runtime || 45; eps++; min += r; minM[d.getMonth()] += r; addP(sh, r); months[d.getMonth()]++; perShow[sh.id] = (perShow[sh.id] || 0) + 1; });
@@ -1566,11 +1569,21 @@ function dove(prov, rent, titolo){
 }
 const miaPiatt = it => !!((it.prov || []).length || it.net);
 const platOf = it => piatt(it.prov)[0]?.n || nomeP(it.net) || '';
+// Dove l'hai VISTO: si fissa la prima volta che lo guardi e non cambia più se poi il titolo passa a un'altra piattaforma.
+// Le statistiche usano questo; "dove vederlo adesso" (da vedere, Stasera cosa guardo) continua a usare platOf.
+const platVisto = it => it.vs || platOf(it);
+const vsRiga = (k, id, it) => `<button class="vsrow" data-act="vsApri" data-k="${k}" data-id="${id}">📺 ${k === 's' ? 'Vista' : 'Visto'} su <b>${esc(platVisto(it) || 'non so dove')}</b><span>Cambia</span></button>`;
+const visto = it => it.state === 'seen' || Object.keys(it.watched || {}).length > 0;
+function fissaPiatt(){
+  let n = 0;
+  for (const it of [...Object.values(D.series), ...Object.values(D.movies)]) if (!it.vs && visto(it)){ const p = platOf(it); if (p){ it.vs = p; n++; } }
+  return n;
+}
 function platSheet(pn){
   UI.open = {type:'genre', g:null, p:pn};
-  const ssV = Object.values(D.series).filter(sh => platOf(sh) === pn && Object.keys(sh.watched).length);
+  const ssV = Object.values(D.series).filter(sh => platVisto(sh) === pn && Object.keys(sh.watched).length);
   const ssT = Object.values(D.series).filter(sh => platOf(sh) === pn && !Object.keys(sh.watched).length);
-  const msV = Object.values(D.movies).filter(m => m.state === 'seen' && platOf(m) === pn);
+  const msV = Object.values(D.movies).filter(m => m.state === 'seen' && platVisto(m) === pn);
   const msT = Object.values(D.movies).filter(m => m.state === 'todo' && platOf(m) === pn);
   const card = (act, id, img, t, sub) => `<button class="pc-it fadein" data-act="${act}" data-id="${id}">${poster(img, t)}<div class="cap">${esc(t)}</div><div class="cap2">${esc(sub)}</div></button>`;
   const sez = (tit, list, f) => list.length ? `<h2 class="sec">${tit} <small>${list.length}</small></h2><div class="grid">${list.map(f).join('')}</div>` : '';
@@ -2435,6 +2448,16 @@ const A = {
   genPrefTog(d){ const i = UI.gp.indexOf(d.g); i < 0 ? UI.gp.push(d.g) : UI.gp.splice(i, 1); UI.gpDraw(); },
   // riapre l'ultima finestra dei voti arrivati (le notizie lette restano 30 giorni)
   votiUlt(){ const n = D.news.filter(x => x.ref === 'voti').sort((a, b) => (b.d || '').localeCompare(a.d || '') || (b.at || 0) - (a.at || 0))[0]; if (n) votiModal(n); else toast('Nessun voto arrivato negli ultimi 30 giorni'); },
+  vsApri(d){
+    const it = d.k === 's' ? D.series[d.id] : D.movies[d.id]; UI.vsIt = {k:d.k, id:d.id};
+    const tutte = [...new Set([...Object.values(D.series), ...Object.values(D.movies)].flatMap(x => [x.vs, platOf(x)]).filter(Boolean)
+      .concat(['Netflix', 'Prime Video', 'Disney+', 'Sky Go', 'Now TV', 'Paramount+', 'Apple TV+', 'HBO Max', 'RaiPlay', 'Mediaset Infinity', 'Al cinema', 'In TV', 'Altro']))];
+    $('#mcard').innerHTML = `<h3>Dove l'hai ${d.k === 's' ? 'vista' : 'visto'}?</h3><div class="s">Resta così anche se un giorno ${d.k === 's' ? 'la serie passa' : 'il film passa'} su un'altra piattaforma: le statistiche contano dove l'hai guardato davvero.</div>
+      <div class="tchips" style="flex-wrap:wrap">${tutte.map(p => `<button style="flex:1 1 30%" class="${platVisto(it) === p ? 'on' : ''}" data-act="vsSet" data-p="${esc(p)}">${esc(p)}</button>`).join('')}</div>
+      <div class="mrow"><button class="btn" data-act="closeModal">Fatto</button></div>`;
+    $('#modal').classList.add('open');
+  },
+  vsSet(d){ const {k, id} = UI.vsIt, it = k === 's' ? D.series[id] : D.movies[id]; it.vs = d.p; save(); $('#modal').classList.remove('open'); refreshView(); toast(`📺 ${k === 's' ? 'Vista' : 'Visto'} su ${esc(d.p)}`); },
   musicaApri(){
     $('#mcard').innerHTML = `<h3>App di musica</h3><div class="s">Toccando un brano della colonna sonora si apre qui. Vale su tutti i tuoi dispositivi.</div>
       <div class="tchips" style="flex-wrap:wrap">${Object.entries(MUSICA).map(([k, [n]]) => `<button style="flex:1 1 45%" class="${(D.musica || 'spotify') === k ? 'on' : ''}" data-act="musicaSet" data-k="${k}">${esc(n)}</button>`).join('')}</div>
@@ -2558,7 +2581,7 @@ async function checkNews(force){
       const nu = await fetchShow(old.id);
       const oldMax = Math.max(0, ...old.eps.map(e => e.s)), newMax = Math.max(0, ...nu.eps.map(e => e.s));
       const fresh = nu.eps.filter(e => e.d && e.d > since && e.d <= t && !old.watched[e.i]);
-      const keep = {watched:old.watched, paused:old.paused, dropped:old.dropped, stopped:old.stopped, closed:old.closed, notes:old.notes, myRating:old.myRating, lastFull:old.lastFull, added:old.added, lastW:old.lastW, tmdb:old.tmdb, myGen:old.myGen, myPoster:old.myPoster, autoP:old.autoP, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
+      const keep = {vs:old.vs, watched:old.watched, paused:old.paused, dropped:old.dropped, stopped:old.stopped, closed:old.closed, notes:old.notes, myRating:old.myRating, lastFull:old.lastFull, added:old.added, lastW:old.lastW, tmdb:old.tmdb, myGen:old.myGen, myPoster:old.myPoster, autoP:old.autoP, itName:old.itName, itPlot:old.itPlot, back:old.back, poster:old.poster, prov:old.prov, itEp:old.itEp};
       keep.tmg = old.tmg; keep.genres = normGen(nu.tvg, old.tmg || []);
       D.series[old.id] = Object.assign(nu, keep);
       const sh = D.series[old.id], name = showName(sh), img = showImg(sh, 'w185');
@@ -2783,7 +2806,7 @@ async function importaNetflix(txt){
         if (!hit && e.season == null && /\S/.test(e.sLab)){ // stagione con un nome (es. "La storia di Ed Gein"): cerca in tutte
           hit = sh.eps.find(x => norm(epT(sh, x)) === nt || norm(x.t) === nt);
         }
-        if (hit && !(sh.watched[hit.i] > 1e11)){ sh.watched[hit.i] = new Date(e.d + 'T21:00').getTime(); segnati++; }
+        if (hit && !(sh.watched[hit.i] > 1e11)){ sh.watched[hit.i] = new Date(e.d + 'T21:00').getTime(); segnati++; sh.vs = sh.vs || 'Netflix'; }
       }
       const last = Math.max(0, ...Object.values(sh.watched).filter(v => v > 1e11)); if (last) sh.lastW = Math.max(sh.lastW || 0, last);
       ok.serie.push({id, nome:showName(sh), segnati, tot:s.eps.length});
@@ -2796,9 +2819,9 @@ async function importaNetflix(txt){
       let r = await tmdb('/search/movie', {query:f.title, region:'IT'}); let t = r.results?.[0];
       if (!t && /[:–-]/.test(f.title)){ for (const q of f.title.split(/\s*[:–]\s*|\s+-\s+/).filter(x => x.length > 3)){ r = await tmdb('/search/movie', {query:q, region:'IT'}); t = r.results?.[0]; if (t) break; } }
       if (!t){ ko.push(f.title); continue; }
-      if (D.movies[t.id]?.state === 'seen'){ if (!D.movies[t.id].seenAt) D.movies[t.id].seenAt = f.d; ok.film.push({id:t.id, nome:D.movies[t.id].title}); continue; }
+      if (D.movies[t.id]?.state === 'seen'){ if (!D.movies[t.id].seenAt) D.movies[t.id].seenAt = f.d; D.movies[t.id].vs = D.movies[t.id].vs || 'Netflix'; ok.film.push({id:t.id, nome:D.movies[t.id].title}); continue; }
       const m = await fetchMovie(t.id);
-      D.movies[m.id] = Object.assign(D.movies[m.id] || {rating:0, comment:''}, m, {state:'seen', seenAt:f.d, added:D.movies[m.id]?.added || Date.now()});
+      D.movies[m.id] = Object.assign(D.movies[m.id] || {rating:0, comment:''}, m, {state:'seen', seenAt:f.d, vs:D.movies[m.id]?.vs || 'Netflix', added:D.movies[m.id]?.added || Date.now()});
       ok.film.push({id:m.id, nome:m.title});
       await sleep(120);
     } catch(e){ ko.push(f.title); }
@@ -3056,6 +3079,7 @@ document.addEventListener('wheel', e => {
 }, {passive:false});
 /* ---------- AVVIO ---------- */
 (async function init(){
+  if (fissaPiatt()) save();
   render();
   checkUpdate();
   if (C.ghToken && C.autoNo === undefined) setTimeout(controllaAuto, 4000); // una volta: nel repository ci sono gli automatismi?
