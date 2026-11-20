@@ -726,7 +726,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.52';
+const VERSIONE = '2.53';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -2159,7 +2159,11 @@ async function doSearch(q){
         ${inList ? `<button class="add done" data-act="openShow" data-id="${inList.id}" data-from="search">✓ In lista ›</button>` : `<button class="add" data-act="addShow" data-src="${s.src}" data-id="${s.id}">+ Aggiungi</button>`}</div>`; }).join('');
     } else {
       if (!C.tmdb){ box.innerHTML = `<div class="hint">Per cercare i film serve la chiave TMDB (la trovi nella scheda <b>Io</b>).<br><br>Intanto puoi aggiungerlo a mano:</div><div class="acts"><button class="btn ghost" data-act="manual" data-q="${esc(q)}">Aggiungi "${esc(q)}" a Da vedere</button></div>`; return; }
-      const r = await tmdb('/search/movie', {query:q, region:'IT'});
+      // "Nosferatu 1922": l'anno in fondo serve a filtrare, TMDB non lo capisce dentro al titolo
+      const ya = q.match(/^(.+?)\s*\(?((?:18|19|20)\d\d)\)?$/);
+      let r = await tmdb('/search/movie', ya ? {query:ya[1], primary_release_year:ya[2], region:'IT'} : {query:q, region:'IT'});
+      if (ya && !r.results.length) r = await tmdb('/search/movie', {query:ya[1], year:ya[2], region:'IT'});
+      if (ya && !r.results.length) r = await tmdb('/search/movie', {query:q, region:'IT'});
       if (!r.results.length){ box.innerHTML = '<div class="hint">Nessun film trovato.</div>'; return; }
       box.innerHTML = r.results.slice(0, 15).map(m => { const st = D.movies[m.id]?.state;
         return `<div class="res fadein" ${st ? `data-act="openMovie" data-id="${m.id}" data-from="search"` : `data-act="resPv" data-k="movie" data-id="${m.id}"`} role="button">${poster(m.poster_path ? IMG + 'w185' + m.poster_path : '', m.title, 'pimg')}<div class="tx"><b>${esc(m.title)}</b><small>${esc([(m.release_date || '').slice(0, 4), m.original_title !== m.title ? m.original_title : ''].filter(Boolean).join(' · '))}</small><small>${esc(m.overview || '')}</small></div>
