@@ -117,7 +117,7 @@ if (dati.tmdbKey){
 // il 1° del mese: arrivano le nuove sfide del mese nell'app
 { const ora = new Date(new Date().toLocaleString('en-US', {timeZone: 'Europe/Rome'}));
   if (ora.getDate() <= 2){ const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
-    msgs.push({id: `sfide-${ora.getFullYear()}-${ora.getMonth() + 1}`, tag: 'sfide-mese', title: `🗓️ Le sfide di ${MESI[ora.getMonth()]}`, body: 'Tre nuove sfide ti aspettano in Visto!: le trovi in Io, tra i traguardi 🍿'}); } }
+    msgs.push({id: `sfide-${ora.getFullYear()}-${ora.getMonth() + 1}`, tag: 'sfide-mese', title: `🗓️ Le sfide di ${MESI[ora.getMonth()]}`, body: (ora.getFullYear() * 12 + ora.getMonth() >= 2026 * 12 + 11) ? 'Tre nuove sfide del mese e una sfida a sorpresa 🎁 per la tua collezione: le trovi in Io, tra i traguardi 🍿' : 'Tre nuove sfide ti aspettano in Visto!: le trovi in Io, tra i traguardi 🍿'}); } }
 for (const msg of msgs){
   if (stato.sent[msg.id]) continue;
   let ok = false;
