@@ -1949,30 +1949,30 @@ function sfide(){
     const perGiorno = {}; F.forEach(x => perGiorno[x.day] = (perGiorno[x.day] || 0) + 1);
     const debutti = ss.filter(sh => { const e1 = sh.eps.find(e => e.s === 1 && e.n === 1); return e1 && sh.watched[e1.i] > 1e11; });
     const S = [
-      ['🎬', 'Tre debutti', 'il primo episodio di 3 serie diverse', debutti.length, 3, debutti.map(sh => rS(sh, fData(giornoDi(sh.watched[sh.eps.find(e => e.s === 1 && e.n === 1).i]))))],
-      ['🕰️', 'Viaggio nei decenni', 'film di 5 decenni diversi', dec.size, 5, [...dec].sort().map(d => ({k:'t', sub:`anni ${String(d).slice(2)}`}))],
-      ['📼', 'Lunga serialità', 'finisci una serie di almeno 100 episodi', finite.filter(sh => sh.eps.length >= 100).length ? 1 : 0, 1, finite.filter(sh => sh.eps.length >= 100).map(sh => rS(sh, plur(sh.eps.length, 'episodio', 'episodi')))],
+      ['🎬', 'Ciak, si comincia', 'il primo episodio di 3 serie diverse', debutti.length, 3, debutti.map(sh => rS(sh, fData(giornoDi(sh.watched[sh.eps.find(e => e.s === 1 && e.n === 1).i]))))],
+      ['🕰️', 'Macchina del tempo', 'film di 5 decenni diversi', dec.size, 5, [...dec].sort().map(d => ({k:'t', sub:`anni ${String(d).slice(2)}`}))],
+      ['📼', 'Cento di questi episodi', 'finisci una serie di almeno 100 episodi', finite.filter(sh => sh.eps.length >= 100).length ? 1 : 0, 1, finite.filter(sh => sh.eps.length >= 100).map(sh => rS(sh, plur(sh.eps.length, 'episodio', 'episodi')))],
       ['⏳', 'Kolossal', 'un film di almeno 3 ore', seen.filter(m => m.runtime >= 180).length ? 1 : 0, 1, seen.filter(m => m.runtime >= 180).map(m => rM(m, ore(m.runtime)))],
-      ['🧭', 'Giro delle piattaforme', 'serie viste su 5 piattaforme diverse', new Set(ss.filter(visto).map(platVisto).filter(Boolean)).size, 5, []],
-      ['🎹', 'Cinema muto', 'un film uscito prima del 1930', seen.filter(m => m.year && +m.year < 1930).length ? 1 : 0, 1, seen.filter(m => m.year && +m.year < 1930).map(m => rM(m, m.year))],
+      ['🧭', 'Zapping d\'autore', 'serie viste su 5 piattaforme diverse', new Set(ss.filter(visto).map(platVisto).filter(Boolean)).size, 5, []],
+      ['🎹', 'Il silenzio è d\'oro', 'un film uscito prima del 1930', seen.filter(m => m.year && +m.year < 1930).length ? 1 : 0, 1, seen.filter(m => m.year && +m.year < 1930).map(m => rM(m, m.year))],
       ['📅', 'Appuntamento fisso', 'episodi in 8 settimane di fila', settimane, 8, []],
-      ['🎥', 'Collezionista di registi', 'film di 30 registi diversi', reg.size, 30, []],
-      ['🌅', 'Colazione con serie', 'un episodio prima delle 9 del mattino', E.filter(x => { const h = new Date(x.ts).getHours(); return h >= 5 && h < 9; }).length ? 1 : 0, 1, []],
-      ['📝', 'Pagella completa', 'vota 50 film', seen.filter(m => m.rating).length, 50, []],
+      ['🎥', 'Dietro la macchina da presa', 'film di 30 registi diversi', reg.size, 30, []],
+      ['🌅', 'Cappuccino e cliffhanger', 'un episodio prima delle 9 del mattino', E.filter(x => { const h = new Date(x.ts).getHours(); return h >= 5 && h < 9; }).length ? 1 : 0, 1, []],
+      ['📝', 'Il critico in sala', 'vota 50 film', seen.filter(m => m.rating).length, 50, []],
       ['🔥', 'Stagioni a raffica', '3 stagioni finite nello stesso mese', Math.max(0, ...Object.values(perMese)), 3, []],
       ['🎨', 'Mondi animati', '5 film d\'animazione', seen.filter(m => mainGen(m) === 'Animazione').length, 5, seen.filter(m => mainGen(m) === 'Animazione').slice(0, 8).map(m => rM(m, m.year || ''))],
-      ['💎', 'Miniserie', 'finisci 3 serie di una sola stagione', finite.filter(sh => Math.max(...sh.eps.map(e => e.s)) === 1).length, 3, finite.filter(sh => Math.max(...sh.eps.map(e => e.s)) === 1).map(sh => rS(sh, plur(sh.eps.length, 'episodio', 'episodi')))],
-      ['🎞️', 'Tripla proiezione', '3 film nello stesso giorno', Math.max(0, ...Object.values(perGiorno)), 3, []],
-      ['🌙', 'Finale di mezzanotte', 'l\'ultimo episodio di una serie dopo mezzanotte', E.filter(x => notte(x.ts) && x.e === x.sh.eps.at(-1)).length ? 1 : 0, 1, E.filter(x => notte(x.ts) && x.e === x.sh.eps.at(-1)).map(x => rS(x.sh, fData(x.day)))],
-      ['🍿', 'Un film al mese', 'film visti in 6 mesi di fila', mesiFilm, 6, []],
-      ['👯', 'Doppio finale', 'finisci 2 serie nello stesso mese', Math.max(0, ...Object.values(finM)), 2, []],
+      ['💎', 'Poche ma buone', 'finisci 3 serie di una sola stagione', finite.filter(sh => Math.max(...sh.eps.map(e => e.s)) === 1).length, 3, finite.filter(sh => Math.max(...sh.eps.map(e => e.s)) === 1).map(sh => rS(sh, plur(sh.eps.length, 'episodio', 'episodi')))],
+      ['🎞️', 'Nuovo Cinema Paradiso', '3 film nello stesso giorno', Math.max(0, ...Object.values(perGiorno)), 3, []],
+      ['🌙', 'Mezzanotte e titoli di coda', 'l\'ultimo episodio di una serie dopo mezzanotte', E.filter(x => notte(x.ts) && x.e === x.sh.eps.at(-1)).length ? 1 : 0, 1, E.filter(x => notte(x.ts) && x.e === x.sh.eps.at(-1)).map(x => rS(x.sh, fData(x.day)))],
+      ['🍿', 'Tessera del cineclub', 'film visti in 6 mesi di fila', mesiFilm, 6, []],
+      ['👯', 'Doppio addio', 'finisci 2 serie nello stesso mese', Math.max(0, ...Object.values(finM)), 2, []],
       ['🦇', 'Brividi d\'epoca', 'un horror uscito prima del 1980', seen.filter(m => m.year && +m.year < 1980 && mainGen(m) === 'Horror & Mistero').length ? 1 : 0, 1, seen.filter(m => m.year && +m.year < 1980 && mainGen(m) === 'Horror & Mistero').map(m => rM(m, m.year))],
-      ['🛋️', 'Weekend in serie', '10 episodi in un fine settimana', Math.max(0, ...Object.values(weE)), 10, []],
+      ['🛋️', 'Weekend sul divano', '10 episodi in un fine settimana', Math.max(0, ...Object.values(weE)), 10, []],
       ['🖋️', 'Memoria storica', 'commenta 5 film di prima del 1990', seen.filter(m => m.year && +m.year < 1990 && (m.comment || '').trim()).length, 5, []],
-      ['⭐', 'Pagella delle serie', 'vota 15 serie', ss.filter(sh => sh.myRating).length, 15, []],
-      ['🎟️', 'Abbonato al cinema', '20 film nello stesso anno', Math.max(0, ...Object.values(filmAnno)), 20, []],
-      ['🧩', 'Saga completa', 'finisci una serie di almeno 5 stagioni', finite.filter(sh => Math.max(...sh.eps.map(e => e.s)) >= 5).length ? 1 : 0, 1, finite.filter(sh => Math.max(...sh.eps.map(e => e.s)) >= 5).map(sh => rS(sh, plur(Math.max(...sh.eps.map(e => e.s)), 'stagione', 'stagioni')))],
-      ['🦉', 'Cinefilo notturno', '5 film dopo mezzanotte', F.filter(x => notte(x.ts)).length, 5, []]];
+      ['⭐', 'Voto in condotta', 'vota 15 serie', ss.filter(sh => sh.myRating).length, 15, []],
+      ['🎟️', 'Prima fila', '20 film nello stesso anno', Math.max(0, ...Object.values(filmAnno)), 20, []],
+      ['🧩', 'Epopea', 'finisci una serie di almeno 5 stagioni', finite.filter(sh => Math.max(...sh.eps.map(e => e.s)) >= 5).length ? 1 : 0, 1, finite.filter(sh => Math.max(...sh.eps.map(e => e.s)) >= 5).map(sh => rS(sh, plur(Math.max(...sh.eps.map(e => e.s)), 'stagione', 'stagioni')))],
+      ['🦉', 'Gufo cinefilo', '5 film dopo mezzanotte', F.filter(x => notte(x.ts)).length, 5, []]];
     S.slice(0, Math.max(0, mesiDa + 1)).forEach(([ic, t, sub, cur, goal, rows], i) =>
       add(ic, t, sub, cur, goal, `🎁 Sfida a sorpresa arrivata a ${i === mesiDa ? mese : MESI[(11 + i) % 12]} ${2026 + Math.floor((11 + i) / 12)}.`, rows.filter(r => r.k !== 't'), i === mesiDa ? ' · 🎁 nuova' : ''));
   }
