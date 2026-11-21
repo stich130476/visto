@@ -2007,7 +2007,12 @@ function vitaP(p){
   const fd = d => new Date(d + 'T12:00').toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'});
   const eta = (a, b) => { const x = new Date(a + 'T12:00'), y = b ? new Date(b + 'T12:00') : new Date(); let n = y.getFullYear() - x.getFullYear(); if (y.getMonth() < x.getMonth() || (y.getMonth() === x.getMonth() && y.getDate() < x.getDate())) n--; return n; };
   const luogo = (p.place_of_birth || '').split(',').map(x => x.trim()).filter(Boolean);
-  const dove = luogo.length > 1 ? `${luogo[0]} (${luogo[luogo.length - 1]})` : luogo[0] || '';
+  const PAESI = {'Germany':'Germania', 'France':'Francia', 'Italy':'Italia', 'Spain':'Spagna', 'UK':'Regno Unito', 'United Kingdom':'Regno Unito', 'England':'Inghilterra', 'Scotland':'Scozia', 'Wales':'Galles', 'Ireland':'Irlanda',
+    'Japan':'Giappone', 'South Korea':'Corea del Sud', 'China':'Cina', 'Sweden':'Svezia', 'Denmark':'Danimarca', 'Norway':'Norvegia', 'Finland':'Finlandia', 'Netherlands':'Paesi Bassi', 'The Netherlands':'Paesi Bassi', 'Belgium':'Belgio',
+    'Switzerland':'Svizzera', 'Mexico':'Messico', 'Brazil':'Brasile', 'New Zealand':'Nuova Zelanda', 'Greece':'Grecia', 'Portugal':'Portogallo', 'Poland':'Polonia', 'Hungary':'Ungheria', 'Czech Republic':'Repubblica Ceca',
+    'Czechia':'Repubblica Ceca', 'Israel':'Israele', 'South Africa':'Sudafrica', 'Turkey':'Turchia', 'Russia':'Russia', 'United States':'USA', 'United States of America':'USA', 'U.S.':'USA', 'Iceland':'Islanda', 'Croatia':'Croazia', 'Serbia':'Serbia'};
+  const paese = x => PAESI[x] || x;
+  const dove = luogo.length > 1 ? `${luogo[0]} (${paese(luogo[luogo.length - 1])})` : paese(luogo[0] || '');
   const r1 = p.birthday ? ['✶ ' + fd(p.birthday), dove, !p.deathday ? plur(eta(p.birthday), 'anno', 'anni') : ''].filter(Boolean).join(' · ') : '';
   const r2 = p.deathday ? ['✝ ' + fd(p.deathday), p.birthday ? 'a ' + plur(eta(p.birthday, p.deathday), 'anno', 'anni') : ''].filter(Boolean).join(' · ') : '';
   return `<div class="pvita">${r1 ? `<span>${esc(r1)}</span>` : ''}${r2 ? `<span>${esc(r2)}</span>` : ''}</div>`;
