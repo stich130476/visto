@@ -1931,50 +1931,47 @@ function sfide(){
   const nE = E.filter(x => notte(x.ts)), nF = F.filter(x => notte(x.ts)), np = nE.length + nF.length * 2;
   add('🌙', 'Notte bianca', '3 film o 6 episodi dopo mezzanotte', np, 6, `Dopo mezzanotte: <b>${nE.length} episodi</b> e <b>${nF.length} film</b> (un film vale due episodi).`, [...nF.map(x => rM(x.m, `${fData(x.day)} alle ${new Date(x.ts).toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'})}`)), ...nE.slice(-6).reverse().map(x => rS(x.sh, `${x.e ? epCode(x.e) + ' · ' : ''}${fData(x.day)}`))]);
 
-  // ===== sfide a sorpresa: dal 1° dicembre 2026 ne arriva una nuova al mese (un po' per i film, un po' per le serie) e resta per sempre =====
+  // ===== sfide a sorpresa: dal 1° dicembre 2026 ne arriva una nuova al mese (un po' per i film, un po' per le serie) e resta per sempre.
+  //       Conta solo quello che guardi DA QUANDO la sfida arriva: così è una sfida vera anche per chi ha già un lungo storico =====
   {
     const ora = new Date(), mesiDa = (ora.getFullYear() - 2026) * 12 + ora.getMonth() - 11; // 0 = dicembre 2026
-    const mese = mesiDa >= 0 ? MESI[ora.getMonth()] : '';
-    const finite = ss.filter(sh => ['finite','attesa'].includes(showStats(sh).st));
-    const dec = new Set(seen.filter(m => m.year).map(m => Math.floor(+m.year / 10) * 10));
-    const reg = new Set(seen.flatMap(m => (m.director || '').split(', ').filter(Boolean)));
-    const settimane = (() => { const w = [...new Set(E.map(x => { const t = new Date(x.day + 'T12:00'); t.setDate(t.getDate() - (t.getDay() + 6) % 7); return t.toLocaleDateString('sv'); }))].sort(); let r = 0, b = 0;
-      w.forEach((d, i) => { r = i && new Date(d) - new Date(w[i - 1]) === 7 * 864e5 ? r + 1 : 1; b = Math.max(b, r); }); return b; })();
-    const mesiFilm = (() => { const m = [...new Set(F.map(x => x.day.slice(0, 7)))].sort(); let r = 0, b = 0; m.forEach((d, i) => { const p = m[i - 1]; r = p && (+d.slice(0, 4) * 12 + +d.slice(5)) - (+p.slice(0, 4) * 12 + +p.slice(5)) === 1 ? r + 1 : 1; b = Math.max(b, r); }); return b; })();
-    const stagFinite = []; ss.forEach(sh => { const se = {}; sh.eps.forEach(e => (se[e.s] = se[e.s] || []).push(e)); Object.entries(se).forEach(([n, l]) => { const ts = l.map(e => sh.watched[e.i]); if (l.length && ts.every(t => t > 1e11)) stagFinite.push({sh, n, mese:giornoDi(Math.max(...ts)).slice(0, 7)}); }); });
-    const perMese = {}; stagFinite.forEach(x => perMese[x.mese] = (perMese[x.mese] || 0) + 1);
-    const finM = {}; finite.forEach(sh => { const v = Object.values(sh.watched).filter(t => t > 1e11); if (v.length) { const k = giornoDi(Math.max(...v)).slice(0, 7); finM[k] = (finM[k] || 0) + 1; } });
-    const weE = {}; E.forEach(x => { const t = new Date(x.day + 'T12:00'), g = t.getDay(); if (g === 0 || g === 6){ t.setDate(t.getDate() - (g === 0 ? 1 : 0)); const k = t.toLocaleDateString('sv'); weE[k] = (weE[k] || 0) + 1; } });
-    const filmAnno = {}; F.forEach(x => filmAnno[x.day.slice(0, 4)] = (filmAnno[x.day.slice(0, 4)] || 0) + 1);
-    const perGiorno = {}; F.forEach(x => perGiorno[x.day] = (perGiorno[x.day] || 0) + 1);
-    const debutti = ss.filter(sh => { const e1 = sh.eps.find(e => e.s === 1 && e.n === 1); return e1 && sh.watched[e1.i] > 1e11; });
-    const S = [
-      ['🎬', 'Ciak, si comincia', 'il primo episodio di 3 serie diverse', debutti.length, 3, debutti.map(sh => rS(sh, fData(giornoDi(sh.watched[sh.eps.find(e => e.s === 1 && e.n === 1).i]))))],
-      ['🕰️', 'Macchina del tempo', 'film di 5 decenni diversi', dec.size, 5, [...dec].sort().map(d => ({k:'t', sub:`anni ${String(d).slice(2)}`}))],
-      ['📼', 'Cento di questi episodi', 'finisci una serie di almeno 100 episodi', finite.filter(sh => sh.eps.length >= 100).length ? 1 : 0, 1, finite.filter(sh => sh.eps.length >= 100).map(sh => rS(sh, plur(sh.eps.length, 'episodio', 'episodi')))],
-      ['⏳', 'Kolossal', 'un film di almeno 3 ore', seen.filter(m => m.runtime >= 180).length ? 1 : 0, 1, seen.filter(m => m.runtime >= 180).map(m => rM(m, ore(m.runtime)))],
-      ['🧭', 'Zapping d\'autore', 'serie viste su 5 piattaforme diverse', new Set(ss.filter(visto).map(platVisto).filter(Boolean)).size, 5, []],
-      ['🎹', 'Il silenzio è d\'oro', 'un film uscito prima del 1930', seen.filter(m => m.year && +m.year < 1930).length ? 1 : 0, 1, seen.filter(m => m.year && +m.year < 1930).map(m => rM(m, m.year))],
-      ['📅', 'Appuntamento fisso', 'episodi in 8 settimane di fila', settimane, 8, []],
-      ['🎥', 'Dietro la macchina da presa', 'film di 30 registi diversi', reg.size, 30, []],
-      ['🌅', 'Cappuccino e cliffhanger', 'un episodio prima delle 9 del mattino', E.filter(x => { const h = new Date(x.ts).getHours(); return h >= 5 && h < 9; }).length ? 1 : 0, 1, []],
-      ['📝', 'Il critico in sala', 'vota 50 film', seen.filter(m => m.rating).length, 50, []],
-      ['🔥', 'Stagioni a raffica', '3 stagioni finite nello stesso mese', Math.max(0, ...Object.values(perMese)), 3, []],
-      ['🎨', 'Mondi animati', '5 film d\'animazione', seen.filter(m => mainGen(m) === 'Animazione').length, 5, seen.filter(m => mainGen(m) === 'Animazione').slice(0, 8).map(m => rM(m, m.year || ''))],
-      ['💎', 'Poche ma buone', 'finisci 3 serie di una sola stagione', finite.filter(sh => Math.max(...sh.eps.map(e => e.s)) === 1).length, 3, finite.filter(sh => Math.max(...sh.eps.map(e => e.s)) === 1).map(sh => rS(sh, plur(sh.eps.length, 'episodio', 'episodi')))],
-      ['🎞️', 'Nuovo Cinema Paradiso', '3 film nello stesso giorno', Math.max(0, ...Object.values(perGiorno)), 3, []],
-      ['🌙', 'Mezzanotte e titoli di coda', 'l\'ultimo episodio di una serie dopo mezzanotte', E.filter(x => notte(x.ts) && x.e === x.sh.eps.at(-1)).length ? 1 : 0, 1, E.filter(x => notte(x.ts) && x.e === x.sh.eps.at(-1)).map(x => rS(x.sh, fData(x.day)))],
-      ['🍿', 'Tessera del cineclub', 'film visti in 6 mesi di fila', mesiFilm, 6, []],
-      ['👯', 'Doppio addio', 'finisci 2 serie nello stesso mese', Math.max(0, ...Object.values(finM)), 2, []],
-      ['🦇', 'Brividi d\'epoca', 'un horror uscito prima del 1980', seen.filter(m => m.year && +m.year < 1980 && mainGen(m) === 'Horror & Mistero').length ? 1 : 0, 1, seen.filter(m => m.year && +m.year < 1980 && mainGen(m) === 'Horror & Mistero').map(m => rM(m, m.year))],
-      ['🛋️', 'Weekend sul divano', '10 episodi in un fine settimana', Math.max(0, ...Object.values(weE)), 10, []],
-      ['🖋️', 'Memoria storica', 'commenta 5 film di prima del 1990', seen.filter(m => m.year && +m.year < 1990 && (m.comment || '').trim()).length, 5, []],
-      ['⭐', 'Voto in condotta', 'vota 15 serie', ss.filter(sh => sh.myRating).length, 15, []],
-      ['🎟️', 'Prima fila', '20 film nello stesso anno', Math.max(0, ...Object.values(filmAnno)), 20, []],
-      ['🧩', 'Epopea', 'finisci una serie di almeno 5 stagioni', finite.filter(sh => Math.max(...sh.eps.map(e => e.s)) >= 5).length ? 1 : 0, 1, finite.filter(sh => Math.max(...sh.eps.map(e => e.s)) >= 5).map(sh => rS(sh, plur(Math.max(...sh.eps.map(e => e.s)), 'stagione', 'stagioni')))],
-      ['🦉', 'Gufo cinefilo', '5 film dopo mezzanotte', F.filter(x => notte(x.ts)).length, 5, []]];
-    S.slice(0, Math.max(0, mesiDa + 1)).forEach(([ic, t, sub, cur, goal, rows], i) =>
-      add(ic, t, sub, cur, goal, `🎁 Sfida a sorpresa arrivata a ${i === mesiDa ? mese : MESI[(11 + i) % 12]} ${2026 + Math.floor((11 + i) / 12)}.`, rows.filter(r => r.k !== 't'), i === mesiDa ? ' · 🎁 nuova' : ''));
+    const finitaIl = sh => { if (!['finite','attesa'].includes(showStats(sh).st)) return ''; const v = Object.values(sh.watched).filter(t => t > 1e11); return v.length ? giornoDi(Math.max(...v)) : ''; };
+    const nS = sh => Math.max(...sh.eps.map(e => e.s));
+    const mesiDi = l => [...new Set(l)].sort();
+    const filaMesi = l => { let r = 0, b = 0; l.forEach((d, i) => { const p = l[i - 1]; r = p && (+d.slice(0, 4) * 12 + +d.slice(5, 7)) - (+p.slice(0, 4) * 12 + +p.slice(5, 7)) === 1 ? r + 1 : 1; b = Math.max(b, r); }); return b; };
+    const settimana = d => { const t = new Date(d + 'T12:00'); t.setDate(t.getDate() - (t.getDay() + 6) % 7); return t.toLocaleDateString('sv'); };
+    const weekend = d => { const t = new Date(d + 'T12:00'), g = t.getDay(); if (g !== 0 && g !== 6) return ''; t.setDate(t.getDate() - (g === 0 ? 1 : 0)); return t.toLocaleDateString('sv'); };
+    const conta = l => { const o = {}; l.filter(Boolean).forEach(k => o[k] = (o[k] || 0) + 1); return Math.max(0, ...Object.values(o)); };
+    const S = [ // [icona, nome, descrizione, (Ed, Fd, da) => [valore, obiettivo, righe]]
+      ['🎬', 'Ciak, si comincia', 'inizia 3 serie dal primo episodio', (Ed) => { const l = [...new Map(Ed.filter(x => x.e?.s === 1 && x.e?.n === 1).map(x => [x.sh.id, x])).values()]; return [l.length, 3, l.map(x => rS(x.sh, fData(x.day)))]; }],
+      ['🕰️', 'Macchina del tempo', 'film di 4 decenni diversi', (Ed, Fd) => { const d = new Set(Fd.filter(x => x.m.year).map(x => Math.floor(x.m.year / 10) * 10)); return [d.size, 4, Fd.map(x => rM(x.m, x.m.year || ''))]; }],
+      ['📼', 'Cento di questi episodi', 'finisci una serie di almeno 100 episodi', (Ed, Fd, da) => { const l = ss.filter(sh => finitaIl(sh) >= da && sh.eps.length >= 100); return [l.length, 1, l.map(sh => rS(sh, plur(sh.eps.length, 'episodio', 'episodi')))]; }],
+      ['⏳', 'Kolossal', 'un film di almeno 3 ore', (Ed, Fd) => { const l = Fd.filter(x => x.m.runtime >= 180); return [l.length, 1, l.map(x => rM(x.m, ore(x.m.runtime)))]; }],
+      ['🧭', 'Zapping d\'autore', 'episodi su 4 piattaforme diverse', (Ed) => [new Set(Ed.map(x => platVisto(x.sh)).filter(Boolean)).size, 4, []]],
+      ['🎹', 'Il silenzio è d\'oro', 'un film uscito prima del 1930', (Ed, Fd) => { const l = Fd.filter(x => x.m.year && +x.m.year < 1930); return [l.length, 1, l.map(x => rM(x.m, x.m.year))]; }],
+      ['📅', 'Appuntamento fisso', 'episodi in 8 settimane di fila', (Ed) => { const w = mesiDi(Ed.map(x => settimana(x.day))); let r = 0, b = 0; w.forEach((d, i) => { r = i && new Date(d) - new Date(w[i - 1]) === 7 * 864e5 ? r + 1 : 1; b = Math.max(b, r); }); return [b, 8, []]; }],
+      ['🎥', 'Dietro la macchina da presa', 'film di 10 registi diversi', (Ed, Fd) => [new Set(Fd.flatMap(x => (x.m.director || '').split(', ').filter(Boolean))).size, 10, []]],
+      ['☕', 'Cappuccino e cliffhanger', 'un episodio prima delle 9 del mattino', (Ed) => { const l = Ed.filter(x => { const h = new Date(x.ts).getHours(); return h >= 5 && h < 9; }); return [l.length, 1, l.slice(0, 6).map(x => rS(x.sh, `${fData(x.day)} alle ${new Date(x.ts).toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'})}`))]; }],
+      ['📝', 'Il critico in sala', 'voto e commento a 10 film', (Ed, Fd) => { const l = Fd.filter(x => x.m.rating && (x.m.comment || '').trim()); return [l.length, 10, l.map(x => rM(x.m, '★'.repeat(x.m.rating)))]; }],
+      ['🔥', 'Stagioni a raffica', '3 stagioni finite nello stesso mese', (Ed, Fd, da) => { const m = []; ss.forEach(sh => { const se = {}; sh.eps.forEach(e => (se[e.s] = se[e.s] || []).push(e)); Object.values(se).forEach(l => { const ts = l.map(e => sh.watched[e.i]); if (ts.every(t => t > 1e11)) { const g = giornoDi(Math.max(...ts)); if (g >= da) m.push(g.slice(0, 7)); } }); }); return [conta(m), 3, []]; }],
+      ['🎨', 'Mondi animati', '3 film d\'animazione', (Ed, Fd) => { const l = Fd.filter(x => mainGen(x.m) === 'Animazione'); return [l.length, 3, l.map(x => rM(x.m, x.m.year || ''))]; }],
+      ['💎', 'Poche ma buone', 'finisci 2 serie di una sola stagione', (Ed, Fd, da) => { const l = ss.filter(sh => finitaIl(sh) >= da && nS(sh) === 1); return [l.length, 2, l.map(sh => rS(sh, plur(sh.eps.length, 'episodio', 'episodi')))]; }],
+      ['🎞️', 'Nuovo Cinema Paradiso', '3 film nello stesso giorno', (Ed, Fd) => [conta(Fd.map(x => x.day)), 3, []]],
+      ['🌙', 'Mezzanotte e titoli di coda', 'l\'ultimo episodio di una serie dopo mezzanotte', (Ed) => { const l = Ed.filter(x => notte(x.ts) && x.e === x.sh.eps.at(-1)); return [l.length, 1, l.map(x => rS(x.sh, fData(x.day)))]; }],
+      ['🍿', 'Tessera del cineclub', 'film visti in 6 mesi di fila', (Ed, Fd) => [filaMesi(mesiDi(Fd.map(x => x.day.slice(0, 7)))), 6, []]],
+      ['👯', 'Doppio addio', 'finisci 2 serie nello stesso mese', (Ed, Fd, da) => [conta(ss.map(finitaIl).filter(g => g && g >= da).map(g => g.slice(0, 7))), 2, []]],
+      ['🦇', 'Brividi d\'epoca', 'un horror uscito prima del 1980', (Ed, Fd) => { const l = Fd.filter(x => x.m.year && +x.m.year < 1980 && mainGen(x.m) === 'Horror & Mistero'); return [l.length, 1, l.map(x => rM(x.m, x.m.year))]; }],
+      ['🛋️', 'Weekend sul divano', '10 episodi in un fine settimana', (Ed) => [conta(Ed.map(x => weekend(x.day))), 10, []]],
+      ['🖋️', 'Memoria storica', 'commenta 3 film di prima del 1990', (Ed, Fd) => { const l = Fd.filter(x => x.m.year && +x.m.year < 1990 && (x.m.comment || '').trim()); return [l.length, 3, l.map(x => rM(x.m, x.m.year))]; }],
+      ['⭐', 'Voto in condotta', 'finisci e vota 5 serie', (Ed, Fd, da) => { const l = ss.filter(sh => finitaIl(sh) >= da && sh.myRating); return [l.length, 5, l.map(sh => rS(sh, '★'.repeat(sh.myRating)))]; }],
+      ['🎟️', 'Prima fila', '20 film', (Ed, Fd) => [Fd.length, 20, []]],
+      ['🧩', 'Epopea', 'finisci una serie di almeno 5 stagioni', (Ed, Fd, da) => { const l = ss.filter(sh => finitaIl(sh) >= da && nS(sh) >= 5); return [l.length, 1, l.map(sh => rS(sh, plur(nS(sh), 'stagione', 'stagioni')))]; }],
+      ['🦉', 'Gufo cinefilo', '3 film dopo mezzanotte', (Ed, Fd) => { const l = Fd.filter(x => notte(x.ts)); return [l.length, 3, l.map(x => rM(x.m, fData(x.day)))]; }]];
+    S.slice(0, Math.max(0, mesiDa + 1)).forEach(([ic, t, sub, f], i) => {
+      const am = 11 + i, anno = 2026 + Math.floor(am / 12), mm = am % 12, da = `${anno}-${String(mm + 1).padStart(2, '0')}-01`;
+      const [cur, goal, rows] = f(E.filter(x => x.day >= da), F.filter(x => x.day >= da), da);
+      add(ic, t, sub + ' (da ' + MESI[mm] + ')', cur, goal, `🎁 Sfida a sorpresa arrivata il 1° ${MESI[mm]} ${anno}: conta quello che guardi da quel giorno.`, rows, i === mesiDa ? ' · 🎁 nuova' : '');
+    });
   }
 
   // ===== sfide del mese: 3 nuove il 1° di ogni mese =====
