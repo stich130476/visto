@@ -191,6 +191,7 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .pst .pb{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(0,0,0,.5)}
 .pst .pb i{display:block;height:100%;background:var(--grad)}
 .cap{font-size:13px;font-weight:600;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fonte{font-size:10.5px;color:var(--mut2);text-align:right;margin-top:10px;letter-spacing:.02em}
 .cap2{font-size:12px;color:var(--mut);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* EMPTY */
@@ -727,7 +728,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.56';
+const VERSIONE = '2.57';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1275,7 +1276,7 @@ function renderIo(){
   <div class="box"><h4>Importa la tua cronologia</h4><p class="plot" style="font-size:14px;margin-bottom:10px">Carica il file "Attività di visione" scaricato da Netflix: serie e film vengono aggiunti già spuntati, con le date vere.</p><div class="acts" style="margin-top:0"><button class="btn small" data-act="netflix">📥 Importa da Netflix</button></div></div>
   ${backupBox()}
   </div>
-  <div class="ver"><div class="firma">🖤💙 <b>Stefano Fasolato</b></div>Visto! · versione <b>${VERSIONE}</b><br>Dati serie: TVmaze · Dati film: TMDB</div>`;
+  <div class="ver"><div class="firma">🖤💙 <b>Stefano Fasolato</b></div>Visto! · versione <b>${VERSIONE}</b><br>Dati serie: TVmaze · Dati film: TMDB<br>Piattaforme: JustWatch · Colonne sonore: MusicBrainz</div>`;
 }
 
 /* ---------- BACKUP ---------- */
@@ -1566,7 +1567,7 @@ function dove(prov, rent, titolo){
   const pr = piatt(prov), re = piatt(rent).filter(r => !pr.some(p => p.n === r.n)).slice(0, 5);
   if (!pr.length && !re.length) return '';
   return `<div class="box"><h4>${titolo}</h4>${pr.length ? `<div class="plats">${pr.map(p => `<span class="plat ${ABBO.test(p.n) ? 'mine' : ''}"><img src="${IMG}w92${esc(p.l)}" alt="" loading="lazy"><small>${esc(p.n)}</small></span>`).join('')}</div>` : ''}
-    ${re.length ? `<div class="rent"><span>A noleggio</span>${re.map(p => `<img src="${IMG}w92${esc(p.l)}" alt="${esc(p.n)}" title="${esc(p.n)}" loading="lazy">`).join('')}</div>` : ''}</div>`;
+    ${re.length ? `<div class="rent"><span>A noleggio</span>${re.map(p => `<img src="${IMG}w92${esc(p.l)}" alt="${esc(p.n)}" title="${esc(p.n)}" loading="lazy">`).join('')}</div>` : ''}<div class="fonte">Dati sulle piattaforme: JustWatch</div></div>`;
 }
 const miaPiatt = it => !!((it.prov || []).length || it.net);
 const platOf = it => piatt(it.prov)[0]?.n || nomeP(it.net) || '';
