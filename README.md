@@ -70,8 +70,10 @@ Si apre dal browser e si installa sulla schermata Home di iPhone, iPad e Android
 - 🍿 **Stasera cosa guardo?**: un suggerimento al volo tra le piattaforme di streaming.
 - ✨ **Consigliati per te**: proposte basate sui tuoi gusti.
 - 🏆 **Traguardi**, **sfide del mese** e **medaglie**, più **Il mio anno in Visto!** con le tue statistiche.
+- 🎁 **Sfide a sorpresa**: il 1° di ogni mese ne arriva una nuova. Quale? Lo scopri solo quel giorno.
 - 📥 **Importa da Netflix**: porti dentro la tua cronologia in pochi passaggi.
-- 🎭 **Registi e attori**: tocchi un nome e vedi tutta la sua filmografia, con quello che hai già visto e un'icona che distingue serie e film. Nei **Suggeriti** trovi prima i suoi titoli migliori, poi quelli più vicini ai tuoi generi.
+- 🎭 **Registi e attori**: tocchi un nome e vedi data e luogo di nascita (e di morte), con l'età, e tutta la sua filmografia, con quello che hai già visto e un'icona che distingue serie e film. Nei **Suggeriti** trovi prima i suoi titoli migliori, poi quelli più vicini ai tuoi generi.
+- 🔎 **Ricerca**: serie, film e persone. Per i film con lo stesso titolo basta aggiungere l'anno (es. *Nosferatu 1922*).
 - 📊 **Statistiche**: generi preferiti, piattaforme più usate, giorni della settimana davanti allo schermo.
 - 🎵 **Colonne sonore**: nella scheda di ogni film e serie trovi l'album ufficiale con tutti i brani (da MusicBrainz). Tocchi un brano e si apre nella tua **app di musica** — Spotify, Apple Music, YouTube Music, Amazon Music o Deezer, la scegli in Impostazioni. E con **Tutte le canzoni del film** vai su Tunefind, dove ci sono anche i brani scelti per le singole scene.
 - 📅 **Date delle serie**: quando hai iniziato e finito ogni stagione e la serie intera, calcolate da sole dagli episodi che spunti.
@@ -96,12 +98,13 @@ Fatto: Visto! è sulla Home con la sua icona e si apre a tutto schermo.
 ## Primo avvio
 
 - **Serie TV**: funzionano subito, senza configurare niente.
-- **Film**: serve una chiave gratuita di **TMDB**. Crea un account su [themoviedb.org](https://www.themoviedb.org/), vai in *Impostazioni → API* e copia la chiave in **Visto! → Impostazioni → Chiave TMDB**.
+- **Film**: serve una chiave gratuita di **TMDB**. Crea un account su [themoviedb.org](https://www.themoviedb.org/), vai in *Impostazioni → API* e copia la chiave in **Visto! → Impostazioni → Chiave TMDB**. Va bene sia la **API Key** (corta) sia il **Read Access Token** (lungo).
+- **Modalità archivio**: all'inizio è accesa. Serve mentre inserisci serie e film visti **in passato**, così non falsano le statistiche di oggi. Quando hai finito, spegnila in **Io → Impostazioni**: da lì in poi ogni cosa che segni conta con la sua data.
 
 ## I tuoi dati sono tuoi
 
-Tutto quello che inserisci resta **nel tuo dispositivo**. Visto! non ha un server, non raccoglie dati e non ti chiede nessun account.
-Chi vuole può anche sincronizzare tutti i suoi dispositivi, ricevere le notifiche e avere i voti MYmovies ogni notte, usando un proprio **repository privato su GitHub** (gratuito). È facoltativo: l'app funziona benissimo anche senza. Come fare è spiegato qui sotto.
+Tutto quello che inserisci resta **nel tuo dispositivo**. Puoi sempre salvarne una copia con **Io → Backup → Salva sul telefono**. Visto! non ha un server, non raccoglie dati e non ti chiede nessun account.
+Chi vuole può anche sincronizzare tutti i suoi dispositivi, ricevere le notifiche, avere i voti MYmovies e un **backup automatico ogni notte**, usando un proprio **repository privato su GitHub** (gratuito). È facoltativo: l'app funziona benissimo anche senza. Come fare è spiegato qui sotto.
 
 ## Sincronizzazione, notifiche e voti: passo passo
 
@@ -130,11 +133,19 @@ Apri Visto! **dall'icona sulla schermata Home** e in **Impostazioni → Notifich
 **6. Gli altri dispositivi**
 Sul primo dispositivo premi **📋 Copia le chiavi** (in Sincronizzazione), mandatele (per esempio con un messaggio a te stesso) e sull'altro premi **📥 Incolla le chiavi**. Poi attiva le notifiche anche lì.
 
+> Il backup notturno ha un controllo di sicurezza: se un giorno i dati sembrano rovinati (illeggibili o con molti titoli in meno), il backup buono non viene toccato e GitHub ti avvisa con un'email.
+
 > La chiave resta solo sui tuoi dispositivi e nel tuo repository: Visto! non ha un server e nessun altro la vede. Gli automatismi usano i minuti gratuiti di GitHub Actions, più che sufficienti.
 
 ## Ringraziamenti
 
-Dati delle serie da [TVmaze](https://www.tvmaze.com/), dati e locandine dei film da [TMDB](https://www.themoviedb.org/).
+- Serie ed episodi: [TVmaze](https://www.tvmaze.com/) (licenza CC BY-SA).
+- Film, attori, registi e locandine: [TMDB](https://www.themoviedb.org/).
+- Dove vedere film e serie: [JustWatch](https://www.justwatch.com/), tramite TMDB.
+- Colonne sonore: [MusicBrainz](https://musicbrainz.org/).
+- Tutte le canzoni delle scene: [Tunefind](https://www.tunefind.com/).
+- Voti: [MYmovies](https://www.mymovies.it/) e [IMDb](https://www.imdb.com/).
+
 <sub>This product uses the TMDB API but is not endorsed or certified by TMDB.</sub>
 
 ---
