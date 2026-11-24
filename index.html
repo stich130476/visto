@@ -727,7 +727,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.55';
+const VERSIONE = '2.56';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1267,7 +1267,7 @@ function renderIo(){
     <div class="lbl">Repository privato dei dati</div><input class="fld" id="ghRepo" value="${esc(C.ghRepo)}" autocapitalize="off" spellcheck="false">
     <div class="lbl">Token</div><input class="fld" id="ghToken" type="password" value="${esc(C.ghToken)}" placeholder="github_pat_…" autocapitalize="off" spellcheck="false">
     <div class="acts"><button class="btn small" data-act="saveGh">Salva e sincronizza</button></div>
-    ${C.ghToken && (C.autoNo || UI.autoBusy) ? `<div class="trasl"><b>⚙️ Automatismi su GitHub</b><small>${UI.autoBusy ? `<span class="mmrun">${esc(UI.autoBusy)}</span>` : 'Per avere notifiche, voti MYmovies ogni notte e backup settimanale, Visto! copia nel tuo repository i file che servono. Basta farlo una volta.'}</small>
+    ${C.ghToken && (C.autoNo || UI.autoBusy) ? `<div class="trasl"><b>⚙️ Automatismi su GitHub</b><small>${UI.autoBusy ? `<span class="mmrun">${esc(UI.autoBusy)}</span>` : 'Per avere notifiche, voti MYmovies e backup ogni notte, Visto! copia nel tuo repository i file che servono. Basta farlo una volta.'}</small>
       ${UI.autoBusy ? '' : '<div class="acts" style="margin-top:8px"><button class="btn small" data-act="preparaAuto">Prepara</button></div>'}</div>` : ''}
     <div class="trasl"><b>🚚 Trasloco delle chiavi</b><small>Prima di togliere Visto! dalla Home (per esempio per avere l'icona nuova) copia le chiavi; nella nuova installazione incollale qui e ritrovi tutto.</small>
       <div class="acts" style="margin-top:8px">${C.ghToken ? '<button class="btn small ghost" data-act="copiaChiavi">📋 Copia le chiavi</button>' : ''}<button class="btn small ${C.ghToken ? 'ghost' : ''}" data-act="incollaChiavi">📥 Incolla le chiavi</button></div></div>
@@ -1297,11 +1297,11 @@ const bkQuando = f => f?.quando ? new Date(f.quando).toLocaleString('it-IT', {we
 function backupBox(){
   if (!C.ghToken || !C.ghUser) return `<div class="box"><h4>Backup</h4><p class="plot" style="font-size:14px;margin-bottom:10px">Attiva la sincronizzazione qui sotto per avere i backup automatici.</p><div class="acts" style="margin-top:0"><button class="btn small ghost" data-act="export">Salva sul telefono</button><button class="btn small ghost" data-act="import">Importa copia</button></div></div>`;
   if (!UI.bk) setTimeout(caricaBackup, 50);
-  const f = UI.bk?.file, fresco = f?.quando && Date.now() - new Date(f.quando) < 9 * 864e5;
+  const f = UI.bk?.file, fresco = f?.quando && (Date.now() - new Date(f.quando) < 2 * 864e5 || (D.upd && D.upd <= new Date(f.quando).getTime()));
   return `<div class="box"><h4>Backup</h4>
     <div class="bkst"><i class="${fresco ? '' : 'warn'}">${fresco ? '✅' : '🛟'}</i><div><b>${!UI.bk ? 'Controllo il backup…' : UI.bk.err && !f ? 'Non riesco a leggere il backup ora' : fresco ? 'Tutto al sicuro' : f ? 'Backup da aggiornare' : 'Nessun backup ancora'}</b><small>${f ? 'Salvato ' + esc(bkQuando(f) || '') + ' · ' + Math.max(1, Math.round(f.size / 1024)) + ' KB' : 'Fanne uno adesso'}</small></div></div>
     <div class="acts"><button class="btn small" data-act="bkNow">Fai un backup adesso</button>${f ? '<button class="btn small ghost" data-act="bkAsk">Ripristina</button>' : ''}</div>
-    <p class="cap2" style="white-space:normal;margin-top:10px">C'è sempre un solo backup, nel tuo archivio privato su GitHub: ogni domenica notte si aggiorna da solo, sostituendo il precedente.</p>
+    <p class="cap2" style="white-space:normal;margin-top:10px">C'è sempre un solo backup, nel tuo archivio privato su GitHub: ogni notte si aggiorna da solo, sostituendo il precedente. Se i dati sembrano rovinati non lo tocca.</p>
     <div class="acts"><button class="btn small ghost" data-act="export">Copia sul telefono</button><button class="btn small ghost" data-act="import">Importa dal telefono</button></div></div>`;
 }
 async function scriviBackup(nome){

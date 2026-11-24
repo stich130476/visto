@@ -2,7 +2,7 @@ name: Backup Visto!
 
 on:
   schedule:
-    - cron: '23 2 * * 0'   # ogni domenica notte
+    - cron: '23 2 * * *'   # ogni notte (03:23 in Italia d'inverno)
   workflow_dispatch:
 
 permissions:
@@ -13,6 +13,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Controllo di sicurezza
+        # Se stanotte visto.json è rovinato o ha perso molti titoli,
+        # NON sovrascrive il backup buono: il job fallisce e GitHub manda un'email.
+        run: |
+          node -e '
+            const fs = require("fs");
+            const conta = f => { const d = JSON.parse(fs.readFileSync(f, "utf8"));
+              return Object.keys(d.series || {}).length + Object.keys(d.movies || {}).length; };
+            let ora;
+            try { ora = conta("visto.json"); } catch (e) { console.error("visto.json non è leggibile: backup NON aggiornato"); process.exit(1); }
+            let prima = 0;
+            try { prima = conta("backup/visto-backup.json"); } catch (e) {}
+            console.log(`Titoli adesso: ${ora} · nel backup: ${prima}`);
+            if (prima >= 20 && ora < prima * 0.8) { console.error("Mancano troppi titoli rispetto al backup: backup NON aggiornato"); process.exit(1); }
+          '
       - name: Un solo backup, sovrascritto ogni volta
         run: |
           git rm -rq --ignore-unmatch backup
@@ -22,6 +37,8 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add backup
           if ! git diff --cached --quiet; then
-            git commit -q -m "Backup settimanale $(date -u +%F)"
+            git commit -q -m "Backup notturno $(date -u +%F)"
             for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
+          else
+            echo "Nessuna novità da ieri: il backup è già aggiornato"
           fi
