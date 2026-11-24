@@ -728,7 +728,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.57';
+const VERSIONE = '2.58';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -2577,14 +2577,14 @@ const A = {
     let t = ''; try { t = (await navigator.clipboard.readText() || '').trim(); } catch(e){}
     if (!t.startsWith('VISTO1:')) return toast('Negli appunti non ci sono le chiavi di Visto!: copiale prima dalla vecchia app');
     let c; try { c = JSON.parse(decodeURIComponent(escape(atob(t.slice(7))))); } catch(e){ return toast('Le chiavi copiate non sono leggibili'); }
-    Object.assign(C, {ghUser:c.u, ghRepo:c.r || 'visto-dati', ghToken:c.t, sha:''}); if (c.k) C.tmdb = c.k; saveCfg();
+    Object.assign(C, {ghUser:c.u, ghRepo:c.r || 'visto-dati', ghToken:c.t, sha:''}); delete C.base; if (c.k) C.tmdb = c.k; saveCfg();
     toast('Ritrovo i tuoi dati…'); await pull(true); render();
     toast(C.syncErr ? 'Errore: ' + esc(C.syncErr) : '✅ Bentornato! Hai ritrovato tutto');
     try { await navigator.clipboard.writeText(''); } catch(e){}
   },
   preparaAuto(){ preparaAuto(); },
   async saveGh(){
-    C.ghUser = $('#ghUser').value.trim(); C.ghRepo = $('#ghRepo').value.trim() || 'visto-dati'; C.ghToken = $('#ghToken').value.trim(); C.sha = ''; saveCfg();
+    C.ghUser = $('#ghUser').value.trim(); C.ghRepo = $('#ghRepo').value.trim() || 'visto-dati'; C.ghToken = $('#ghToken').value.trim(); C.sha = ''; delete C.base; saveCfg();
     if (!C.ghToken) return toast('Sincronizzazione disattivata');
     toast('Sincronizzo…'); await pull(true); render(); controllaAuto();
     toast(C.syncErr ? 'Errore: ' + esc(C.syncErr) : '✓ Sincronizzazione attiva');
@@ -2692,40 +2692,59 @@ const ghUrl = () => `https://api.github.com/repos/${encodeURIComponent(C.ghUser)
 const ghH = () => ({Authorization:'Bearer ' + C.ghToken, Accept:'application/vnd.github+json'});
 const b64e = s => { const b = new TextEncoder().encode(s); let x = ''; for (let i = 0; i < b.length; i += 0x8000) x += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(x); };
 const b64d = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g, '')), c => c.charCodeAt(0)));
+// Sincronizzazione sicura (2.58): C.base = la versione di GitHub su cui si basa questo dispositivo.
+// - GitHub cambiato da un altro dispositivo → si prende GitHub (le modifiche locali non inviate restano in una copia di riserva, visto-scarto).
+// - GitHub fermo e qui ci sono modifiche → si inviano.
+// Prima della prima lettura di GitHub non si invia mai niente: un dispositivo rimasto chiuso a lungo non può più sovrascrivere i dati buoni.
+async function leggiRemoto(){
+  const r = await fetch(ghUrl() + '?t=' + Date.now(), {headers:ghH(), cache:'no-store'});
+  if (r.status === 404) return {nuovo:true};
+  if (r.status === 401) throw new Error('token non valido');
+  if (!r.ok) throw new Error('GitHub ' + r.status);
+  const j = await r.json(); let remote = null;
+  if (j.content) remote = JSON.parse(b64d(j.content));
+  else { const raw = await fetch(j.download_url, {headers:ghH(), cache:'no-store'}); remote = await raw.json(); }
+  return {sha:j.sha, remote};
+}
 async function pull(pushIfOlder){
   if (!C.ghToken || !C.ghUser) return;
   try {
-    const r = await fetch(ghUrl() + '?t=' + Date.now(), {headers:ghH(), cache:'no-store'});
-    if (r.status === 404){ C.sha = ''; C.syncErr = ''; saveCfg(); await push(); return; }
-    if (r.status === 401) throw new Error('token non valido');
-    if (!r.ok) throw new Error('GitHub ' + r.status);
-    const j = await r.json(); C.sha = j.sha;
-    let remote = null;
-    if (j.content) remote = JSON.parse(b64d(j.content));
-    else { const raw = await fetch(j.download_url, {headers:ghH(), cache:'no-store'}); remote = await raw.json(); }
+    const {nuovo, sha, remote} = await leggiRemoto();
+    if (nuovo){ C.sha = ''; C.syncErr = ''; saveCfg(); UI.letto = true; await push(); return; }
+    C.sha = sha; UI.letto = true;
     const vuoto = !Object.keys(D.series).length && !Object.keys(D.movies).length;
     if (remote && remote.tmdbKey && !C.tmdb){ C.tmdb = remote.tmdbKey; saveCfg(); }
     const remotoPieno = remote && (Object.keys(remote.series || {}).length || Object.keys(remote.movies || {}).length);
-    if (remote && ((vuoto && remotoPieno) || remote.upd > D.upd)){ D = remote; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){} if (!$('#sheet').classList.contains('open')) render(); }
+    const remotoCambiato = remote && remote.upd !== C.base;
+    const mieModifiche = C.base !== undefined && D.upd > C.base;
+    if (remote && ((vuoto && remotoPieno) || (remotoCambiato && remote.upd !== D.upd))){
+      if ((mieModifiche || D.upd > remote.upd) && !vuoto){ try { localStorage.setItem('visto-scarto', JSON.stringify({quando:Date.now(), D})); } catch(e){} }
+      D = remote; C.base = remote.upd; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch(e){}
+      if (!$('#sheet').classList.contains('open')) render();
+    }
     else if (remote && D.upd > remote.upd && pushIfOlder !== false) await push();
+    else if (remote) C.base = remote.upd;
     C.syncErr = ''; C.lastSync = Date.now(); saveCfg();
   } catch(e){ C.syncErr = e.message; saveCfg(); }
 }
 function pushLater(){ if (!C.ghToken) return; clearTimeout(UI.pt); UI.pt = setTimeout(push, 1500); }
 async function push(retry = true){
-  if (!C.ghToken || !C.ghUser) return;
+  if (!C.ghToken || !C.ghUser || !UI.letto) return; // mai inviare prima di aver letto GitHub
   try {
     const body = {message:'Visto: aggiornamento ' + new Date().toLocaleString('it-IT'), content:b64e(JSON.stringify(D))};
     if (C.sha) body.sha = C.sha;
     const r = await fetch(ghUrl(), {method:'PUT', headers:Object.assign({'Content-Type':'application/json'}, ghH()), body:JSON.stringify(body)});
     if ((r.status === 409 || r.status === 422) && retry){
-      const g = await fetch(ghUrl() + '?t=' + Date.now(), {headers:ghH(), cache:'no-store'});
-      if (g.ok){ C.sha = (await g.json()).sha; return push(false); }
+      // GitHub è cambiato nel frattempo: si sovrascrive solo se è ancora la versione su cui ci basiamo, altrimenti vince GitHub
+      const {sha, remote} = await leggiRemoto();
+      C.sha = sha;
+      if (remote && remote.upd !== C.base && remote.upd !== D.upd){ await pull(false); return; }
+      return push(false);
     }
     if (r.status === 401) throw new Error('token non valido');
     if (r.status === 404) throw new Error('repository non trovato');
     if (!r.ok) throw new Error('GitHub ' + r.status);
-    C.sha = (await r.json()).content.sha; C.syncErr = ''; C.lastSync = Date.now(); saveCfg();
+    C.sha = (await r.json()).content.sha; C.base = D.upd; C.syncErr = ''; C.lastSync = Date.now(); saveCfg();
   } catch(e){ C.syncErr = e.message; saveCfg(); }
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible'){ pull().then(() => checkNews(false)); } });
@@ -3148,7 +3167,7 @@ document.addEventListener('wheel', e => {
 }, {passive:false});
 /* ---------- AVVIO ---------- */
 (async function init(){
-  if (fissaPiatt()) save();
+  if (!C.ghToken && fissaPiatt()) save(); // con la sincronizzazione si sistema dopo aver letto GitHub
   render();
   checkUpdate();
   if (C.ghToken && C.autoNo === undefined) setTimeout(controllaAuto, 4000); // una volta: nel repository ci sono gli automatismi?
@@ -3160,6 +3179,7 @@ document.addEventListener('wheel', e => {
     posterPool().then(list => { if (!cache && list.length) buildWall(list); });
   } else $('#intro').remove();
   await pull();
+  if (C.ghToken && fissaPiatt()) save();
   setTimeout(controllaImport, 1500);
   UI.vn = 0;
   caricaMM().then(() => { // voti arrivati di notte: alla prima apertura si mostrano subito
