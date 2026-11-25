@@ -1425,8 +1425,8 @@ function showSheet(id, keep){
       ${(() => { const l = Object.entries(sh.sv || {}).filter(([, v]) => v.r || v.c).sort((a, b) => a[0] - b[0]); if (!l.length) return '';
         const vv = l.filter(([, v]) => v.r), media = vv.length ? vv.reduce((a, [, v]) => a + v.r, 0) / vv.length : 0;
         return `<div class="svlist"><p class="lbl" style="margin:4px 0 2px">Stagione per stagione${vv.length > 1 ? ` · media ${media.toFixed(1).replace('.', ',')}` : ''}</p>${l.map(([n, v]) => `<div class="set" data-act="rateSeason" data-id="${id}" data-s="${n}" role="button"><div class="l"><b>Stagione ${n} ${v.r ? stars(v.r) : ''}</b>${v.c ? `<small><q>${esc(v.c)}</q></small>` : ''}</div><span class="lnk">›</span></div>`).join('')}</div>`; })()}
-      ${sh.notes ? `<p class="plot" style="font-style:italic">“${esc(sh.notes)}”</p>` : '<p class="cap2" style="font-size:14px">Ancora nessun voto né commento: com\'è questa serie? Di cosa parla, cosa ti ha colpito?</p>'}
-      <div class="acts"><button class="btn ghost" data-act="rateShow" data-id="${id}">${sh.myRating || sh.notes ? 'Modifica voto e commento' : '★ Vota e commenta'}</button></div></div>
+      ${sh.notes ? `<p class="plot" style="font-style:italic">“${esc(sh.notes)}”</p>` : (Object.keys(sh.sv || {}).length ? '<p class="cap2" style="font-size:14px">Manca il giudizio sulla serie intera</p>' : '<p class="cap2" style="font-size:14px">Ancora nessun voto né commento: com\'è questa serie? Di cosa parla, cosa ti ha colpito?</p>')}
+      <div class="acts"><button class="btn ghost" data-act="rateShow" data-id="${id}">${sh.myRating || sh.notes ? 'Modifica voto e commento' : Object.keys(sh.sv || {}).length ? '★ Vota la serie intera' : '★ Vota e commenta'}</button></div></div>
   </div>`, keep);
   // la fila delle stagioni resta sulla stagione scelta (prima tornava all'inizio e la 13ª spariva)
   const sc = $('#sheetIn .schips'), on = sc && sc.querySelector('.schip.on');
