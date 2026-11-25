@@ -61,6 +61,7 @@ Si apre dal browser e si installa sulla schermata Home di iPhone, iPad e Android
 
 - 📺 **Serie TV**: spunti gli episodi visti stagione per stagione e sai subito qual è il prossimo.
 - 🎬 **Film**: una lista "da vedere" e un diario dei film visti, con voto e commento personale per ricordarti com'erano.
+- ⭐ **Voto per stagione**: oltre al giudizio sulla serie intera, ogni stagione ha le sue stelle e il suo commento, con la media. Perfetto per le serie lunghe e le antologie.
 - 🆕 **Novità**: nuove stagioni e nuovi episodi delle tue serie compaiono in cima, anche se riapri l'app dopo mesi.
 - 🔔 **Notifiche**, anche ad app chiusa, su iPhone, Apple Watch e Android:
   - è uscito un **nuovo episodio** di una serie che segui;
