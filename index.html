@@ -728,7 +728,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.58';
+const VERSIONE = '2.59';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -3003,9 +3003,22 @@ const OST = 'visto-ost3'; // v2: ricerche rifatte con gli abbinamenti più preci
 const normT = t => (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 // Tunefind elenca tutte le canzoni usate nelle scene (anche episodio per episodio).
 // Il collegamento apre direttamente la sua pagina del titolo (primo risultato di DuckDuckGo su tunefind.com), anche se Tunefind cambia il suo sito
-const tfLink = (k, titolo) => `<a class="tflink" href="https://duckduckgo.com/?q=${encodeURIComponent('\\ site:tunefind.com ' + (titolo || '') + ' ' + (UI.ostY?.[k] || '') + (k[0] === 's' ? ' tv' : ' movie'))}" target="_blank" rel="noopener">🎶 Tutte le canzoni ${k[0] === 's' ? 'della serie' : 'del film'}<span>Tunefind ›</span></a>`;
+// Tunefind usa i titoli inglesi (La grande bellezza = The Great Beauty): per i film si chiede a TMDB il titolo inglese e lo si ricorda.
+const TFEN = 'visto-tfen';
+function tfInglese(k){
+  if (k[0] !== 'm' || !C.tmdb) return;
+  const cache = load(TFEN) || {}; UI.tfEn = UI.tfEn || {};
+  if (cache[k]){ UI.tfEn[k] = cache[k]; return; }
+  if (UI.tfEn[k] === '') return; UI.tfEn[k] = '';
+  tmdb('/movie/' + k.slice(1), {language:'en-US'}).then(r => {
+    if (!r?.title) return; UI.tfEn[k] = r.title;
+    const c = load(TFEN) || {}; c[k] = r.title; try { localStorage.setItem(TFEN, JSON.stringify(c)); } catch(e){}
+    document.querySelectorAll(`#ost-${k} a.tflink`).forEach(a => a.outerHTML = tfLink(k, UI.ostT?.[k]));
+  }).catch(() => {});
+}
+const tfLink = (k, titolo) => `<a class="tflink" href="https://duckduckgo.com/?q=${encodeURIComponent('\\ site:tunefind.com ' + (UI.tfEn?.[k] || titolo || '') + ' ' + (UI.ostY?.[k] || '') + (k[0] === 's' ? ' tv' : ' movie'))}" target="_blank" rel="noopener">🎶 Tutte le canzoni ${k[0] === 's' ? 'della serie' : 'del film'}<span>Tunefind ›</span></a>`;
 function ostBox(k, titoli, anno){
-  const c = (load(OST) || {})[k]; UI.ostT = UI.ostT || {}; UI.ostT[k] = titoli.filter(Boolean)[0]; (UI.ostY = UI.ostY || {})[k] = anno;
+  const c = (load(OST) || {})[k]; UI.ostT = UI.ostT || {}; UI.ostT[k] = titoli.filter(Boolean)[0]; (UI.ostY = UI.ostY || {})[k] = anno; tfInglese(k);
   if (c && c.ok && !c.alb.length && Date.now() - c.at < 30 * 864e5) return `<div class="box" id="ost-${k}"><h4>Colonna sonora</h4>${tfLink(k, UI.ostT[k])}</div>`; // l'album ufficiale non c'è: resta solo Tunefind
   return `<div class="box" id="ost-${k}"><h4>Colonna sonora</h4>${c && c.ok ? ostHtml(k, c) : `<button class="ostbtn" data-act="ost" data-k="${k}" data-t="${esc(JSON.stringify([...new Set(titoli.filter(Boolean))]))}" data-y="${esc(anno || '')}">🎵 Mostra i brani<span>›</span></button>${tfLink(k, UI.ostT[k])}`}</div>`;
 }
