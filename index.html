@@ -721,6 +721,8 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
   .sheet .inner{max-width:1180px}
   .close{left:calc(var(--sbw) + 16px)}
   .toast{left:calc(50% + var(--sbw) / 2)}
+  .seg.two{flex-wrap:nowrap;gap:4px}
+  .seg.two button{flex:1 1 0;padding:10px 6px}
 }
 </style>
 </head>
@@ -760,7 +762,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.61';
+const VERSIONE = '2.62';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
