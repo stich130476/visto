@@ -1060,14 +1060,21 @@ function render(){
   requestAnimationFrame(() => document.querySelectorAll('.tpath').forEach(p => { const n = p.querySelector('.next'); if (n) p.scrollLeft = Math.max(0, n.offsetLeft - p.offsetLeft - 110); }));
 }
 
+// Novità da leggere. Gli avvisi "in arrivo" spariscono quando la data è passata (l'episodio è già uscito)
+// e dicono sempre il giorno giusto (oggi, domani…), non quello calcolato quando sono nati.
+function newsAttive(){
+  return D.news.filter(n => !n.read && !(n.kind === 'soon' && n.d && n.d < oggi()))
+    .map(n => n.kind === 'soon' && n.d && n.d2 ? Object.assign({}, n, {d2:n.d2.replace(/([Ee]sce) .*$/, `$1 ${fGiorno(n.d)}`)}) : n)
+    .sort((a, b) => (a.kind === 'soon') - (b.kind === 'soon') || (b.d || '').localeCompare(a.d || ''));
+}
 // Le novità ancora da leggere, in elenco compatto (pagina Io)
 function ioNews(){
-  const items = D.news.filter(n => !n.read).sort((a, b) => (a.kind === 'soon') - (b.kind === 'soon') || (b.d || '').localeCompare(a.d || ''));
+  const items = newsAttive();
   if (!items.length) return '';
   return `<div id="ioNews" class="nlist">${items.map(n => `<div class="nwr" data-act="openNews" data-id="${esc(n.id)}" role="button">${poster(n.img, n.t, 'pimg')}<div><small>${esc(n.k)}</small><b>${esc(n.t)}</b><span>${esc(n.d2 || '')}</span></div></div>`).join('')}</div>`;
 }
 function renderNews(){
-  const items = D.news.filter(n => !n.read).sort((a, b) => (a.kind === 'soon') - (b.kind === 'soon') || (b.d || '').localeCompare(a.d || ''));
+  const items = newsAttive();
   const last = D.lastCheck ? fData(new Date(D.lastCheck).toLocaleDateString('sv'), false) : null;
   if (!items.length){
     if (!Object.keys(D.series).length && !Object.keys(D.movies).length) return '';
@@ -2844,7 +2851,7 @@ function polvere(){ // granelli di polvere che danzano nel fascio di luce
   el.innerHTML = h;
 }
 function introStats(){
-  const ns = Object.keys(D.series).length, nm = Object.values(D.movies).filter(m => m.state === 'seen').length, nn = D.news.filter(n => !n.read).length;
+  const ns = Object.keys(D.series).length, nm = Object.values(D.movies).filter(m => m.state === 'seen').length, nn = newsAttive().length;
   $('#introStats').textContent = ns || nm ? `${ns} serie · ${nm} film visti${nn ? ` · ${nn} novità` : ''}` : '';
 }
 
