@@ -93,7 +93,7 @@ Fatto: Visto! è sulla Home con la sua icona e si apre a tutto schermo.
 2. Tocca il menu **⋮** in alto a destra.
 3. Scegli **Aggiungi a schermata Home** (o **Installa app**) e conferma.
 
-> Funziona anche dal computer: basta aprire lo stesso indirizzo in qualsiasi browser.
+> Funziona anche dal computer: basta aprire lo stesso indirizzo in qualsiasi browser. Lì puoi usare anche la tastiera: **Esc** chiude, **/** o **Ctrl+K** cerca, **1 2 3** passano a Serie, Film e Io.
 
 ## Primo avvio
 
