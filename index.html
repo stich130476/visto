@@ -1623,6 +1623,16 @@ function yearSheet(yy){
 }
 
 // Voto e commento a una singola stagione (sh.sv = {numero: {r, c}}): utile per le serie lunghe e le antologie
+// Segnare una stagione o la serie intera: come per i film si sceglie se l'hai vista oggi, in una data o tempo fa
+function quandoModal(sh, s){
+  UI.quando = {id:sh.id, s};
+  $('#mcard').innerHTML = `<h3>${esc(showName(sh))}</h3><div class="s">${s ? esc(etStag(sh, s)) : 'Tutta la serie'}: quando l'hai vista?</div>
+    <div class="tchips" style="margin:0 0 8px"><button class="on" data-act="quandoW" data-w="o">Oggi</button><button data-act="quandoW" data-w="d">In una data</button><button data-act="quandoW" data-w="p">Tempo fa</button></div>
+    <input class="fld hide" type="date" id="rDate" value="${oggi()}" max="${oggi()}">
+    <p class="cap2" style="white-space:normal;margin:6px 0 0">"Tempo fa" non conta nelle statistiche del periodo, come la modalità archivio, ma solo per questa volta.</p>
+    <div class="mrow"><button class="btn ghost" data-act="closeModal">Annulla</button><button class="btn" data-act="saveQuando">Segna come vista</button></div>`;
+  $('#modal').classList.add('open');
+}
 function rateSeasonModal(id, s){
   const sh = D.series[id], v = sh.sv?.[s] || {};
   UI.rate = {id, r:v.r || 0, season:+s};
@@ -2446,13 +2456,16 @@ const A = {
   season(d){ UI.season[d.id] = +d.s; showSheet(+d.id, true); },
   seasonAll(d){
     const sh = D.series[d.id], t = oggi(), eps = sh.eps.filter(e => e.s == d.s && e.d && e.d <= t);
-    const all = eps.every(e => sh.watched[e.i]); eps.forEach(e => markEp(sh, e.i, !all, true)); save(); showSheet(+d.id, true);
+    const all = eps.every(e => sh.watched[e.i]);
+    if (!all && !d.quando && !C.archivio) return quandoModal(sh, +d.s);
+    eps.forEach(e => { if (!all && sh.watched[e.i]) return; markEp(sh, e.i, !all, true); if (!all && d.quando) sh.watched[e.i] = d.quando; }); // gli episodi già visti tengono la loro data save(); showSheet(+d.id, true);
     toast(all ? `Stagione ${d.s}: spunte tolte` : `Stagione ${d.s} segnata come vista`);
     if (!all && stagioneFinita(sh, d.s)) chiediVotoStagione(sh, +d.s);
   },
   allShow(d){
     const sh = D.series[d.id], t = oggi(), todo = sh.eps.filter(e => e.d && e.d <= t && !sh.watched[e.i]);
-    todo.forEach(e => markEp(sh, e.i, true, true)); save(); showSheet(+d.id, true); burst(document.querySelector('.ring') || document.body);
+    if (!d.quando && !C.archivio) return quandoModal(sh, 0);
+    todo.forEach(e => { markEp(sh, e.i, true, true); if (d.quando) sh.watched[e.i] = d.quando; }); save(); showSheet(+d.id, true); burst(document.querySelector('.ring') || document.body);
     toast(`🎉 <b>${esc(showName(sh))}</b>: tutta vista!`, 'Annulla', () => { todo.forEach(e => markEp(sh, e.i, false)); save(); refreshView(); }, 6000);
     if (!sh.myRating) setTimeout(() => rateShowModal(sh.id, sh.status === 'Ended'), 1200);
   },
@@ -2484,6 +2497,13 @@ const A = {
       <div class="mrow"><button class="btn ghost" data-act="closeModal">Annulla</button><button class="btn" data-act="saveEpWhen">Salva</button></div>`;
     $('#modal').classList.add('open');
   },
+  saveQuando(){
+    const q = UI.quando, w = $('#mcard .tchips button.on')?.dataset.w || 'o';
+    const ts = w === 'p' ? 1 : w === 'd' ? new Date(($('#rDate').value || oggi()) + 'T21:00').getTime() : Date.now();
+    $('#modal').classList.remove('open');
+    if (q.s) A.seasonAll({id:q.id, s:q.s, quando:ts}); else A.allShow({id:q.id, quando:ts});
+  },
+  quandoW(d, el){ el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); $('#rDate').classList.toggle('hide', d.w !== 'd'); },
   saveEpWhen(){
     const sh = D.series[UI.ew.id], past = $('#rDate').classList.contains('hide');
     sh.watched[UI.ew.e] = past ? 1 : new Date(($('#rDate').value || oggi()) + 'T21:00').getTime();
