@@ -303,6 +303,15 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .schip.on{border-color:rgba(255,154,77,.7);background:rgba(255,154,77,.14)}
 .schip.done::after{content:"✓";margin-left:6px;color:var(--ok)}
 .schip i{position:absolute;left:0;bottom:0;height:3px;background:var(--grad)}
+.schip em{font-style:normal;font-size:12px;color:var(--a2);margin-left:6px;font-weight:700}
+.svoto{display:flex;align-items:center;gap:10px;width:100%;margin:10px 0 6px;padding:10px 12px;border-radius:12px;background:var(--card2);border:1px solid var(--line);color:var(--mut);font-size:13.5px;text-align:left}
+.svoto .stars{font-size:17px}
+.svoto b{color:var(--txt);font-weight:600}
+.svoto q{flex:1;min-width:0;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;quotes:'\201C' '\201D'}
+.svoto span.go{margin-left:auto;color:var(--a2);font-weight:600;flex:none}
+.svlist{margin:4px 0 10px}
+.svlist .set{padding:9px 0}
+.svlist small q{font-style:italic;quotes:'\201C' '\201D'}
 .ep{display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid var(--line)}
 .ep:last-child{border-bottom:0}
 .ep .n{width:34px;font-size:13px;font-weight:700;color:var(--mut2);font-variant-numeric:tabular-nums}
@@ -762,7 +771,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.62';
+const VERSIONE = '2.63';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1397,9 +1406,12 @@ function showSheet(id, keep){
     ${dove(sh.prov, [], 'Dove vederla')}
     <div class="box"><h4>Episodi</h4>
       <div class="schips">${seasons.map(s => { const se = sh.eps.filter(e => e.s === s && e.d && e.d <= t), w = se.filter(e => sh.watched[e.i]).length;
-        return `<button class="schip ${s === cur ? 'on' : ''} ${se.length && w === se.length ? 'done' : ''}" data-act="season" data-id="${id}" data-s="${s}">Stagione ${s}<i style="width:${se.length ? w / se.length * 100 : 0}%"></i></button>`; }).join('')}</div>
+        return `<button class="schip ${s === cur ? 'on' : ''} ${se.length && w === se.length ? 'done' : ''}" data-act="season" data-id="${id}" data-s="${s}">Stagione ${s}${sh.sv?.[s]?.r ? `<em>★${sh.sv[s].r}</em>` : ''}<i style="width:${se.length ? w / se.length * 100 : 0}%"></i></button>`; }).join('')}</div>
       <div class="seasact"><span><b style="color:var(--txt)">Stagione ${cur}</b> · ${sW} di ${eps.length} visti${eps.length > sAired.length ? ` · ${eps.length - sAired.length} in arrivo` : ''}${(() => { const dz = dateStag(sh, cur); return dz.i && dz.f ? '<br>📅 Vista ' + esc(fRange(dz.i, dz.f)) : dz.i ? '<br>📅 Iniziata il ' + esc(fData(dz.i)) : ''; })()}</span>
         ${sAired.length ? `<button class="lnk" data-act="seasonAll" data-id="${id}" data-s="${cur}">${sW === sAired.length ? 'Togli tutte le spunte' : 'Segna tutta la stagione'}</button>` : ''}</div>
+      ${(() => { const v = sh.sv?.[cur]; if (!sW && !v) return '';
+        return v?.r || v?.c ? `<button class="svoto" data-act="rateSeason" data-id="${id}" data-s="${cur}">${v.r ? stars(v.r) : ''}${v.c ? `<q>${esc(v.c)}</q>` : ''}<span class="go">Modifica</span></button>`
+          : `<button class="svoto" data-act="rateSeason" data-id="${id}" data-s="${cur}"><span>☆ Com'era la <b>stagione ${cur}</b>? Dalle un voto</span><span class="go">›</span></button>`; })()}
       ${eps.map(e => { const fut = !e.d || e.d > t, on = !!sh.watched[e.i];
         return `<div class="ep ${fut ? 'fut' : ''}"><div class="n">E${String(e.n).padStart(2, '0')}</div><div class="nm" ${on ? `data-act="epWhen" data-id="${id}" data-e="${e.i}" role="button"` : ''}><b>${esc(epT(sh, e))}</b><small>${e.d ? (fut ? 'Esce ' + esc(fGiorno(e.d)) : esc(fData(e.d))) : 'Data da annunciare'}${e.r ? ' · ' + e.r + ' min' : ''}${on ? (sh.watched[e.i] > 1e11 ? ' · visto il ' + esc(fData(new Date(sh.watched[e.i]).toLocaleDateString('sv'), false)) : ' · <span style="color:var(--a2)">visto in passato ›</span>') : ''}</small></div>
         ${fut ? '' : `<button class="ck ${on ? 'on' : ''}" data-act="ep" data-id="${id}" data-e="${e.i}" aria-label="Visto">${I.check}</button>`}</div>`; }).join('')}
@@ -1410,6 +1422,9 @@ function showSheet(id, keep){
     ${critica(showName(sh), sh.name, (sh.premiered || '').slice(0, 4), sh.rating, 'serie tv', 's' + sh.id)}
     ${(() => { const a = antoDi(sh), l = a ? antoSerie(a).filter(z => z !== sh) : []; return l.length ? `<div class="box"><h4>Della stessa antologia</h4><div class="recrow" style="margin:0">${l.map(z => { const s2 = showStats(z); return `<button class="pc-it" data-act="antoGo" data-id="${z.id}">${poster(showImg(z), showName(z), 'pst', s2.st === 'finite' ? '<span class="bdg hot">✓ Vista</span>' : '')}<div class="cap">${esc(showName(z).replace(/^(DAHMER - )?(Mostr[oi]|Monsters?):\s*/i, '').replace(/^La storia di /i, '').replace(/^./, c => c.toUpperCase()))}</div><div class="cap2">${esc((z.premiered || '').slice(0, 4))}</div></button>`; }).join('')}</div></div>` : ''; })()}
     <div class="box"><h4>Il mio giudizio</h4>${sh.myRating ? `<div style="font-size:22px;margin-bottom:6px">${stars(sh.myRating)}</div>` : ''}
+      ${(() => { const l = Object.entries(sh.sv || {}).filter(([, v]) => v.r || v.c).sort((a, b) => a[0] - b[0]); if (!l.length) return '';
+        const vv = l.filter(([, v]) => v.r), media = vv.length ? vv.reduce((a, [, v]) => a + v.r, 0) / vv.length : 0;
+        return `<div class="svlist"><p class="lbl" style="margin:4px 0 2px">Stagione per stagione${vv.length > 1 ? ` · media ${media.toFixed(1).replace('.', ',')}` : ''}</p>${l.map(([n, v]) => `<div class="set" data-act="rateSeason" data-id="${id}" data-s="${n}" role="button"><div class="l"><b>Stagione ${n} ${v.r ? stars(v.r) : ''}</b>${v.c ? `<small><q>${esc(v.c)}</q></small>` : ''}</div><span class="lnk">›</span></div>`).join('')}</div>`; })()}
       ${sh.notes ? `<p class="plot" style="font-style:italic">“${esc(sh.notes)}”</p>` : '<p class="cap2" style="font-size:14px">Ancora nessun voto né commento: com\'è questa serie? Di cosa parla, cosa ti ha colpito?</p>'}
       <div class="acts"><button class="btn ghost" data-act="rateShow" data-id="${id}">${sh.myRating || sh.notes ? 'Modifica voto e commento' : '★ Vota e commenta'}</button></div></div>
   </div>`, keep);
@@ -1592,6 +1607,22 @@ function yearSheet(yy){
   </div>`);
 }
 
+// Voto e commento a una singola stagione (sh.sv = {numero: {r, c}}): utile per le serie lunghe e le antologie
+function rateSeasonModal(id, s){
+  const sh = D.series[id], v = sh.sv?.[s] || {};
+  UI.rate = {id, r:v.r || 0, season:+s};
+  $('#mcard').innerHTML = `<h3>${esc(showName(sh))}</h3><div class="s">Stagione ${s}: com'è stata?</div>
+    <div class="rate">${[1,2,3,4,5].map(n => `<button class="${n <= UI.rate.r ? 'on' : ''}" data-act="star" data-n="${n}">★</button>`).join('')}</div>
+    <div class="lbl">Un commento sulla stagione (facoltativo)</div><div class="notes ce" id="rCom" contenteditable="true" role="textbox" aria-multiline="true" autocorrect="on" autocapitalize="sentences" spellcheck="true" data-ph="Cosa ti è piaciuto, cosa no, com'era rispetto alle altre…">${esc(v.c || '')}</div>
+    <div class="mrow">${v.r || v.c ? `<button class="btn ghost" data-act="delSeason">Togli</button>` : `<button class="btn ghost" data-act="closeModal">Annulla</button>`}<button class="btn" data-act="saveRate">Salva</button></div>`;
+  $('#modal').classList.add('open');
+}
+// Una stagione appena finita (tutti gli episodi usciti e visti, nessuno in arrivo)
+const stagioneFinita = (sh, s) => { const l = sh.eps.filter(e => e.s == s); return l.length > 0 && l.every(e => e.d && e.d <= oggi() && sh.watched[e.i]); };
+function chiediVotoStagione(sh, s){
+  if (sh.sv?.[s]?.r || showStats(sh).st === 'finite' || C.archivio) return;
+  setTimeout(() => toast(`🎬 Stagione ${s} finita! Com'era?`, 'Vota', () => rateSeasonModal(sh.id, s), 7000), 700);
+}
 function rateShowModal(id, fin, boc){
   const sh = D.series[id];
   UI.rate = {id, r:sh.myRating || 0, show:true};
@@ -2392,6 +2423,7 @@ const A = {
     if (on){
       const t = oggi(), ep = sh.eps.find(e => e.i == d.e);
       const prev = sh.eps.filter(e => (e.s < ep.s || (e.s === ep.s && e.n < ep.n)) && e.d && e.d <= t && !sh.watched[e.i]);
+      if (!prev.length && stagioneFinita(sh, ep.s)) chiediVotoStagione(sh, ep.s);
       if (prev.length) toast(prev.length === 1 ? 'C\'è 1 episodio precedente non spuntato' : `Ci sono ${prev.length} episodi precedenti non spuntati`, 'Segna anche quelli', () => { prev.forEach(e => markEp(sh, e.i, true, true)); save(); refreshView(); }, 6000);
     }
     setTimeout(refreshView, 300);
@@ -2401,6 +2433,7 @@ const A = {
     const sh = D.series[d.id], t = oggi(), eps = sh.eps.filter(e => e.s == d.s && e.d && e.d <= t);
     const all = eps.every(e => sh.watched[e.i]); eps.forEach(e => markEp(sh, e.i, !all, true)); save(); showSheet(+d.id, true);
     toast(all ? `Stagione ${d.s}: spunte tolte` : `Stagione ${d.s} segnata come vista`);
+    if (!all && stagioneFinita(sh, d.s)) chiediVotoStagione(sh, +d.s);
   },
   allShow(d){
     const sh = D.series[d.id], t = oggi(), todo = sh.eps.filter(e => e.d && e.d <= t && !sh.watched[e.i]);
@@ -2580,7 +2613,12 @@ const A = {
   setGen(d){ const it = UI.pg.k === 's' ? D.series[UI.pg.id] : D.movies[UI.pg.id]; it.myGen = d.g || null; save(); $('#modal').classList.remove('open'); refreshView(); toast('🏷️ Genere: ' + esc(mainGen(it))); },
   star(d){ UI.rate.r = UI.rate.r === +d.n ? 0 : +d.n; document.querySelectorAll('.rate button').forEach((b, i) => b.classList.toggle('on', i < UI.rate.r)); },
   rateShow(d){ rateShowModal(d.id); },
+  rateSeason(d){ rateSeasonModal(+d.id, +d.s); },
+  delSeason(){ const sh = D.series[UI.rate.id]; if (sh.sv) delete sh.sv[UI.rate.season]; save(); $('#modal').classList.remove('open'); toast(`Stagione ${UI.rate.season}: voto tolto`); refreshView(); },
   saveRate(){
+    if (UI.rate.season){ const sh = D.series[UI.rate.id]; sh.sv = sh.sv || {}; const c = $('#rCom').innerText.trim();
+      if (UI.rate.r || c) sh.sv[UI.rate.season] = {r:UI.rate.r, c}; else delete sh.sv[UI.rate.season];
+      save(); $('#modal').classList.remove('open'); toast(`✓ Stagione ${UI.rate.season}: giudizio salvato`); refreshView(); return; }
     if (UI.rate.show){ const sh = D.series[UI.rate.id]; sh.myRating = UI.rate.r; sh.notes = $('#rCom').innerText.trim(); save(); $('#modal').classList.remove('open'); toast('✓ Giudizio salvato'); refreshView(); return; }
     const m = D.movies[UI.rate.id], first = m.state !== 'seen';
     Object.assign(m, {state:'seen', rating:UI.rate.r, seenAt:$('#rDate').classList.contains('hide') ? '' : ($('#rDate').value || oggi()), comment:$('#rCom').innerText.trim()});
