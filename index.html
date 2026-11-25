@@ -728,7 +728,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.59';
+const VERSIONE = '2.60';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -2624,6 +2624,21 @@ const A = {
 document.addEventListener('click', ev => {
   const el = ev.target.closest('[data-act]'); if (!el) return;
   const f = A[el.dataset.act]; if (f){ if (el.dataset.act !== 'modalBg' && el.dataset.act !== 'openNews') ev.stopPropagation(); f(el.dataset, el, ev); }
+});
+/* Tastiera sul computer: Esc chiude, / o Ctrl+K cerca, 1 2 3 cambiano sezione */
+document.addEventListener('keydown', ev => {
+  if (ev.key === 'Escape'){
+    if ($('#cele')){ A.celeOk(); ev.preventDefault(); return; }
+    if ($('#modal').classList.contains('open')){ A.closeModal(); ev.preventDefault(); return; }
+    if ($('#sheet').classList.contains('open')){ document.activeElement?.blur?.(); closeSheet(); ev.preventDefault(); }
+    return;
+  }
+  const t = ev.target, scrive = t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+  if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && ev.key.toLowerCase() === 'k'){ ev.preventDefault(); if (!$('#sheet').classList.contains('open')) A.search(); else $('#q')?.focus(); return; }
+  if (scrive || ev.ctrlKey || ev.metaKey || ev.altKey || $('#intro') || $('#modal').classList.contains('open')) return;
+  if (ev.key === '/'){ ev.preventDefault(); if (!$('#sheet').classList.contains('open')) A.search(); else $('#q')?.focus(); return; }
+  const sez = {'1':'serie', '2':'film', '3':'io'}[ev.key];
+  if (sez && !$('#sheet').classList.contains('open')){ ev.preventDefault(); A.tab({t:sez}); }
 });
 document.addEventListener('input', ev => {
   const t = ev.target; if (t.dataset.notes === 'show'){ D.series[t.dataset.id].notes = t.value; clearTimeout(UI.nt); UI.nt = setTimeout(save, 800); }
