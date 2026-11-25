@@ -692,6 +692,36 @@ html[data-theme=light] .tier.next>i{opacity:.82;filter:grayscale(1) contrast(1.1
 html[data-theme=light] .tabbar button{text-shadow:0 1px 2px rgba(255,255,255,.85)}
 html[data-theme=light] .tabbar{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 10px 30px rgba(70,40,20,.14)}
 html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-shadow:0 2px 8px rgba(70,40,20,.08)}
+/* ---------- COMPUTER (2.61): menu a sinistra come OutLoud, contenuto a tutta larghezza ---------- */
+.sbb,.sbf,.sbl{display:none}
+@media (min-width:1024px) and (hover:hover) and (pointer:fine){
+  :root{--sbw:232px}
+  .tabbar{left:0;top:0;bottom:0;transform:none;width:var(--sbw);flex-direction:column;align-items:stretch;gap:4px;padding:26px 14px 20px;border-radius:0;border:0;border-right:1px solid var(--line);background:var(--bg2);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+  html[data-theme=light] .tabbar{background:var(--bg2);box-shadow:none;border-right:1px solid var(--line)}
+  .sbb{display:flex;align-items:center;gap:9px;padding:0 10px 22px;font-family:"New York",ui-serif,Georgia,serif;font-size:25px;font-weight:700;color:var(--txt)}
+  .sbb svg,.sbb img{width:30px;height:30px}
+  .tabbar button{flex-direction:row;justify-content:flex-start;gap:12px;width:auto;padding:11px 14px;border-radius:12px;font-size:15px;font-weight:600}
+  .tabbar button svg{width:21px;height:21px}
+  .tabbar button:hover{background:rgba(255,255,255,.06);color:var(--txt)}
+  html[data-theme=light] .tabbar button:hover{background:rgba(70,45,30,.06)}
+  .tabbar button.on{background:rgba(255,154,77,.13);box-shadow:none;color:var(--txt)}
+  .tabbar .plus{order:-1;margin:0 0 14px;width:auto;padding:11px 14px;border-radius:12px;justify-content:flex-start;color:#2a0d05;font-weight:700}
+  .tabbar .plus svg{width:20px;height:20px}
+  .tabbar .plus:hover{background:var(--grad);filter:brightness(1.06)}
+  .sbb{order:-2}
+  .sbl{display:inline}
+  .sbf{display:block;margin-top:auto;padding:0 10px;font-size:11.5px;line-height:1.7;color:var(--mut2)}
+  .sbf b{color:var(--mut);font-weight:600}
+  .sbf kbd{font:inherit;font-size:10.5px;padding:1px 5px;margin-right:2px;border-radius:5px;border:1px solid var(--line);color:var(--mut)}
+  .app{max-width:none;margin-left:var(--sbw);padding-left:40px;padding-right:40px;padding-bottom:50px}
+  .top .brand{visibility:hidden}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  .tiles{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .sheet{left:var(--sbw)}
+  .sheet .inner{max-width:1180px}
+  .close{left:calc(var(--sbw) + 16px)}
+  .toast{left:calc(50% + var(--sbw) / 2)}
+}
 </style>
 </head>
 <body>
@@ -715,10 +745,12 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 <div class="app" id="app"></div>
 
 <nav class="tabbar" id="tabbar">
+  <div class="sbb" id="sbBrand"></div>
   <button data-act="tab" data-t="serie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M8 2.5 12 6l4-3.5"/></svg>Serie</button>
   <button data-act="tab" data-t="film"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4M3 12h18"/></svg>Film</button>
-  <button class="plus" data-act="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button class="plus" data-act="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="sbl">Cerca e aggiungi</span></button>
   <button data-act="tab" data-t="io"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Io</button>
+  <div class="sbf"><kbd>/</kbd> cerca · <kbd>Esc</kbd> chiude · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> sezioni<br><b>Stefano Fasolato</b> 🖤💙</div>
 </nav>
 
 <div class="sheet" id="sheet"><div class="inner" id="sheetIn"></div></div>
@@ -728,7 +760,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.60';
+const VERSIONE = '2.61';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -764,12 +796,14 @@ let D = load(KEY) || {v:1, upd:0, series:{}, movies:{}, news:[], lastCheck:0};
 let C = Object.assign({tmdb:'', ghUser:'', ghRepo:'visto-dati', ghToken:'', intro:true, archivio:true, sha:'', lastSync:0, syncErr:''}, load(CFG) || {});
 let UI = {tab:'serie', filmSeg:'todo', serSeg:'corso', season:{}, searchType:null, busy:false};
 const MQ = matchMedia('(prefers-color-scheme: light)');
+const PC = matchMedia('(hover:hover) and (pointer:fine) and (min-width:1024px)'); // computer: il tema automatico segue l'orario
 function applyTheme(){
-  const t = (C.theme || 'auto') === 'auto' ? (MQ.matches ? 'light' : 'dark') : C.theme;
+  const h = new Date().getHours();
+  const t = (C.theme || 'auto') === 'auto' ? (PC.matches ? (h >= 7 && h < 19 ? 'light' : 'dark') : (MQ.matches ? 'light' : 'dark')) : C.theme;
   document.documentElement.dataset.theme = t;
   document.querySelector('meta[name=theme-color]').content = t === 'light' ? '#f5efe6' : '#0a0910';
 }
-MQ.addEventListener?.('change', () => applyTheme());
+MQ.addEventListener?.('change', () => applyTheme()); PC.addEventListener?.('change', () => applyTheme()); setInterval(applyTheme, 5 * 60e3);
 applyTheme();
 function load(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
 function saveCfg(){ try { localStorage.setItem(CFG, JSON.stringify(C)); } catch(e){} }
@@ -1026,14 +1060,21 @@ function render(){
   requestAnimationFrame(() => document.querySelectorAll('.tpath').forEach(p => { const n = p.querySelector('.next'); if (n) p.scrollLeft = Math.max(0, n.offsetLeft - p.offsetLeft - 110); }));
 }
 
+// Novità da leggere. Gli avvisi "in arrivo" spariscono quando la data è passata (l'episodio è già uscito)
+// e dicono sempre il giorno giusto (oggi, domani…), non quello calcolato quando sono nati.
+function newsAttive(){
+  return D.news.filter(n => !n.read && !(n.kind === 'soon' && n.d && n.d < oggi()))
+    .map(n => n.kind === 'soon' && n.d && n.d2 ? Object.assign({}, n, {d2:n.d2.replace(/([Ee]sce) .*$/, `$1 ${fGiorno(n.d)}`)}) : n)
+    .sort((a, b) => (a.kind === 'soon') - (b.kind === 'soon') || (b.d || '').localeCompare(a.d || ''));
+}
 // Le novità ancora da leggere, in elenco compatto (pagina Io)
 function ioNews(){
-  const items = D.news.filter(n => !n.read).sort((a, b) => (a.kind === 'soon') - (b.kind === 'soon') || (b.d || '').localeCompare(a.d || ''));
+  const items = newsAttive();
   if (!items.length) return '';
   return `<div id="ioNews" class="nlist">${items.map(n => `<div class="nwr" data-act="openNews" data-id="${esc(n.id)}" role="button">${poster(n.img, n.t, 'pimg')}<div><small>${esc(n.k)}</small><b>${esc(n.t)}</b><span>${esc(n.d2 || '')}</span></div></div>`).join('')}</div>`;
 }
 function renderNews(){
-  const items = D.news.filter(n => !n.read).sort((a, b) => (a.kind === 'soon') - (b.kind === 'soon') || (b.d || '').localeCompare(a.d || ''));
+  const items = newsAttive();
   const last = D.lastCheck ? fData(new Date(D.lastCheck).toLocaleDateString('sv'), false) : null;
   if (!items.length){
     if (!Object.keys(D.series).length && !Object.keys(D.movies).length) return '';
@@ -1242,7 +1283,7 @@ function renderIo(){
   <h2 class="sec">Impostazioni</h2>
   <div class="setg">
   <div class="box">
-    <div class="set"><div class="l"><b>Aspetto</b><small>Giorno, notte o automatico come il dispositivo</small></div><div class="theme3">${[['auto','Auto'],['light','☀︎ Giorno'],['dark','☾ Notte']].map(([v, l]) => `<button class="${(C.theme || 'auto') === v ? 'on' : ''}" data-act="theme" data-v="${v}">${l}</button>`).join('')}</div></div>
+    <div class="set"><div class="l"><b>Aspetto</b><small>${PC.matches ? 'Giorno, notte o automatico: sul computer notte dalle 19 alle 7' : 'Giorno, notte o automatico come il dispositivo'}</small></div><div class="theme3">${[['auto','Auto'],['light','☀︎ Giorno'],['dark','☾ Notte']].map(([v, l]) => `<button class="${(C.theme || 'auto') === v ? 'on' : ''}" data-act="theme" data-v="${v}">${l}</button>`).join('')}</div></div>
     <div class="set"><div class="l"><b>Notifiche</b><small>${esc(statoNotifiche().t)}</small></div><button class="btn small ${statoNotifiche().ok ? 'ghost' : ''}" data-act="push">${statoNotifiche().ok ? 'Riattiva' : '🔔 Attiva'}</button></div>
     <div class="set"><div class="l"><b>App di musica</b><small>Dove si aprono i brani delle colonne sonore</small></div><button class="btn small ghost" data-act="musicaApri">${esc(musica()[0])} ›</button></div>
     <div class="set"><div class="l"><b>Intro all'avvio</b><small>Il collage di locandine quando apri l'app</small></div><button class="sw ${C.intro ? 'on' : ''}" data-act="toggleIntro" aria-label="Intro"></button></div>
@@ -2810,7 +2851,7 @@ function polvere(){ // granelli di polvere che danzano nel fascio di luce
   el.innerHTML = h;
 }
 function introStats(){
-  const ns = Object.keys(D.series).length, nm = Object.values(D.movies).filter(m => m.state === 'seen').length, nn = D.news.filter(n => !n.read).length;
+  const ns = Object.keys(D.series).length, nm = Object.values(D.movies).filter(m => m.state === 'seen').length, nn = newsAttive().length;
   $('#introStats').textContent = ns || nm ? `${ns} serie · ${nm} film visti${nn ? ` · ${nn} novità` : ''}` : '';
 }
 
@@ -3195,6 +3236,7 @@ document.addEventListener('wheel', e => {
 }, {passive:false});
 /* ---------- AVVIO ---------- */
 (async function init(){
+  try { $('#sbBrand').innerHTML = I.logo + 'Visto!'; } catch(e){}
   if (!C.ghToken && fissaPiatt()) save(); // con la sincronizzazione si sistema dopo aver letto GitHub
   render();
   checkUpdate();
