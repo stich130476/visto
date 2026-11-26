@@ -303,6 +303,11 @@ h2.sec small{color:var(--mut2);font-size:14px;font-weight:600}
 .schip.on{border-color:rgba(255,154,77,.7);background:rgba(255,154,77,.14)}
 .schip.done::after{content:"✓";margin-left:6px;color:var(--ok)}
 .schip i{position:absolute;left:0;bottom:0;height:3px;background:var(--grad)}
+.stato{display:flex;align-items:center;gap:10px;color:var(--mut);font-size:13.5px}
+.stato .tag{padding:5px 12px;border-radius:999px;background:rgba(255,154,77,.14);color:var(--a2);font-weight:700;font-size:13px;flex:none}
+.stato .tag.no{background:rgba(255,110,110,.14);color:#ff8a7a}
+.btn.segna{gap:10px}
+.btn.segna i{width:18px;height:18px;border-radius:50%;border:2px solid currentColor;opacity:.7;flex:none}
 .schip em{font-style:normal;font-size:12px;color:var(--a2);margin-left:6px;font-weight:700}
 .svoto{display:flex;align-items:center;gap:10px;width:100%;margin:10px 0 6px;padding:10px 12px;border-radius:12px;background:var(--card2);border:1px solid var(--line);color:var(--mut);font-size:13.5px;text-align:left}
 .svoto .stars{font-size:17px}
@@ -771,7 +776,7 @@ html[data-theme=light] .tabbar button.on{background:rgba(255,255,255,.7);box-sha
 
 <script>
 'use strict';
-const VERSIONE = '2.64';
+const VERSIONE = '2.65';
 const KEY = 'visto-dati', CFG = 'visto-cfg', POSTERS = 'visto-poster';
 const IMG = 'https://image.tmdb.org/t/p/';
 const $ = s => document.querySelector(s);
@@ -1468,7 +1473,8 @@ function movieSheet(id, keep){
       ${m.comment ? `<p class="plot" style="font-style:italic">“${esc(m.comment)}”</p>` : '<p class="cap2">Nessun commento</p>'}
       <div class="acts"><button class="btn ghost" data-act="rate" data-id="${id}">Modifica voto e commento</button></div></div>`
     : `<div class="box">${m.gone ? `<p class="plot" style="margin-bottom:12px;color:#ff9a7a">Non è più su ${esc(nomeP(m.gone.n))} dal ${esc(fData(m.gone.d))}${m.prov?.length ? '' : ' e per ora non è su nessuna piattaforma in abbonamento'}.</p>` : ''}${m.rel && m.rel > t ? `<p class="plot" style="margin-bottom:12px">Esce in Italia <b style="color:var(--a2)">${esc(fGiorno(m.rel))}${fGiorno(m.rel) !== fData(m.rel) ? ' (' + esc(fData(m.rel)) + ')' : ''}</b>. Ti avviso tra le novità.</p>` : ''}
-      <div class="acts" style="margin-top:0"><button class="btn" data-act="rate" data-id="${id}">${I.check}L'ho visto</button></div></div>`}
+      <div class="stato">${m.dropped ? '<span class="tag no">Bocciato</span>' : '<span class="tag">🔖 Da vedere</span>'}<span>${m.added ? 'in lista dal ' + esc(fData(new Date(m.added).toLocaleDateString('sv'))) : 'nella tua lista'}</span></div>
+      <div class="acts" style="margin-top:12px"><button class="btn ghost segna" data-act="rate" data-id="${id}"><i></i>Segna come visto</button></div></div>`}
     ${visto(m) ? vsRiga('m', m.id, m) : ''}
     ${dove(m.prov, m.rent, 'Dove vederlo')}
     ${m.plot ? `<div class="box"><h4>Trama</h4><p class="plot clamp" data-act="moreText" role="button">${esc(m.plot)}</p></div>` : ''}
